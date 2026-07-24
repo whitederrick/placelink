@@ -22,8 +22,8 @@ export default defineConfig({
     command: "node ./node_modules/next/dist/bin/next dev",
     url: `${baseURL}/ko`,
     reuseExistingServer: !process.env.CI,
-    stderr: "ignore",
-    stdout: "ignore",
+    stderr: process.env.CI ? "pipe" : "ignore",
+    stdout: process.env.CI ? "pipe" : "ignore",
     timeout: 120_000,
   },
 });
