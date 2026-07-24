@@ -1,0 +1,359 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  WITHDRAWN
+}
+
+enum AuthProvider {
+  KAKAO
+  GOOGLE
+}
+
+enum CoupleStatus {
+  ACTIVE
+  DISSOLVED
+}
+
+enum SourceType {
+  PUBLIC_API
+  BUSINESS
+  EDITOR
+  UGC
+}
+
+enum PlaceStatus {
+  ACTIVE
+  CLOSED
+  MERGED
+}
+
+enum ExternalProvider {
+  KAKAO
+  NAVER
+  GOOGLE
+  TOUR_API
+  SEOUL_OPEN_DATA
+}
+
+enum HappeningStatus {
+  UPCOMING
+  ACTIVE
+  ENDED
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  PRIVATE
+  DELETED
+}
+
+enum TagKind {
+  SITUATION
+  BUDGET
+  MOOD
+  CATEGORY
+}
+
+enum ActorType {
+  HUMAN
+  AGENT
+}
+
+model User {
+  id                    String           @id @default(cuid())
+  email                 String?          @unique
+  nickname              String
+  profileImageUrl       String?          @map("profile_image_url")
+  status                UserStatus       @default(ACTIVE)
+  createdAt             DateTime         @default(now()) @map("created_at")
+  updatedAt             DateTime         @updatedAt @map("updated_at")
+  deletedAt             DateTime?        @map("deleted_at")
+  authIdentities        AuthIdentity[]
+  coupleMemberships     CoupleMember[]
+  soloCourses           Course[]         @relation("SoloCourseCreator")
+  scraps                Scrap[]
+  events                AnalyticsEvent[]
+  createdCoupleInvites  CoupleInvite[]   @relation("CoupleInviteCreator")
+  acceptedCoupleInvites CoupleInvite[]   @relation("CoupleInviteAccepter")
+
+  @@index([status, createdAt])
+  @@map("users")
+}
+
+model AuthIdentity {
+  id         String       @id @default(cuid())
+  userId     String       @map("user_id")
+  provider   AuthProvider
+  externalId String       @map("external_id")
+  createdAt  DateTime     @default(now()) @map("created_at")
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, externalId])
+  @@index([userId])
+  @@map("auth_identities")
+}
+
+model Couple {
+  id          String         @id @default(cuid())
+  displayName String         @map("display_name")
+  startedAt   DateTime       @map("started_at")
+  status      CoupleStatus   @default(ACTIVE)
+  dissolvedAt DateTime?      @map("dissolved_at")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+  members     CoupleMember[]
+  courses     Course[]
+
+  @@index([status, createdAt])
+  @@map("couples")
+}
+
+model CoupleMember {
+  id       String    @id @default(cuid())
+  coupleId String    @map("couple_id")
+  userId   String    @map("user_id")
+  joinedAt DateTime  @default(now()) @map("joined_at")
+  leftAt   DateTime? @map("left_at")
+  couple   Couple    @relation(fields: [coupleId], references: [id], onDelete: Restrict)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([coupleId, userId])
+  @@index([userId, leftAt])
+  @@map("couple_members")
+}
+
+model CoupleInvite {
+  id                        String    @id @default(cuid())
+  inviterUserId             String    @map("inviter_user_id")
+  acceptedByUserId          String?   @map("accepted_by_user_id")
+  tokenHash                 String    @unique @map("token_hash") @db.Char(64)
+  startedAt                 DateTime  @map("started_at") @db.Date
+  inviterUpgradeSoloCourses Boolean   @default(false) @map("inviter_upgrade_solo_courses")
+  expiresAt                 DateTime  @map("expires_at")
+  acceptedAt                DateTime? @map("accepted_at")
+  revokedAt                 DateTime? @map("revoked_at")
+  createdAt                 DateTime  @default(now()) @map("created_at")
+  inviter                   User      @relation("CoupleInviteCreator", fields: [inviterUserId], references: [id], onDelete: Cascade)
+  acceptedBy                User?     @relation("CoupleInviteAccepter", fields: [acceptedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([inviterUserId, createdAt])
+  @@index([expiresAt])
+  @@map("couple_invites")
+}
+
+model Place {
+  id           String                                @id @default(cuid())
+  sourceType   SourceType                            @map("source_type")
+  status       PlaceStatus                           @default(ACTIVE)
+  category     String
+  areaSlug     String?                               @map("area_slug")
+  lat          Decimal                               @db.Decimal(9, 6)
+  lng          Decimal                               @db.Decimal(9, 6)
+  location     Unsupported("geography(Point,4326)")?
+  phone        String?
+  websiteUrl   String?                               @map("website_url")
+  createdAt    DateTime                              @default(now()) @map("created_at")
+  updatedAt    DateTime                              @updatedAt @map("updated_at")
+  translations PlaceTranslation[]
+  providerRefs PlaceProviderRef[]
+  happenings   Happening[]
+  courseNodes  CourseNode[]
+  tags         PlaceTag[]
+
+  @@index([status, category])
+  @@index([status, areaSlug, category, id])
+  @@index([sourceType, createdAt])
+  @@index([location], type: Gist, map: "places_location_gist_idx")
+  @@map("places")
+}
+
+model PlaceTranslation {
+  id      String  @id @default(cuid())
+  placeId String  @map("place_id")
+  locale  String  @db.VarChar(10)
+  name    String
+  address String
+  summary String?
+  place   Place   @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@unique([placeId, locale])
+  @@index([locale, name])
+  @@map("place_translations")
+}
+
+model PlaceProviderRef {
+  id         String           @id @default(cuid())
+  placeId    String           @map("place_id")
+  provider   ExternalProvider
+  externalId String           @map("external_id")
+  sourceUrl  String?          @map("source_url")
+  place      Place            @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, externalId])
+  @@index([placeId])
+  @@map("place_provider_refs")
+}
+
+model Happening {
+  id           String                 @id @default(cuid())
+  placeId      String                 @map("place_id")
+  sourceType   SourceType             @map("source_type")
+  status       HappeningStatus        @default(UPCOMING)
+  startsAt     DateTime               @map("starts_at")
+  endsAt       DateTime               @map("ends_at")
+  isAnchor     Boolean                @default(false) @map("is_anchor")
+  createdAt    DateTime               @default(now()) @map("created_at")
+  updatedAt    DateTime               @updatedAt @map("updated_at")
+  place        Place                  @relation(fields: [placeId], references: [id], onDelete: Restrict)
+  translations HappeningTranslation[]
+
+  @@index([status, startsAt, endsAt])
+  @@index([isAnchor, status, endsAt])
+  @@index([placeId])
+  @@map("happenings")
+}
+
+model HappeningTranslation {
+  id          String    @id @default(cuid())
+  happeningId String    @map("happening_id")
+  locale      String    @db.VarChar(10)
+  title       String
+  description String?
+  happening   Happening @relation(fields: [happeningId], references: [id], onDelete: Cascade)
+
+  @@unique([happeningId, locale])
+  @@map("happening_translations")
+}
+
+model Course {
+  id              String       @id @default(cuid())
+  slug            String       @unique
+  creatorUserId   String?      @map("creator_user_id")
+  coupleId        String?      @map("couple_id")
+  status          CourseStatus @default(DRAFT)
+  title           String
+  description     String?
+  coverImageUrl   String?      @map("cover_image_url")
+  durationMinutes Int?         @map("duration_minutes")
+  viewCount       Int          @default(0) @map("view_count")
+  scrapCount      Int          @default(0) @map("scrap_count")
+  publishedAt     DateTime?    @map("published_at")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+  deletedAt       DateTime?    @map("deleted_at")
+  creatorUser     User?        @relation("SoloCourseCreator", fields: [creatorUserId], references: [id], onDelete: Restrict)
+  couple          Couple?      @relation(fields: [coupleId], references: [id], onDelete: Restrict)
+  nodes           CourseNode[]
+  tags            CourseTag[]
+  scraps          Scrap[]
+
+  @@index([status, publishedAt, id])
+  @@index([coupleId, createdAt])
+  @@index([creatorUserId, createdAt])
+  @@map("courses")
+}
+
+model CourseNode {
+  id              String  @id @default(cuid())
+  courseId        String  @map("course_id")
+  placeId         String  @map("place_id")
+  orderIndex      Int     @map("order_index")
+  durationMinutes Int?    @map("duration_minutes")
+  distanceMeters  Int?    @map("distance_meters")
+  tip             String? @db.VarChar(50)
+  course          Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  place           Place   @relation(fields: [placeId], references: [id], onDelete: Restrict)
+
+  @@unique([courseId, orderIndex])
+  @@index([placeId])
+  @@map("course_nodes")
+}
+
+model Tag {
+  id        String      @id @default(cuid())
+  kind      TagKind
+  slug      String      @unique
+  labelKo   String      @map("label_ko")
+  labelEn   String      @map("label_en")
+  isActive  Boolean     @default(true) @map("is_active")
+  createdAt DateTime    @default(now()) @map("created_at")
+  courses   CourseTag[]
+  places    PlaceTag[]
+
+  @@index([kind, isActive])
+  @@map("tags")
+}
+
+model CourseTag {
+  courseId String @map("course_id")
+  tagId    String @map("tag_id")
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  tag      Tag    @relation(fields: [tagId], references: [id], onDelete: Restrict)
+
+  @@id([courseId, tagId])
+  @@index([tagId, courseId])
+  @@map("course_tags")
+}
+
+model PlaceTag {
+  placeId String @map("place_id")
+  tagId   String @map("tag_id")
+  place   Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Restrict)
+
+  @@id([placeId, tagId])
+  @@index([tagId, placeId])
+  @@map("place_tags")
+}
+
+model Scrap {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  courseId  String   @map("course_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([courseId, createdAt])
+  @@map("scraps")
+}
+
+model AuditLog {
+  id         String    @id @default(cuid())
+  actorId    String    @map("actor_id")
+  actorType  ActorType @map("actor_type")
+  action     String
+  targetType String    @map("target_type")
+  targetId   String    @map("target_id")
+  before     Json?
+  after      Json?
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@index([targetType, targetId, createdAt])
+  @@index([actorType, actorId, createdAt])
+  @@map("audit_logs")
+}
+
+model AnalyticsEvent {
+  id         String   @id @default(cuid())
+  userId     String?  @map("user_id")
+  name       String
+  properties Json
+  createdAt  DateTime @default(now()) @map("created_at")
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([name, createdAt])
+  @@index([userId, createdAt])
+  @@map("analytics_events")
+}

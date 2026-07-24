@@ -1,0 +1,27 @@
+{
+  "name": "place-link",
+  "private": true,
+  "packageManager": "pnpm@11.9.0",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "test:e2e": "pnpm --filter @placelink/web test:e2e",
+    "verify": "turbo lint && turbo typecheck && turbo test && turbo build",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:generate": "pnpm --filter @placelink/database db:generate",
+    "db:migrate": "pnpm --filter @placelink/database db:migrate",
+    "db:deploy": "pnpm --filter @placelink/database db:deploy",
+    "db:seed": "pnpm --filter @placelink/database db:seed",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "turbo": "^2.5.8",
+    "typescript": "^5.9.3"
+  }
+}
