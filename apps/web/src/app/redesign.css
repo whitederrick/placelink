@@ -274,15 +274,27 @@ textarea:focus-visible {
 }
 
 .course-cover.sunset {
-  background: linear-gradient(145deg, #d77a62, #efaa77 60%, #e8cf9a);
+  background-image:
+    linear-gradient(rgba(40, 37, 31, 0.05), rgba(40, 37, 31, 0.25)),
+    url("/images/places/seoul-date-atlas.png");
+  background-position: 0 100%;
+  background-size: 300% 200%;
 }
 
 .course-cover.mono {
-  background: linear-gradient(145deg, #8e9289, #d4d3cc);
+  background-image:
+    linear-gradient(rgba(40, 37, 31, 0.05), rgba(40, 37, 31, 0.25)),
+    url("/images/places/seoul-date-atlas.png");
+  background-position: 0 0;
+  background-size: 300% 200%;
 }
 
 .course-cover.violet {
-  background: linear-gradient(145deg, #7e8d91, #d28d95);
+  background-image:
+    linear-gradient(rgba(40, 37, 31, 0.05), rgba(40, 37, 31, 0.25)),
+    url("/images/places/seoul-date-atlas.png");
+  background-position: 100% 100%;
+  background-size: 300% 200%;
 }
 
 .course-copy {
@@ -397,20 +409,44 @@ textarea:focus-visible {
   display: grid;
   place-items: center;
   border-radius: 10px;
+  background-image:
+    linear-gradient(rgba(40, 37, 31, 0.06), rgba(40, 37, 31, 0.18)),
+    url("/images/places/seoul-date-atlas.png");
+  background-repeat: no-repeat;
+  background-size: 300% 200%;
 }
 
 .mini-cover span {
-  color: rgba(40, 37, 31, 0.56);
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(255, 253, 249, 0.88);
+  color: var(--ink);
   font-size: 11px;
   font-weight: 800;
 }
 
-.mini-cover.lime {
-  background: linear-gradient(145deg, #dce8cf, #bed2ae);
+.mini-cover.category-exhibition {
+  background-position: 0 0;
 }
 
-.mini-cover.pink {
-  background: linear-gradient(145deg, #f3b3a3, #e67d65);
+.mini-cover.category-cafe {
+  background-position: 50% 0;
+}
+
+.mini-cover.category-shop {
+  background-position: 100% 0;
+}
+
+.mini-cover.category-restaurant {
+  background-position: 0 100%;
+}
+
+.mini-cover.category-activity {
+  background-position: 50% 100%;
+}
+
+.mini-cover.category-bar {
+  background-position: 100% 100%;
 }
 
 .mini-place-row div:nth-child(2) {

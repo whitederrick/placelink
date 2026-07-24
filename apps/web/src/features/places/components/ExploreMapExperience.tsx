@@ -10,8 +10,6 @@ import type { MapPlacesQuery, PlaceSummary } from "../schema";
 import { FallbackMap } from "./FallbackMap";
 
 const MapCanvas = dynamic(() => import("./MapCanvas"), { ssr: false });
-const TONES = ["lime", "pink"] as const;
-
 interface ExploreMapExperienceProps {
   locale: "ko" | "en";
   initialPlaces: PlaceSummary[];
@@ -102,15 +100,16 @@ export function ExploreMapExperience({
           ) : (
             places.map((place, index) => (
               <article className="mini-place-row" key={place.id}>
-                <div className={`mini-cover ${TONES[index % TONES.length]}`}>
+                <div
+                  className={`mini-cover category-${place.category.toLowerCase()}`}
+                >
                   <span>{String(index + 1).padStart(2, "0")}</span>
                 </div>
                 <div>
                   <strong>{place.name}</strong>
-                  <span>
-                    {t(`categories.${place.category}`)} · {place.address}
-                  </span>
+                  <span>{place.summary ?? place.address}</span>
                   <small>
+                    {t(`categories.${place.category}`)} ·{" "}
                     {place.area ? t(`areas.${place.area}`) : t("allSeoul")}
                   </small>
                 </div>

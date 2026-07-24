@@ -5,9 +5,14 @@ import {
   type MapPlacesQuery,
   type NearbyPlacesQuery,
   type PlaceListQuery,
-  type PlaceSummary
+  type PlaceSummary,
 } from "./schema";
-import { selectMapPlaceRecords, selectNearbyPlaceRecords, selectPlaceRecords, type PlaceRecords } from "./queries";
+import {
+  selectMapPlaceRecords,
+  selectNearbyPlaceRecords,
+  selectPlaceRecords,
+  type PlaceRecords,
+} from "./queries";
 
 function mapPlace(record: PlaceRecords[number]): PlaceSummary {
   const translation = record.translations[0];
@@ -15,10 +20,11 @@ function mapPlace(record: PlaceRecords[number]): PlaceSummary {
     id: record.id,
     name: translation?.name ?? record.id,
     address: translation?.address ?? "",
+    summary: translation?.summary,
     area: record.areaSlug as PlaceSummary["area"],
     category: record.category as PlaceSummary["category"],
     lat: Number(record.lat),
-    lng: Number(record.lng)
+    lng: Number(record.lng),
   };
 }
 
@@ -28,7 +34,7 @@ export async function searchPlaces(query: PlaceListQuery) {
   const visible = records.slice(0, query.take).map(mapPlace);
   return placeListResponseSchema.parse({
     data: visible,
-    meta: { nextCursor: hasNextPage ? visible.at(-1)?.id : undefined }
+    meta: { nextCursor: hasNextPage ? visible.at(-1)?.id : undefined },
   });
 }
 
@@ -38,9 +44,9 @@ export async function findNearbyPlaces(query: NearbyPlacesQuery) {
     data: records.map((record) => ({
       ...record,
       area: record.areaSlug,
-      distanceMeters: Math.round(Number(record.distanceMeters))
+      distanceMeters: Math.round(Number(record.distanceMeters)),
     })),
-    meta: { radiusMeters: query.radiusMeters }
+    meta: { radiusMeters: query.radiusMeters },
   });
 }
 
@@ -49,8 +55,8 @@ export async function findMapPlaces(query: MapPlacesQuery) {
   return mapPlacesResponseSchema.parse({
     data: records.slice(0, query.take).map((record) => ({
       ...record,
-      area: record.areaSlug
+      area: record.areaSlug,
     })),
-    meta: { capped: records.length > query.take }
+    meta: { capped: records.length > query.take },
   });
 }

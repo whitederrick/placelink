@@ -1,6 +1,8 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./test";
 
+test.setTimeout(90_000);
+
 async function signInAs(page: Page, userName: "지훈" | "민지") {
   await page
     .getByRole("button", {

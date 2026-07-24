@@ -4,20 +4,52 @@ import { PrismaClient } from "../generated/client/client";
 import { readDatabaseEnv } from "../src/env";
 import { createSeedPlaces } from "../src/seed-data";
 
-const adapter = new PrismaPg({ connectionString: readDatabaseEnv().DATABASE_URL });
+const adapter = new PrismaPg({
+  connectionString: readDatabaseEnv().DATABASE_URL,
+});
 const prisma = new PrismaClient({ adapter });
 
 const users = [
   { id: "seed-user-jihoon", email: "jihoon@example.test", nickname: "지훈" },
-  { id: "seed-user-minji", email: "minji@example.test", nickname: "민지" }
+  { id: "seed-user-minji", email: "minji@example.test", nickname: "민지" },
 ] as const;
 
 const tags = [
-  { id: "seed-tag-rain", kind: "SITUATION" as const, slug: "rainy-day", labelKo: "비오는 날", labelEn: "Rainy day" },
-  { id: "seed-tag-anniversary", kind: "SITUATION" as const, slug: "anniversary", labelKo: "기념일", labelEn: "Anniversary" },
-  { id: "seed-tag-cozy", kind: "MOOD" as const, slug: "cozy", labelKo: "아늑한", labelEn: "Cozy" },
-  { id: "seed-tag-trendy", kind: "MOOD" as const, slug: "trendy", labelKo: "트렌디", labelEn: "Trendy" },
-  { id: "seed-tag-mid", kind: "BUDGET" as const, slug: "mid-budget", labelKo: "5~10만원", labelEn: "₩50K–100K" }
+  {
+    id: "seed-tag-rain",
+    kind: "SITUATION" as const,
+    slug: "rainy-day",
+    labelKo: "비오는 날",
+    labelEn: "Rainy day",
+  },
+  {
+    id: "seed-tag-anniversary",
+    kind: "SITUATION" as const,
+    slug: "anniversary",
+    labelKo: "기념일",
+    labelEn: "Anniversary",
+  },
+  {
+    id: "seed-tag-cozy",
+    kind: "MOOD" as const,
+    slug: "cozy",
+    labelKo: "아늑한",
+    labelEn: "Cozy",
+  },
+  {
+    id: "seed-tag-trendy",
+    kind: "MOOD" as const,
+    slug: "trendy",
+    labelKo: "트렌디",
+    labelEn: "Trendy",
+  },
+  {
+    id: "seed-tag-mid",
+    kind: "BUDGET" as const,
+    slug: "mid-budget",
+    labelKo: "5~10만원",
+    labelEn: "₩50K–100K",
+  },
 ] as const;
 
 async function resetDatabase() {
@@ -38,7 +70,7 @@ async function resetDatabase() {
     prisma.coupleMember.deleteMany(),
     prisma.couple.deleteMany(),
     prisma.authIdentity.deleteMany(),
-    prisma.user.deleteMany()
+    prisma.user.deleteMany(),
   ]);
 }
 
@@ -52,8 +84,8 @@ async function seed() {
       id: `seed-auth-${index + 1}`,
       userId: user.id,
       provider: index === 0 ? "KAKAO" : "GOOGLE",
-      externalId: `seed-external-${index + 1}`
-    }))
+      externalId: `seed-external-${index + 1}`,
+    })),
   });
 
   await prisma.couple.create({
@@ -62,9 +94,12 @@ async function seed() {
       displayName: "지훈♥민지",
       startedAt: new Date("2025-03-23T00:00:00.000Z"),
       members: {
-        create: users.map((user, index) => ({ id: `seed-member-${index + 1}`, userId: user.id }))
-      }
-    }
+        create: users.map((user, index) => ({
+          id: `seed-member-${index + 1}`,
+          userId: user.id,
+        })),
+      },
+    },
   });
 
   await prisma.tag.createMany({ data: [...tags] });
@@ -75,17 +110,36 @@ async function seed() {
       category: place.category,
       areaSlug: place.areaSlug,
       lat: place.lat,
-      lng: place.lng
-    }))
+      lng: place.lng,
+    })),
   });
   await prisma.placeTranslation.createMany({
     data: places.flatMap((place) => [
-      { id: `${place.id}-ko`, placeId: place.id, locale: "ko", name: place.nameKo, address: `서울 ${place.neighborhood} 테스트로 ${place.id.slice(-2)}` },
-      { id: `${place.id}-en`, placeId: place.id, locale: "en", name: place.nameEn, address: `${place.id.slice(-2)} Test-ro, ${place.neighborhood}, Seoul` }
-    ])
+      {
+        id: `${place.id}-ko`,
+        placeId: place.id,
+        locale: "ko",
+        name: place.nameKo,
+        address: place.addressKo,
+        summary: place.summaryKo,
+      },
+      {
+        id: `${place.id}-en`,
+        placeId: place.id,
+        locale: "en",
+        name: place.nameEn,
+        address: place.addressEn,
+        summary: place.summaryEn,
+      },
+    ]),
   });
   await prisma.placeProviderRef.createMany({
-    data: places.map((place, index) => ({ id: `seed-provider-${index + 1}`, placeId: place.id, provider: "TOUR_API", externalId: `tour-${index + 1}` }))
+    data: places.map((place, index) => ({
+      id: `seed-provider-${index + 1}`,
+      placeId: place.id,
+      provider: "TOUR_API",
+      externalId: `tour-${index + 1}`,
+    })),
   });
 
   const activeHappeningEnd = new Date("2026-07-31T14:59:59.000Z");
@@ -104,18 +158,30 @@ async function seed() {
         isAnchor: true,
         translations: {
           create: [
-            { id: `${happeningId}-ko`, locale: "ko", title: `${anchorPlace.neighborhood} 여름 팝업` },
-            { id: `${happeningId}-en`, locale: "en", title: `${anchorPlace.nameEn} Summer Pop-up` }
-          ]
-        }
-      }
+            {
+              id: `${happeningId}-ko`,
+              locale: "ko",
+              title: `${anchorPlace.neighborhood} 여름 팝업`,
+            },
+            {
+              id: `${happeningId}-en`,
+              locale: "en",
+              title: `${anchorPlace.nameEn} Summer Pop-up`,
+            },
+          ],
+        },
+      },
     });
   }
 
   for (let courseIndex = 0; courseIndex < 5; courseIndex += 1) {
     const courseId = `seed-course-${courseIndex + 1}`;
     const firstPlace = places[courseIndex * 3]!;
-    const nodePlaces = [firstPlace, places[courseIndex * 3 + 1]!, places[courseIndex * 3 + 2]!];
+    const nodePlaces = [
+      firstPlace,
+      places[courseIndex * 3 + 1]!,
+      places[courseIndex * 3 + 2]!,
+    ];
     await prisma.course.create({
       data: {
         id: courseId,
@@ -132,24 +198,27 @@ async function seed() {
             orderIndex: nodeIndex,
             durationMinutes: 50,
             distanceMeters: nodeIndex === 0 ? null : 550 + nodeIndex * 120,
-            tip: nodeIndex === 0 ? "예약 시간보다 10분 일찍 도착해요" : "천천히 둘러보기 좋은 곳이에요"
-          }))
+            tip:
+              nodeIndex === 0
+                ? "예약 시간보다 10분 일찍 도착해요"
+                : "천천히 둘러보기 좋은 곳이에요",
+          })),
         },
         tags: {
           create: [
             { tagId: tags[courseIndex % tags.length]!.id },
-            { tagId: tags[(courseIndex + 2) % tags.length]!.id }
-          ]
-        }
-      }
+            { tagId: tags[(courseIndex + 2) % tags.length]!.id },
+          ],
+        },
+      },
     });
   }
 
   await prisma.scrap.createMany({
     data: [
       { id: "seed-scrap-1", userId: users[0].id, courseId: "seed-course-2" },
-      { id: "seed-scrap-2", userId: users[1].id, courseId: "seed-course-1" }
-    ]
+      { id: "seed-scrap-2", userId: users[1].id, courseId: "seed-course-1" },
+    ],
   });
   await prisma.auditLog.create({
     data: {
@@ -159,8 +228,8 @@ async function seed() {
       action: "happening.anchor_assigned",
       targetType: "Happening",
       targetId: "seed-happening-1",
-      after: { isAnchor: true }
-    }
+      after: { isAnchor: true },
+    },
   });
 }
 
