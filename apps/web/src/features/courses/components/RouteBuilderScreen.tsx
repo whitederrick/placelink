@@ -99,52 +99,56 @@ export function RouteBuilderScreen({
         <strong>{t("stepRoute")}</strong>
         <span>{t("stepPublish")}</span>
       </div>
-      <section className="builder-card route-editor-card">
-        <div className="builder-title">
-          <span>{t("routeKicker")}</span>
-          <h2>{t("routeTitle")}</h2>
-          <p>{t("routeHint")}</p>
-        </div>
-        <SortableRouteList nodes={nodes} onChange={setNodes} />
-      </section>
-      <section className="place-suggestions">
-        <div className="section-heading">
-          <div>
-            <span className="section-kicker">{t("nearbyKicker")}</span>
-            <h2>{t("nearbyTitle")}</h2>
+      <div className="route-workspace">
+        <section className="builder-card route-editor-card">
+          <div className="builder-title">
+            <span>{t("routeKicker")}</span>
+            <h2>{t("routeTitle")}</h2>
+            <p>{t("routeHint")}</p>
           </div>
-          <span>{t("routeLimit", { count: nodes.length })}</span>
-        </div>
-        {availableSuggestions.length === 0 ? (
-          <div className="empty-state">
-            <strong>{t("nearbyEmptyTitle")}</strong>
-            <p>{t("nearbyEmptyBody")}</p>
+          <SortableRouteList nodes={nodes} onChange={setNodes} />
+        </section>
+        <section className="place-suggestions">
+          <div className="section-heading">
+            <div>
+              <span className="section-kicker">{t("nearbyKicker")}</span>
+              <h2>{t("nearbyTitle")}</h2>
+            </div>
+            <span>{t("routeLimit", { count: nodes.length })}</span>
           </div>
-        ) : (
-          availableSuggestions.slice(0, 8).map((place) => (
-            <article className="suggestion-row" key={place.id}>
-              <div>
-                <small>{explore(`categories.${place.category}`)}</small>
-                <strong>{place.name}</strong>
-                <span>
-                  {place.distanceMeters
-                    ? t("metersAway", { distance: place.distanceMeters })
-                    : place.address}
-                </span>
+          <div className="suggestion-list">
+            {availableSuggestions.length === 0 ? (
+              <div className="empty-state">
+                <strong>{t("nearbyEmptyTitle")}</strong>
+                <p>{t("nearbyEmptyBody")}</p>
               </div>
-              <button
-                type="button"
-                onClick={() => addPlace(place)}
-                disabled={nodes.length >= 8}
-                aria-label={t("addNamedPlace", { place: place.name })}
-              >
-                <Plus size={17} />
-                {t("addShort")}
-              </button>
-            </article>
-          ))
-        )}
-      </section>
+            ) : (
+              availableSuggestions.slice(0, 8).map((place) => (
+                <article className="suggestion-row" key={place.id}>
+                  <div>
+                    <small>{explore(`categories.${place.category}`)}</small>
+                    <strong>{place.name}</strong>
+                    <span>
+                      {place.distanceMeters
+                        ? t("metersAway", { distance: place.distanceMeters })
+                        : place.address}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => addPlace(place)}
+                    disabled={nodes.length >= 8}
+                    aria-label={t("addNamedPlace", { place: place.name })}
+                  >
+                    <Plus size={17} />
+                    {t("addShort")}
+                  </button>
+                </article>
+              ))
+            )}
+          </div>
+        </section>
+      </div>
       {updateDraft.isSuccess ? (
         <p className="save-notice">
           <Check size={14} />

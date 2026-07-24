@@ -1,10 +1,4 @@
-import {
-  ArrowUpRight,
-  Bookmark,
-  Clock3,
-  Heart,
-  MapPin,
-} from "lucide-react";
+import { ArrowUpRight, Bookmark, Clock3, Heart, MapPin } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
@@ -108,51 +102,63 @@ export default async function MyPage({
           <h1>{t("greetingNamed", { name: profileName })}</h1>
         </div>
       </div>
-      <section className="couple-card">
-        <div className="couple-avatars">
-          {overview.profile.memberInitials.map((initial, index) => (
-            <span key={`${initial}-${index}`}>{initial}</span>
-          ))}
-          {overview.profile.coupleName ? (
-            <Heart className="heart-pin" size={18} fill="currentColor" />
+      <div className="profile-overview">
+        <section className="couple-card">
+          <div className="couple-avatars">
+            {overview.profile.memberInitials.map((initial, index) => (
+              <span key={`${initial}-${index}`}>{initial}</span>
+            ))}
+            {overview.profile.coupleName ? (
+              <Heart className="heart-pin" size={18} fill="currentColor" />
+            ) : null}
+          </div>
+          <span className="couple-label">
+            {overview.profile.coupleName ? t("coupleLabel") : t("soloLabel")}
+          </span>
+          <h2>{profileName}</h2>
+          {overview.profile.daysTogether !== null ? (
+            <strong>D+{overview.profile.daysTogether}</strong>
           ) : null}
-        </div>
-        <span className="couple-label">
-          {overview.profile.coupleName ? t("coupleLabel") : t("soloLabel")}
-        </span>
-        <h2>{profileName}</h2>
-        {overview.profile.daysTogether !== null ? (
-          <strong>D+{overview.profile.daysTogether}</strong>
-        ) : null}
-        {overview.profile.startedAt ? (
-          <p>
-            {new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(
-              new Date(overview.profile.startedAt),
-            )}{" "}
-            · {t("together")}
-          </p>
-        ) : (
-          <p>{t("soloBody")}</p>
-        )}
-        <CoupleControls connected={Boolean(overview.profile.coupleName)} locale={locale} labels={{
-          invite: t("invite"), startedAt: t("startedAt"), upgrade: t("upgradeSolo"),
-          create: t("createInvite"), creating: t("creatingInvite"), copy: t("copyInvite"),
-          copied: t("copiedInvite"), disconnect: t("disconnect"),
-          disconnectConfirm: t("disconnectConfirm"), error: t("coupleActionError"),
-        }} />
-      </section>
-      <div className="profile-stats">
-        <div>
-          <strong>{overview.stats.made}</strong>
-          <span>{t("made")}</span>
-        </div>
-        <div>
-          <strong>{overview.stats.saved}</strong>
-          <span>{t("scrapped")}</span>
-        </div>
-        <div>
-          <strong>{overview.stats.received}</strong>
-          <span>{t("received")}</span>
+          {overview.profile.startedAt ? (
+            <p>
+              {new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(
+                new Date(overview.profile.startedAt),
+              )}{" "}
+              · {t("together")}
+            </p>
+          ) : (
+            <p>{t("soloBody")}</p>
+          )}
+          <CoupleControls
+            connected={Boolean(overview.profile.coupleName)}
+            locale={locale}
+            labels={{
+              invite: t("invite"),
+              startedAt: t("startedAt"),
+              upgrade: t("upgradeSolo"),
+              create: t("createInvite"),
+              creating: t("creatingInvite"),
+              copy: t("copyInvite"),
+              copied: t("copiedInvite"),
+              disconnect: t("disconnect"),
+              disconnectConfirm: t("disconnectConfirm"),
+              error: t("coupleActionError"),
+            }}
+          />
+        </section>
+        <div className="profile-stats">
+          <div>
+            <strong>{overview.stats.made}</strong>
+            <span>{t("made")}</span>
+          </div>
+          <div>
+            <strong>{overview.stats.saved}</strong>
+            <span>{t("scrapped")}</span>
+          </div>
+          <div>
+            <strong>{overview.stats.received}</strong>
+            <span>{t("received")}</span>
+          </div>
         </div>
       </div>
       <section className="my-list">
