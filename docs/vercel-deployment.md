@@ -53,4 +53,8 @@ npx vercel env run -e production -- pnpm db:seed
 - Draft PR: <https://github.com/whitederrick/placelink/pull/1>
 - GitHub Actions `Quality`, `E2E`: 통과
 - 최초 Vercel Preview: `DATABASE_URL` 미설정으로 실패
-- 환경 변수 값 입력 및 운영 DB 준비 후 재배포 필요
+- Vercel 변수 이름: 사용자 등록 완료
+- 환경 변수 실제 값과 운영 DB: 준비 중이며 아직 검증하지 않음
+- 로컬 SEO 커밋 `5111551`: 원격 기능 브랜치보다 1개 앞서 있으며 값 입력 전에는
+  push하지 않음
+- 환경 변수 값 입력 및 운영 DB 준비 후 migration → 필요 시 seed → push/재배포 필요
