@@ -16,6 +16,7 @@
     "db:migrate": "pnpm --filter @placelink/database db:migrate",
     "db:deploy": "pnpm --filter @placelink/database db:deploy",
     "db:seed": "pnpm --filter @placelink/database db:seed",
+    "db:sync:kakao": "pnpm --filter @placelink/database db:sync:kakao",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
