@@ -31,6 +31,7 @@ export interface KakaoPlaceSelectionPolicy {
   categoryIncludesAny?: string[];
   categoryExcludesAny?: string[];
   nameOrCategoryExcludesAny?: string[];
+  dedupeByName?: boolean;
 }
 
 export function selectKakaoPlaces(
@@ -38,6 +39,7 @@ export function selectKakaoPlaces(
   policy: KakaoPlaceSelectionPolicy,
   limit: number,
 ): KakaoPlaceDocument[] {
+  const selectedNames = new Set<string>();
   return documents
     .filter((document) => {
       if (
@@ -70,6 +72,16 @@ export function selectKakaoPlaces(
       ) {
         return false;
       }
+      return true;
+    })
+    .filter((document) => {
+      if (!policy.dedupeByName) return true;
+      const normalizedName = document.place_name
+        .replace(/\s*\([^)]*\)\s*$/, "")
+        .trim()
+        .toLocaleLowerCase("ko");
+      if (selectedNames.has(normalizedName)) return false;
+      selectedNames.add(normalizedName);
       return true;
     })
     .slice(0, Math.max(0, limit));

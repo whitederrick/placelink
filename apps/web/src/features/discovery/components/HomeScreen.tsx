@@ -160,7 +160,7 @@ export async function HomeScreen({
                 </strong>
                 <small>
                   <Bookmark size={13} />
-                  {course.scraps}
+                  {t("weeklyScraps", { count: course.weeklyScraps })}
                   <Eye size={13} />
                   {course.views}
                 </small>

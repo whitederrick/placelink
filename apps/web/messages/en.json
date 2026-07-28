@@ -31,6 +31,7 @@
     "scraps": "{count, number} saves",
     "hallKicker": "WEEKLY HALL OF FAME",
     "hallTitle": "Routes couples love most",
+    "weeklyScraps": "{count, number} in 7 days",
     "sortLatest": "Latest",
     "sortPopular": "Popular",
     "situationFilter": "Situation",
@@ -197,6 +198,30 @@
     "accepting": "Connecting...",
     "error": "We could not load or accept this invite. Please try again.",
     "retry": "Try again"
+  },
+  "analytics": {
+    "kicker": "INTERNAL OPERATIONS",
+    "title": "Analytics event dashboard",
+    "subtitle": "Collection health and usage for the last {days} days.",
+    "rangeLabel": "Date range",
+    "days": "{days} days",
+    "lastEvent": "Last event",
+    "totalEvents": "Total events",
+    "filterEvents": "Filter usage",
+    "authenticatedEvents": "Signed-in events",
+    "newActivity": "New activity with no prior baseline",
+    "change": "{value}% versus the previous period",
+    "privacyNote": "No raw personal information shown",
+    "eventBreakdown": "Usage by event",
+    "latestEvents": "Latest collected events",
+    "authenticated": "Signed in",
+    "anonymous": "Anonymous",
+    "empty": "No events were collected in this period.",
+    "status": {
+      "healthy": "Collection healthy",
+      "idle": "No events collected yet",
+      "stale": "No events in the last 24 hours"
+    }
   },
   "course": {
     "hallBadge": "WEEKLY HALL OF FAME",

@@ -135,4 +135,32 @@ describe("searchKakaoPlaces", () => {
       ).map((candidate) => candidate.place_name),
     ).toEqual(["와인바"]);
   });
+
+  it("deduplicates exact and directional variants before applying the limit", () => {
+    const candidates = [
+      place("경의선숲길", "여행 > 공원", ""),
+      place("경의선숲길", "여행 > 공원", ""),
+      place(
+        "서울명예도로 노벨길(연남동방면)",
+        "여행 > 관광,명소 > 도보여행",
+        "",
+      ),
+      place(
+        "서울명예도로 노벨길(홍대입구역방면)",
+        "여행 > 관광,명소 > 도보여행",
+        "",
+      ),
+    ];
+
+    expect(
+      selectKakaoPlaces(
+        candidates,
+        {
+          categoryIncludesAny: ["여행 >"],
+          dedupeByName: true,
+        },
+        3,
+      ).map((candidate) => candidate.place_name),
+    ).toEqual(["경의선숲길", "서울명예도로 노벨길(연남동방면)"]);
+  });
 });
