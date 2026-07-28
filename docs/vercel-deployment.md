@@ -10,7 +10,7 @@ Vercel 프로젝트 `ahn-namkyus-projects/placelink`의 Preview와 Production에
 - `DATABASE_URL`: Vercel에서 접근 가능한 Postgres 연결 문자열
 - `AUTH_SECRET`: 32자 이상의 무작위 인증 비밀값
 
-로컬 Docker 주소(`localhost:54329`)는 Vercel에서 접근할 수 없다. 운영 데이터베이스는
+로컬 Docker 주소(`localhost:54329`)는 Vercel에서 접근할 수 없다. Vercel 개발·검증용 데이터베이스는
 PostGIS 확장을 지원해야 하며 serverless 환경에서는 풀링 연결 문자열을 우선한다.
 
 ### 기능별
