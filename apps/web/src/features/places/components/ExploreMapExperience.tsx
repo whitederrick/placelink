@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { MapPin, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
+import { trackAnalyticsEvent } from "@/features/analytics/client";
 import type { MapBounds, MapProvider } from "@/lib/adapters/maps";
 import { useMapPlaces } from "../hooks";
 import type { MapPlacesQuery, PlaceSummary } from "../schema";
@@ -17,6 +18,7 @@ interface ExploreMapExperienceProps {
   provider: MapProvider;
   apiKey?: string;
   resetHref: string;
+  category?: MapPlacesQuery["category"];
 }
 
 export function ExploreMapExperience({
@@ -26,6 +28,7 @@ export function ExploreMapExperience({
   provider,
   apiKey,
   resetHref,
+  category,
 }: ExploreMapExperienceProps) {
   const t = useTranslations("explore");
   const [pendingBounds, setPendingBounds] = useState<MapBounds | null>(null);
@@ -39,7 +42,8 @@ export function ExploreMapExperience({
 
   const searchCurrentArea = () => {
     if (!pendingBounds) return;
-    setMapQuery({ locale, ...pendingBounds, take: 50 });
+    setMapQuery({ locale, ...pendingBounds, category, take: 50 });
+    trackAnalyticsEvent("map.area_searched", { locale, category });
   };
 
   return (

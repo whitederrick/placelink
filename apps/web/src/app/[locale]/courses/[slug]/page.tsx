@@ -3,6 +3,7 @@ import { Clock3, MapPin, Trophy } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+import { AnalyticsEventOnMount } from "@/features/analytics/components/AnalyticsEventOnMount";
 import {
   CourseScrapMetric,
   CourseShareActions,
@@ -108,6 +109,12 @@ export default async function CourseDetailPage({
   };
   return (
     <div className="course-detail">
+      <AnalyticsEventOnMount
+        event={{
+          name: "course.viewed",
+          properties: { courseSlug: slug, locale },
+        }}
+      />
       {query.published === "1" ? (
         <p className="published-banner">
           <Trophy size={15} />

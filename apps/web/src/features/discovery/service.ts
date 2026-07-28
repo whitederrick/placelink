@@ -56,11 +56,48 @@ function selectNeighborhood(
   return name?.split(" ")[0] ?? "SEOUL";
 }
 
+function mapCourse(
+  course: HomeFeedRecords["courses"][number],
+  index: number,
+  locale: HomeFeedLocale,
+) {
+  return {
+    slug: course.slug,
+    coupleName:
+      course.couple?.status === "ACTIVE"
+        ? course.couple.displayName
+        : course.couple
+          ? locale === "ko"
+            ? "익명 커플"
+            : "Anonymous couple"
+          : (course.creatorUser?.nickname ??
+            (locale === "ko" ? "익명" : "Anonymous")),
+    neighborhood: selectNeighborhood(
+      course.nodes[0]?.place.areaSlug ?? null,
+      course.nodes[0]?.place.translations[0]?.name,
+      locale,
+    ),
+    duration: formatDuration(course.durationMinutes),
+    stops: course._count.nodes,
+    scraps: course.scrapCount,
+    views: course.viewCount,
+    tags: course.tags.map(({ tag }) =>
+      locale === "ko" ? tag.labelKo : tag.labelEn,
+    ),
+    tone: COURSE_TONES[index % COURSE_TONES.length],
+  };
+}
+
 export function buildHomeFeed(
   records: HomeFeedRecords,
   locale: HomeFeedLocale,
   now: Date,
 ): HomeFeed {
+  const option = (tag: HomeFeedRecords["filterTags"][number]) => ({
+    slug: tag.slug,
+    label: locale === "ko" ? tag.labelKo : tag.labelEn,
+  });
+
   return homeFeedSchema.parse({
     happenings: records.happenings.map((happening, index) => ({
       id: happening.id,
@@ -70,7 +107,7 @@ export function buildHomeFeed(
         locale,
       ),
       title: happening.translations[0]?.title ?? happening.id,
-      period: `${formatDate(happening.startsAt)} — ${formatDate(happening.endsAt)}`,
+      period: `${formatDate(happening.startsAt)} → ${formatDate(happening.endsAt)}`,
       dDay: formatHappeningBadge(
         happening.status,
         happening.startsAt,
@@ -81,30 +118,26 @@ export function buildHomeFeed(
     })),
     courses: records.courses
       .filter((course) => course._count.nodes > 0)
+      .map((course, index) => mapCourse(course, index, locale)),
+    hallOfFame: records.hallCandidates
+      .filter((course) => course._count.nodes > 0)
       .map((course, index) => ({
-        slug: course.slug,
-        coupleName:
-          course.couple?.status === "ACTIVE"
-            ? course.couple.displayName
-            : course.couple
-              ? locale === "ko"
-                ? "익명 커플"
-                : "Anonymous couple"
-              : (course.creatorUser?.nickname ??
-                (locale === "ko" ? "익명" : "Anonymous")),
-        neighborhood: selectNeighborhood(
-          course.nodes[0]?.place.areaSlug ?? null,
-          course.nodes[0]?.place.translations[0]?.name,
-          locale,
-        ),
-        duration: formatDuration(course.durationMinutes),
-        stops: course._count.nodes,
-        scraps: course._count.scraps,
-        tags: course.tags.map(({ tag }) =>
-          locale === "ko" ? tag.labelKo : tag.labelEn,
-        ),
-        tone: COURSE_TONES[index % COURSE_TONES.length],
-      })),
+        ...mapCourse(course, index, locale),
+        rank: index + 1,
+        score: course.scrapCount * 5 + course.viewCount,
+      }))
+      .slice(0, 3),
+    filters: {
+      situations: records.filterTags
+        .filter((tag) => tag.kind === "SITUATION")
+        .map(option),
+      budgets: records.filterTags
+        .filter((tag) => tag.kind === "BUDGET")
+        .map(option),
+      moods: records.filterTags
+        .filter((tag) => tag.kind === "MOOD")
+        .map(option),
+    },
   });
 }
 
@@ -115,14 +148,18 @@ interface HomeFeedPage {
 
 export async function loadHomeFeed(
   locale: HomeFeedLocale,
-  pagination: Pick<HomeFeedQuery, "cursor" | "take"> = {
-    take: DEFAULT_HOME_FEED_LIMIT,
-  },
+  rawQuery: Partial<HomeFeedQuery> = {},
   now = new Date(),
 ): Promise<HomeFeedPage> {
-  const records = await selectHomeFeedRecords(locale, pagination);
-  const hasNextPage = records.courses.length > pagination.take;
-  const visibleCourses = records.courses.slice(0, pagination.take);
+  const query: HomeFeedQuery = {
+    locale,
+    take: DEFAULT_HOME_FEED_LIMIT,
+    sort: "latest",
+    ...rawQuery,
+  };
+  const records = await selectHomeFeedRecords(locale, query);
+  const hasNextPage = records.courses.length > query.take;
+  const visibleCourses = records.courses.slice(0, query.take);
   return {
     data: buildHomeFeed({ ...records, courses: visibleCourses }, locale, now),
     nextCursor: hasNextPage ? visibleCourses.at(-1)?.slug : undefined,

@@ -5,6 +5,7 @@ import { ArrowRight, Check, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AnalyticsEventOnMount } from "@/features/analytics/components/AnalyticsEventOnMount";
 import type { CourseDraft, CourseDraftNode } from "../schema";
 import { useUpdateCourseDraft } from "../hooks";
 
@@ -78,6 +79,9 @@ export function RouteBuilderScreen({
 
   return (
     <div className="screen-page create-page">
+      <AnalyticsEventOnMount
+        event={{ name: "wizard.step_viewed", properties: { step: 2, locale } }}
+      />
       <div className="wizard-head">
         <div>
           <span className="section-kicker">{t("kicker")}</span>

@@ -4,6 +4,7 @@ import { ArrowLeft, Check, Clock3, MapPin, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
+import { AnalyticsEventOnMount } from "@/features/analytics/components/AnalyticsEventOnMount";
 import type { CourseDraft } from "../schema";
 import { usePublishCourseDraft } from "../hooks";
 
@@ -41,6 +42,9 @@ export function PublishCourseScreen({
 
   return (
     <div className="screen-page create-page publish-page">
+      <AnalyticsEventOnMount
+        event={{ name: "wizard.step_viewed", properties: { step: 3, locale } }}
+      />
       <div className="wizard-head">
         <div>
           <span className="section-kicker">{t("kicker")}</span>

@@ -3,9 +3,16 @@
 import { Bookmark, Link2, Plus, Share2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { trackAnalyticsEvent } from "@/features/analytics/client";
 import { useCourseScrap } from "@/features/scraps/client";
 
-export function CourseScrapMetric({ slug, initialScrapCount }: { slug: string; initialScrapCount: number }) {
+export function CourseScrapMetric({
+  slug,
+  initialScrapCount,
+}: {
+  slug: string;
+  initialScrapCount: number;
+}) {
   const t = useTranslations("course");
   const scrap = useCourseScrap(slug, initialScrapCount);
   return <span>{t("scraps", { count: scrap.status.scrapCount })}</span>;
@@ -28,10 +35,20 @@ export function CourseShareActions({
   const share = async () => {
     if (navigator.share) {
       await navigator.share({ title, url: window.location.href });
+      trackAnalyticsEvent("course.shared", {
+        courseSlug: slug,
+        locale,
+        method: "native",
+      });
       return;
     }
     await navigator.clipboard.writeText(window.location.href);
     setCopied(true);
+    trackAnalyticsEvent("course.shared", {
+      courseSlug: slug,
+      locale,
+      method: "clipboard",
+    });
   };
   const toggleScrap = () => {
     if (scrap.status.signedIn === false) {

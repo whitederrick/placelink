@@ -4,6 +4,7 @@ import { ArrowRight, CalendarDays, Check, MapPin } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { AnalyticsEventOnMount } from "@/features/analytics/components/AnalyticsEventOnMount";
 import type { CourseAnchor } from "../schema";
 import { useCreateCourseDraft } from "../hooks";
 
@@ -31,6 +32,9 @@ export function AnchorSelectionScreen({
 
   return (
     <div className="screen-page create-page">
+      <AnalyticsEventOnMount
+        event={{ name: "wizard.step_viewed", properties: { step: 1, locale } }}
+      />
       <div className="wizard-head">
         <div>
           <span className="section-kicker">{t("kicker")}</span>
