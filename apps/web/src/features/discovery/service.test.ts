@@ -17,6 +17,8 @@ const records: HomeFeedRecords = {
     {
       slug: "seongsu-date",
       durationMinutes: 260,
+      viewCount: 24,
+      scrapCount: 12,
       couple: { displayName: "지훈♥민지", status: "ACTIVE" },
       creatorUser: null,
       nodes: [
@@ -31,6 +33,8 @@ const records: HomeFeedRecords = {
       _count: { nodes: 3, scraps: 12 },
     },
   ],
+  hallCandidates: [],
+  filterTags: [],
 };
 
 describe("buildHomeFeed", () => {
@@ -47,6 +51,19 @@ describe("buildHomeFeed", () => {
       stops: 3,
       scraps: 12,
       tags: ["비오는 날"],
+    });
+  });
+
+  it("ranks eligible popular courses with a stable score", () => {
+    const feed = buildHomeFeed(
+      { ...records, hallCandidates: records.courses },
+      "en",
+      new Date("2026-07-22T00:00:00.000Z"),
+    );
+    expect(feed.hallOfFame[0]).toMatchObject({
+      slug: "seongsu-date",
+      rank: 1,
+      score: 84,
     });
   });
 });
