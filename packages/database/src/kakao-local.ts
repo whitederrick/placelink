@@ -26,6 +26,55 @@ const kakaoPlaceSearchResponseSchema = z.object({
 
 export type KakaoPlaceDocument = z.infer<typeof kakaoPlaceDocumentSchema>;
 
+export interface KakaoPlaceSelectionPolicy {
+  allowedGroupCodes?: string[];
+  categoryIncludesAny?: string[];
+  categoryExcludesAny?: string[];
+  nameOrCategoryExcludesAny?: string[];
+}
+
+export function selectKakaoPlaces(
+  documents: KakaoPlaceDocument[],
+  policy: KakaoPlaceSelectionPolicy,
+  limit: number,
+): KakaoPlaceDocument[] {
+  return documents
+    .filter((document) => {
+      if (
+        policy.allowedGroupCodes &&
+        !policy.allowedGroupCodes.includes(document.category_group_code)
+      ) {
+        return false;
+      }
+      if (
+        policy.categoryIncludesAny &&
+        !policy.categoryIncludesAny.some((value) =>
+          document.category_name.includes(value),
+        )
+      ) {
+        return false;
+      }
+      if (
+        policy.categoryExcludesAny?.some((value) =>
+          document.category_name.includes(value),
+        )
+      ) {
+        return false;
+      }
+      if (
+        policy.nameOrCategoryExcludesAny?.some(
+          (value) =>
+            document.place_name.includes(value) ||
+            document.category_name.includes(value),
+        )
+      ) {
+        return false;
+      }
+      return true;
+    })
+    .slice(0, Math.max(0, limit));
+}
+
 export interface KakaoPlaceSearchInput {
   restApiKey: string;
   query: string;

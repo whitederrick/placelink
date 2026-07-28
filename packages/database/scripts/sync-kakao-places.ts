@@ -2,7 +2,12 @@
 
 import { config } from "dotenv";
 import { getDatabase } from "../src/client";
-import { searchKakaoPlaces, type KakaoPlaceDocument } from "../src/kakao-local";
+import {
+  searchKakaoPlaces,
+  selectKakaoPlaces,
+  type KakaoPlaceDocument,
+  type KakaoPlaceSelectionPolicy,
+} from "../src/kakao-local";
 
 config({ path: "../../apps/web/.env" });
 
@@ -15,13 +20,56 @@ const areas = [
 ] as const;
 
 const categories = [
-  { category: "EXHIBITION", keyword: "전시" },
-  { category: "CAFE", keyword: "카페" },
-  { category: "SHOP", keyword: "소품샵" },
-  { category: "RESTAURANT", keyword: "데이트 맛집" },
-  { category: "ACTIVITY", keyword: "산책 명소" },
-  { category: "BAR", keyword: "LP바" },
-] as const;
+  {
+    category: "EXHIBITION",
+    keyword: "전시",
+    policy: { categoryIncludesAny: ["문화,예술"] },
+  },
+  {
+    category: "CAFE",
+    keyword: "카페",
+    policy: {
+      allowedGroupCodes: ["CE7"],
+      nameOrCategoryExcludesAny: [
+        "스타벅스",
+        "컴포즈커피",
+        "메가MGC커피",
+        "빽다방",
+        "투썸플레이스",
+        "이디야커피",
+        "커피빈",
+        "할리스",
+        "폴바셋",
+      ],
+    },
+  },
+  { category: "SHOP", keyword: "소품샵", policy: {} },
+  {
+    category: "RESTAURANT",
+    keyword: "데이트 맛집",
+    policy: {
+      allowedGroupCodes: ["FD6"],
+      categoryExcludesAny: ["술집"],
+    },
+  },
+  {
+    category: "ACTIVITY",
+    keyword: "산책 명소",
+    policy: { categoryIncludesAny: ["여행 > 관광,명소"] },
+  },
+  {
+    category: "BAR",
+    keyword: "LP바",
+    policy: {
+      allowedGroupCodes: ["FD6"],
+      categoryIncludesAny: ["술집"],
+    },
+  },
+] satisfies ReadonlyArray<{
+  category: string;
+  keyword: string;
+  policy: KakaoPlaceSelectionPolicy;
+}>;
 
 const argumentsSet = new Set(process.argv.slice(2));
 const dryRun = argumentsSet.has("--dry-run");
@@ -70,6 +118,8 @@ async function upsertPlace(
         category,
         name: document.place_name,
         address,
+        providerCategory: document.category_name,
+        distanceMeters: Number(document.distance),
       }),
     );
     return;
@@ -138,15 +188,20 @@ async function upsertPlace(
 
 for (const area of targetAreas) {
   for (const category of categories) {
-    const documents = await searchKakaoPlaces({
+    const candidates = await searchKakaoPlaces({
       restApiKey,
       query: `${area.label} ${category.keyword}`,
       center: { lat: area.lat, lng: area.lng },
       radiusMeters: 2_500,
-      size: 3,
+      size: 10,
     });
+    const documents = selectKakaoPlaces(candidates, category.policy, 3);
     for (const document of documents) {
-      await upsertPlace(area, category.category, document);
+      await upsertPlace(
+        area,
+        category.category as (typeof categories)[number]["category"],
+        document,
+      );
     }
   }
 }

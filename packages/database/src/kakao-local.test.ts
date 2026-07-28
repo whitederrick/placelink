@@ -1,5 +1,30 @@
 import { describe, expect, it, vi } from "vitest";
-import { searchKakaoPlaces } from "./kakao-local";
+import {
+  searchKakaoPlaces,
+  selectKakaoPlaces,
+  type KakaoPlaceDocument,
+} from "./kakao-local";
+
+function place(
+  name: string,
+  category: string,
+  group: string,
+): KakaoPlaceDocument {
+  return {
+    id: name,
+    place_name: name,
+    category_name: category,
+    category_group_code: group,
+    category_group_name: "",
+    phone: "",
+    address_name: "서울 성동구 성수동",
+    road_address_name: "",
+    x: "127.0559",
+    y: "37.5446",
+    place_url: `https://place.map.kakao.com/${encodeURIComponent(name)}`,
+    distance: "100",
+  };
+}
 
 describe("searchKakaoPlaces", () => {
   it("sends a server-key request and validates place documents", async () => {
@@ -67,5 +92,47 @@ describe("searchKakaoPlaces", () => {
         fetcher,
       }),
     ).rejects.not.toThrow("never-print-this-key");
+  });
+
+  it("selects category matches while excluding chains and mismatches", () => {
+    const candidates = [
+      place("스타벅스 성수점", "음식점 > 카페 > 스타벅스", "CE7"),
+      place("로컬 티룸", "음식점 > 카페", "CE7"),
+      place("데이트 와인바", "음식점 > 술집 > 와인바", "FD6"),
+      place("로컬 디저트", "음식점 > 카페", "CE7"),
+    ];
+
+    expect(
+      selectKakaoPlaces(
+        candidates,
+        {
+          allowedGroupCodes: ["CE7"],
+          nameOrCategoryExcludesAny: ["스타벅스"],
+        },
+        2,
+      ).map((candidate) => candidate.place_name),
+    ).toEqual(["로컬 티룸", "로컬 디저트"]);
+  });
+
+  it("can distinguish restaurants from bars within the food group", () => {
+    const candidates = [
+      place("레스토랑", "음식점 > 양식", "FD6"),
+      place("와인바", "음식점 > 술집 > 와인바", "FD6"),
+    ];
+
+    expect(
+      selectKakaoPlaces(
+        candidates,
+        { allowedGroupCodes: ["FD6"], categoryExcludesAny: ["술집"] },
+        3,
+      ).map((candidate) => candidate.place_name),
+    ).toEqual(["레스토랑"]);
+    expect(
+      selectKakaoPlaces(
+        candidates,
+        { allowedGroupCodes: ["FD6"], categoryIncludesAny: ["술집"] },
+        3,
+      ).map((candidate) => candidate.place_name),
+    ).toEqual(["와인바"]);
   });
 });
