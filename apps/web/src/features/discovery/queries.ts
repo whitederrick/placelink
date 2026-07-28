@@ -5,7 +5,7 @@ const ANCHOR_LIMIT = 10;
 
 export async function selectHomeFeedRecords(
   locale: HomeFeedLocale,
-  pagination: Pick<HomeFeedQuery, "cursor" | "take">
+  pagination: Pick<HomeFeedQuery, "cursor" | "take">,
 ) {
   const database = getDatabase();
   const [happenings, courses] = await Promise.all([
@@ -21,18 +21,19 @@ export async function selectHomeFeedRecords(
         translations: {
           where: { locale },
           take: 1,
-          select: { title: true }
+          select: { title: true },
         },
         place: {
           select: {
+            areaSlug: true,
             translations: {
               where: { locale },
               take: 1,
-              select: { name: true }
-            }
-          }
-        }
-      }
+              select: { name: true },
+            },
+          },
+        },
+      },
     }),
     database.course.findMany({
       where: { status: "PUBLISHED", deletedAt: null },
@@ -51,24 +52,25 @@ export async function selectHomeFeedRecords(
           select: {
             place: {
               select: {
+                areaSlug: true,
                 translations: {
                   where: { locale },
                   take: 1,
-                  select: { name: true }
-                }
-              }
-            }
-          }
+                  select: { name: true },
+                },
+              },
+            },
+          },
         },
         tags: {
           take: 3,
           select: {
-            tag: { select: { labelKo: true, labelEn: true } }
-          }
+            tag: { select: { labelKo: true, labelEn: true } },
+          },
         },
-        _count: { select: { nodes: true, scraps: true } }
-      }
-    })
+        _count: { select: { nodes: true, scraps: true } },
+      },
+    }),
   ]);
 
   return { happenings, courses };

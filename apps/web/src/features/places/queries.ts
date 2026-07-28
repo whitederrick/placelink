@@ -1,5 +1,9 @@
 import { getDatabase } from "@placelink/database";
-import type { MapPlacesQuery, NearbyPlacesQuery, PlaceListQuery } from "./schema";
+import type {
+  MapPlacesQuery,
+  NearbyPlacesQuery,
+  PlaceListQuery,
+} from "./schema";
 
 export async function selectPlaceRecords(query: PlaceListQuery) {
   return getDatabase().place.findMany({
@@ -13,11 +17,11 @@ export async function selectPlaceRecords(query: PlaceListQuery) {
               locale: query.locale,
               OR: [
                 { name: { contains: query.query, mode: "insensitive" } },
-                { address: { contains: query.query, mode: "insensitive" } }
-              ]
-            }
+                { address: { contains: query.query, mode: "insensitive" } },
+              ],
+            },
           }
-        : undefined
+        : undefined,
     },
     orderBy: { id: "asc" },
     cursor: query.cursor ? { id: query.cursor } : undefined,
@@ -32,9 +36,9 @@ export async function selectPlaceRecords(query: PlaceListQuery) {
       translations: {
         where: { locale: query.locale },
         take: 1,
-        select: { name: true, address: true }
-      }
-    }
+        select: { name: true, address: true, summary: true },
+      },
+    },
   });
 }
 
@@ -46,10 +50,13 @@ export interface NearbyPlaceRecord {
   lng: number;
   name: string;
   address: string;
+  summary: string | null;
   distanceMeters: number;
 }
 
-export async function selectNearbyPlaceRecords(query: NearbyPlacesQuery): Promise<NearbyPlaceRecord[]> {
+export async function selectNearbyPlaceRecords(
+  query: NearbyPlacesQuery,
+): Promise<NearbyPlaceRecord[]> {
   const database = getDatabase();
   return database.$queryRaw<NearbyPlaceRecord[]>`
     SELECT
@@ -60,6 +67,7 @@ export async function selectNearbyPlaceRecords(query: NearbyPlacesQuery): Promis
       p."lng"::double precision AS "lng",
       pt."name",
       pt."address",
+      pt."summary",
       ST_Distance(
         p."location",
         ST_SetSRID(ST_MakePoint(${query.lng}, ${query.lat}), 4326)::geography
@@ -80,7 +88,9 @@ export async function selectNearbyPlaceRecords(query: NearbyPlacesQuery): Promis
   `;
 }
 
-export async function selectMapPlaceRecords(query: MapPlacesQuery): Promise<NearbyPlaceRecord[]> {
+export async function selectMapPlaceRecords(
+  query: MapPlacesQuery,
+): Promise<NearbyPlaceRecord[]> {
   const database = getDatabase();
   return database.$queryRaw<NearbyPlaceRecord[]>`
     SELECT
@@ -91,6 +101,7 @@ export async function selectMapPlaceRecords(query: MapPlacesQuery): Promise<Near
       p."lng"::double precision AS "lng",
       pt."name",
       pt."address",
+      pt."summary",
       0::double precision AS "distanceMeters"
     FROM "places" p
     INNER JOIN "place_translations" pt

@@ -3,8 +3,13 @@ import { Clock3, MapPin, Trophy } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { cache } from "react";
-import { CourseScrapMetric, CourseShareActions, loadPublishedCourse } from "@/features/courses";
+import {
+  CourseScrapMetric,
+  CourseShareActions,
+  loadPublishedCourse,
+} from "@/features/courses";
 import { isLocale } from "@/i18n/config";
+import { getLocalizedAlternates } from "@/lib/site-url";
 
 const getCourse = cache(async (slug: string, locale: string) =>
   loadPublishedCourse(slug, locale),
@@ -38,14 +43,26 @@ export async function generateMetadata({
     const description =
       course.description ??
       course.nodes.map((node) => node.place.name).join(" → ");
+    const languages = getLocalizedAlternates(`courses/${slug}`);
     return {
       title: course.title,
       description,
-      openGraph: { title: course.title, description, type: "article" },
+      alternates: {
+        canonical: languages[locale],
+        languages,
+      },
+      openGraph: {
+        title: course.title,
+        description,
+        type: "article",
+        url: languages[locale],
+        images: [`/${locale}/courses/${slug}/opengraph-image`],
+      },
       twitter: {
         card: "summary_large_image",
         title: course.title,
         description,
+        images: [`/${locale}/courses/${slug}/opengraph-image`],
       },
     };
   } catch {
@@ -118,7 +135,10 @@ export default async function CourseDetailPage({
             <MapPin size={14} />
             {t("stops", { count: course.nodes.length })}
           </span>
-          <CourseScrapMetric slug={course.slug} initialScrapCount={course.scrapCount} />
+          <CourseScrapMetric
+            slug={course.slug}
+            initialScrapCount={course.scrapCount}
+          />
         </div>
         <div className="trophy-glow" />
       </section>

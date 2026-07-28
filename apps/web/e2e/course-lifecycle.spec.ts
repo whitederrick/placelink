@@ -30,7 +30,7 @@ test("creates, publishes, scraps, and opens a shared course", async ({
   await signInAsJihoon(page);
   await expect(page).toHaveURL(/\/ko\/create$/);
 
-  await page.getByRole("button", { name: "이 앵커로 시작" }).click();
+  await page.getByRole("button", { name: "이 장소로 시작" }).click();
   await expect(page).toHaveURL(/\/ko\/create\?step=2&draft=/);
 
   await page.locator('button[aria-label$=" 추가"]').first().click();
@@ -48,7 +48,7 @@ test("creates, publishes, scraps, and opens a shared course", async ({
       response.request().method() === "POST" &&
       /\/api\/v1\/courses\/[^/]+\/publish\?locale=ko$/.test(response.url()),
   );
-  await page.getByRole("button", { name: "코스 발행" }).click();
+  await page.getByRole("button", { name: "저장하고 공유" }).click();
   expect((await publishResponse).status()).toBe(200);
 
   await expect(page).toHaveURL(/\/ko\/courses\/[^?]+\?published=1$/, {
