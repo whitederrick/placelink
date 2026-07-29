@@ -33,6 +33,8 @@ test("creates, publishes, scraps, and opens a shared course", async ({
   await page.getByRole("button", { name: "이 장소로 시작" }).click();
   await expect(page).toHaveURL(/\/ko\/create\?step=2&draft=/);
 
+  await page.getByRole("button", { name: "2일", exact: true }).click();
+  await page.getByRole("button", { name: "DAY 2", exact: true }).click();
   await page.locator('button[aria-label$=" 추가"]').first().click();
   await page.getByLabel(/팁$/).first().fill("사진은 입장 직후가 가장 한적해요");
   await page.getByRole("button", { name: "다음 단계" }).click();
@@ -58,6 +60,7 @@ test("creates, publishes, scraps, and opens a shared course", async ({
   await expect(
     page.getByRole("heading", { name: courseTitle, exact: true }),
   ).toBeVisible();
+  await expect(page.getByText("DAY 2", { exact: true })).toBeVisible();
 
   const scrapButton = page.getByRole("button", { name: /이 코스 저장하기/ });
   await scrapButton.click();
