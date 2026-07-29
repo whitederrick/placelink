@@ -5,10 +5,13 @@ import type {
   PlaceListQuery,
 } from "./schema";
 
+const hideDemoPlaces = process.env.NODE_ENV === "production";
+
 export async function selectPlaceRecords(query: PlaceListQuery) {
   return getDatabase().place.findMany({
     where: {
       status: "ACTIVE",
+      id: hideDemoPlaces ? { not: { startsWith: "seed-place-" } } : undefined,
       areaSlug: query.area,
       category: query.category,
       translations: query.query
@@ -76,6 +79,7 @@ export async function selectNearbyPlaceRecords(
     INNER JOIN "place_translations" pt
       ON pt."place_id" = p."id" AND pt."locale" = ${query.locale}
     WHERE p."status" = 'ACTIVE'::"PlaceStatus"
+      AND (${hideDemoPlaces} = FALSE OR p."id" NOT LIKE 'seed-place-%')
       AND p."location" IS NOT NULL
       AND (${query.category ?? null}::text IS NULL OR p."category" = ${query.category ?? null})
       AND ST_DWithin(
@@ -107,6 +111,7 @@ export async function selectMapPlaceRecords(
     INNER JOIN "place_translations" pt
       ON pt."place_id" = p."id" AND pt."locale" = ${query.locale}
     WHERE p."status" = 'ACTIVE'::"PlaceStatus"
+      AND (${hideDemoPlaces} = FALSE OR p."id" NOT LIKE 'seed-place-%')
       AND p."location" IS NOT NULL
       AND (${query.category ?? null}::text IS NULL OR p."category" = ${query.category ?? null})
       AND p."location" && ST_MakeEnvelope(${query.west}, ${query.south}, ${query.east}, ${query.north}, 4326)::geography
