@@ -142,6 +142,10 @@ export async function selectDraftCourse(
       slug: true,
       status: true,
       title: true,
+      dayCount: true,
+      dayStartMinutes: true,
+      dayEndMinutes: true,
+      targetStopCount: true,
       creatorUserId: true,
       creatorUser: { select: { nickname: true } },
       couple: {
@@ -160,6 +164,8 @@ export async function selectDraftCourse(
         select: {
           id: true,
           orderIndex: true,
+          dayIndex: true,
+          durationMinutes: true,
           tip: true,
           distanceMeters: true,
           place: {
@@ -203,10 +209,18 @@ export async function selectRoutePlaces(placeIds: string[], locale: string) {
 
 export async function replaceDraftNodes(
   courseId: string,
+  schedule: {
+    dayCount: number;
+    dayStartMinutes: number;
+    dayEndMinutes: number;
+    targetStopCount: number;
+  },
   nodes: Array<{
     id: string;
     placeId: string;
     orderIndex: number;
+    dayIndex: number;
+    durationMinutes: number;
     tip: string | null;
     distanceMeters: number | null;
   }>,
@@ -219,7 +233,7 @@ export async function replaceDraftNodes(
     }),
     database.course.update({
       where: { id: courseId },
-      data: { updatedAt: new Date() },
+      data: { ...schedule, updatedAt: new Date() },
       select: { id: true },
     }),
   ]);
@@ -252,6 +266,10 @@ export async function selectPublishedCourse(slug: string, locale: string) {
       title: true,
       description: true,
       durationMinutes: true,
+      dayCount: true,
+      dayStartMinutes: true,
+      dayEndMinutes: true,
+      targetStopCount: true,
       scrapCount: true,
       publishedAt: true,
       couple: { select: { displayName: true, status: true } },
@@ -265,6 +283,8 @@ export async function selectPublishedCourse(slug: string, locale: string) {
         select: {
           id: true,
           orderIndex: true,
+          dayIndex: true,
+          durationMinutes: true,
           tip: true,
           distanceMeters: true,
           place: {

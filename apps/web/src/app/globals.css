@@ -1083,7 +1083,10 @@ a {
 .couple-card button:disabled {
   opacity: 0.55;
 }
-.couple-controls { position: relative; z-index: 1; }
+.couple-controls {
+  position: relative;
+  z-index: 1;
+}
 .couple-invite-form {
   margin: 14px auto 0;
   max-width: 310px;
@@ -1091,19 +1094,37 @@ a {
   gap: 9px;
   text-align: left;
 }
-.couple-invite-form label { display: grid; gap: 5px; font-size: 10px; color: #ccc; }
+.couple-invite-form label {
+  display: grid;
+  gap: 5px;
+  font-size: 10px;
+  color: #ccc;
+}
 .couple-invite-form input:not([type="checkbox"]) {
   box-sizing: border-box;
   width: 100%;
-  border: 1px solid rgba(255,255,255,.35);
-  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.08);
   color: #fff;
   padding: 10px;
 }
-.couple-check { display: flex !important; align-items: flex-start; gap: 8px !important; }
-.couple-check input { margin-top: 2px; }
-.couple-error { display: block; margin-top: 8px; color: #ff9d9d; }
-.couple-card .couple-disconnect { border-color: rgba(255,130,130,.55); color: #ffb2b2; }
+.couple-check {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 8px !important;
+}
+.couple-check input {
+  margin-top: 2px;
+}
+.couple-error {
+  display: block;
+  margin-top: 8px;
+  color: #ff9d9d;
+}
+.couple-card .couple-disconnect {
+  border-color: rgba(255, 130, 130, 0.55);
+  color: #ffb2b2;
+}
 .couple-invite-page {
   min-height: 70vh;
   display: flex;
@@ -1114,11 +1135,28 @@ a {
   gap: 16px;
   padding: 36px 24px;
 }
-.couple-invite-page > svg { color: var(--pink); }
-.couple-invite-page h1 { max-width: 420px; margin: 0; font-size: 32px; }
-.couple-invite-page p { margin: 0; color: var(--muted); }
-.couple-invite-page .couple-check { max-width: 340px; text-align: left; }
-.couple-invite-page > button { border: 1px solid var(--ink); background: var(--lime); padding: 13px 20px; font-weight: 900; }
+.couple-invite-page > svg {
+  color: var(--pink);
+}
+.couple-invite-page h1 {
+  max-width: 420px;
+  margin: 0;
+  font-size: 32px;
+}
+.couple-invite-page p {
+  margin: 0;
+  color: var(--muted);
+}
+.couple-invite-page .couple-check {
+  max-width: 340px;
+  text-align: left;
+}
+.couple-invite-page > button {
+  border: 1px solid var(--ink);
+  background: var(--lime);
+  padding: 13px 20px;
+  font-weight: 900;
+}
 .profile-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1322,6 +1360,17 @@ a {
 .timeline {
   margin-top: 28px;
 }
+.multiday-timeline {
+  display: grid;
+  gap: 28px;
+}
+.timeline-day {
+  padding-top: 14px;
+  border-top: 2px solid var(--ink);
+}
+.timeline-day .timeline {
+  margin-top: 18px;
+}
 .timeline-stop {
   min-height: 150px;
   display: grid;
@@ -1377,6 +1426,16 @@ a {
   font-size: 11px;
   line-height: 1.6;
   color: var(--muted);
+}
+.stay-duration {
+  width: max-content;
+  margin-top: 8px;
+  display: block;
+  padding: 4px 7px;
+  background: #eff8d0;
+  color: #566526;
+  font-size: 8px;
+  font-weight: 800;
 }
 .stop-copy em {
   display: inline-block;
@@ -1470,6 +1529,28 @@ a {
 }
 .publish-builder {
   padding-bottom: 18px;
+}
+.publish-day-summary {
+  margin: 0 18px 18px;
+  display: grid;
+  gap: 7px;
+}
+.publish-day-summary > div {
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--line);
+  background: #f5f4ee;
+}
+.publish-day-summary strong {
+  color: var(--pink);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+.publish-day-summary span {
+  color: var(--muted);
+  font-size: 9px;
 }
 .share-card-preview {
   aspect-ratio: 1;
@@ -1803,10 +1884,104 @@ a {
 .route-editor-card {
   overflow: hidden;
 }
+.schedule-controls {
+  margin: 0 12px 8px;
+  padding: 14px;
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--line);
+  background: #f5f4ee;
+}
+.schedule-control-group {
+  display: grid;
+  gap: 8px;
+}
+.schedule-control-group > span,
+.schedule-time-grid label > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  font-weight: 900;
+}
+.day-count-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.day-count-options button,
+.suggestion-day-picker button {
+  min-height: 36px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font-size: 10px;
+  font-weight: 900;
+}
+.day-count-options button.selected,
+.suggestion-day-picker button.selected {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+.schedule-time-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.schedule-time-grid label {
+  display: grid;
+  gap: 6px;
+}
+.schedule-time-grid input,
+.schedule-time-grid select,
+.route-node-schedule select {
+  min-width: 0;
+  height: 36px;
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 0 8px;
+  font: inherit;
+  font-size: 10px;
+}
 .editable-route-list {
   padding: 12px;
   display: grid;
   gap: 9px;
+}
+.route-day-group {
+  display: grid;
+  gap: 9px;
+}
+.route-day-group + .route-day-group {
+  margin-top: 12px;
+  padding-top: 16px;
+  border-top: 2px solid var(--ink);
+}
+.route-day-group > header,
+.timeline-day > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.route-day-group > header strong,
+.timeline-day > header strong {
+  color: var(--pink);
+  font-size: 13px;
+  letter-spacing: 0.12em;
+}
+.route-day-group > header span,
+.timeline-day > header span {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+}
+.route-day-empty {
+  margin: 0;
+  padding: 18px;
+  border: 1px dashed var(--line);
+  color: var(--muted);
+  font-size: 10px;
+  text-align: center;
 }
 .editable-route-node {
   display: grid;
@@ -1873,6 +2048,20 @@ a {
   padding: 0 9px;
   font-size: 10px;
 }
+.route-node-schedule {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.route-node-schedule label {
+  display: grid;
+  gap: 3px;
+}
+.route-node-schedule label > span {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 800;
+}
 .route-node-actions {
   display: flex;
   flex-direction: column;
@@ -1909,6 +2098,22 @@ a {
 .place-suggestions .section-heading > span {
   font-size: 10px;
   font-weight: 900;
+}
+.suggestion-day-picker {
+  margin: 10px 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.suggestion-day-picker > span {
+  margin-right: 4px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+}
+.suggestion-day-picker button {
+  min-height: 30px;
+  padding: 0 10px;
 }
 .suggestion-row {
   display: grid;
@@ -1992,6 +2197,16 @@ a {
   }
 }
 @media (max-width: 370px) {
+  .schedule-time-grid {
+    grid-template-columns: 1fr;
+  }
+  .editable-route-node {
+    grid-template-columns: 30px 1fr;
+  }
+  .route-node-actions,
+  .anchor-lock {
+    grid-column: 2;
+  }
   .hero-section h1 {
     font-size: 43px;
   }

@@ -21,16 +21,8 @@ function formatDuration(minutes: number) {
   return `${Math.floor(minutes / 60)}H ${String(minutes % 60).padStart(2, "0")}M`;
 }
 
-function timeAt(index: number, nodes: Array<{ walkMinutes: number | null }>) {
-  const elapsed = nodes
-    .slice(0, index)
-    .reduce(
-      (total, _node, nodeIndex) =>
-        total + 60 + (nodes[nodeIndex + 1]?.walkMinutes ?? 0),
-      0,
-    );
-  const date = new Date(Date.UTC(2026, 0, 1, 14, elapsed));
-  return `${String(date.getUTCHours()).padStart(2, "0")}:${String(date.getUTCMinutes()).padStart(2, "0")}`;
+function formatTime(minutes: number) {
+  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
 }
 
 export async function generateMetadata({
@@ -99,6 +91,7 @@ export default async function CourseDetailPage({
     itinerary: course.nodes.map((node, index) => ({
       "@type": "TouristAttraction",
       position: index + 1,
+      day: node.dayIndex,
       name: node.place.name,
       address: node.place.address,
       geo: {
@@ -143,6 +136,7 @@ export default async function CourseDetailPage({
             <MapPin size={14} />
             {t("stops", { count: course.nodes.length })}
           </span>
+          <span>{t("days", { count: course.dayCount })}</span>
           <CourseScrapMetric
             slug={course.slug}
             initialScrapCount={course.scrapCount}
@@ -157,42 +151,70 @@ export default async function CourseDetailPage({
             <h2>{t("routeTitle")}</h2>
           </div>
         </div>
-        <div className="timeline">
-          {course.nodes.map((node, index) => {
-            const mapUrl = createPlaceMapUrl(locale, node.place);
-            const happening = node.happening;
-            const period = happening
-              ? `${new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }).format(new Date(happening.startsAt))} – ${new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }).format(new Date(happening.endsAt))}`
-              : null;
+        <div className="multiday-timeline">
+          {Array.from({ length: course.dayCount }, (_, dayOffset) => {
+            const dayIndex = dayOffset + 1;
+            const dayNodes = course.nodes.filter(
+              (node) => node.dayIndex === dayIndex,
+            );
             return (
-              <div className="timeline-stop" key={node.id}>
-                <div className="time-column">
-                  <strong>{timeAt(index, course.nodes)}</strong>
-                  <span>{String(index + 1).padStart(2, "0")}</span>
+              <section className="timeline-day" key={dayIndex}>
+                <header>
+                  <strong>DAY {dayIndex}</strong>
+                  <span>
+                    {formatTime(course.dayStartMinutes)}–
+                    {formatTime(course.dayEndMinutes)}
+                  </span>
+                </header>
+                <div className="timeline">
+                  {dayNodes.map((node, index) => {
+                    const mapUrl = createPlaceMapUrl(locale, node.place);
+                    const happening = node.happening;
+                    const period = happening
+                      ? `${new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }).format(new Date(happening.startsAt))} – ${new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }).format(new Date(happening.endsAt))}`
+                      : null;
+                    return (
+                      <div className="timeline-stop" key={node.id}>
+                        <div className="time-column">
+                          <strong>{formatTime(node.arrivalMinutes)}</strong>
+                          <span>{String(index + 1).padStart(2, "0")}</span>
+                        </div>
+                        <div className="timeline-dot" />
+                        <div className="stop-copy">
+                          <small>
+                            {categoryT(node.place.category)}
+                            {period
+                              ? ` · ${happening?.status === "ENDED" ? t("endedPopup") : period}`
+                              : ""}
+                          </small>
+                          <h3>{node.place.name}</h3>
+                          <p>{node.tip || t("noTip")}</p>
+                          <span className="stay-duration">
+                            {t("stayMinutes", {
+                              minutes: node.durationMinutes,
+                            })}
+                          </span>
+                          <a href={mapUrl} target="_blank" rel="noreferrer">
+                            <MapPin size={13} />
+                            {t(
+                              locale === "ko"
+                                ? "openKakaoMap"
+                                : "openGoogleMap",
+                            )}
+                          </a>
+                          {index < dayNodes.length - 1 ? (
+                            <em>
+                              {t("walkMinutes", {
+                                minutes: dayNodes[index + 1]?.walkMinutes ?? 0,
+                              })}
+                            </em>
+                          ) : null}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="timeline-dot" />
-                <div className="stop-copy">
-                  <small>
-                    {categoryT(node.place.category)}
-                    {period
-                      ? ` · ${happening?.status === "ENDED" ? t("endedPopup") : period}`
-                      : ""}
-                  </small>
-                  <h3>{node.place.name}</h3>
-                  <p>{node.tip || t("noTip")}</p>
-                  <a href={mapUrl} target="_blank" rel="noreferrer">
-                    <MapPin size={13} />
-                    {t(locale === "ko" ? "openKakaoMap" : "openGoogleMap")}
-                  </a>
-                  {index < course.nodes.length - 1 ? (
-                    <em>
-                      {t("walkMinutes", {
-                        minutes: course.nodes[index + 1]?.walkMinutes ?? 0,
-                      })}
-                    </em>
-                  ) : null}
-                </div>
-              </div>
+              </section>
             );
           })}
         </div>

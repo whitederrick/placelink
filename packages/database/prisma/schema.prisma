@@ -245,6 +245,10 @@ model Course {
   description     String?
   coverImageUrl   String?      @map("cover_image_url")
   durationMinutes Int?         @map("duration_minutes")
+  dayCount        Int          @default(1) @map("day_count")
+  dayStartMinutes Int          @default(600) @map("day_start_minutes")
+  dayEndMinutes   Int          @default(1320) @map("day_end_minutes")
+  targetStopCount Int          @default(3) @map("target_stop_count")
   viewCount       Int          @default(0) @map("view_count")
   scrapCount      Int          @default(0) @map("scrap_count")
   publishedAt     DateTime?    @map("published_at")
@@ -268,13 +272,15 @@ model CourseNode {
   courseId        String  @map("course_id")
   placeId         String  @map("place_id")
   orderIndex      Int     @map("order_index")
-  durationMinutes Int?    @map("duration_minutes")
+  dayIndex        Int     @default(1) @map("day_index")
+  durationMinutes Int?    @default(60) @map("duration_minutes")
   distanceMeters  Int?    @map("distance_meters")
   tip             String? @db.VarChar(50)
   course          Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
   place           Place   @relation(fields: [placeId], references: [id], onDelete: Restrict)
 
   @@unique([courseId, orderIndex])
+  @@index([courseId, dayIndex, orderIndex])
   @@index([placeId])
   @@map("course_nodes")
 }
