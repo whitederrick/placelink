@@ -33,10 +33,12 @@ export function ExploreMapExperience({
   const t = useTranslations("explore");
   const [pendingBounds, setPendingBounds] = useState<MapBounds | null>(null);
   const [mapQuery, setMapQuery] = useState<MapPlacesQuery | null>(null);
+  const [mapFailed, setMapFailed] = useState(false);
   const handleBoundsChanged = useCallback(
     (bounds: MapBounds) => setPendingBounds(bounds),
     [],
   );
+  const handleMapLoadError = useCallback(() => setMapFailed(true), []);
   const mapResult = useMapPlaces(mapQuery);
   const places = mapResult.data?.data ?? initialPlaces;
 
@@ -50,19 +52,22 @@ export function ExploreMapExperience({
     <div className="explore-workspace">
       <div className="explore-map-column">
         <div className="map-preview interactive-map">
-          {apiKey ? (
+          {apiKey && !mapFailed ? (
             <MapCanvas
               provider={provider}
               apiKey={apiKey}
               locale={locale}
               points={places}
               onBoundsChanged={handleBoundsChanged}
-              errorLabel={t("mapSdkError")}
+              onLoadError={handleMapLoadError}
             />
           ) : (
             <FallbackMap places={places} />
           )}
-          {apiKey && pendingBounds ? (
+          {mapFailed ? (
+            <div className="map-sdk-error">{t("mapSdkError")}</div>
+          ) : null}
+          {apiKey && !mapFailed && pendingBounds ? (
             <button
               className="map-refresh"
               type="button"
