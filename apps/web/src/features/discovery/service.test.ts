@@ -15,6 +15,7 @@ const records: HomeFeedRecords = {
   ],
   courses: [
     {
+      id: "course-seongsu-date",
       slug: "seongsu-date",
       durationMinutes: 260,
       viewCount: 24,
@@ -56,14 +57,18 @@ describe("buildHomeFeed", () => {
 
   it("ranks eligible popular courses with a stable score", () => {
     const feed = buildHomeFeed(
-      { ...records, hallCandidates: records.courses },
+      {
+        ...records,
+        hallCandidates: [{ ...records.courses[0]!, weeklyScraps: 4 }],
+      },
       "en",
       new Date("2026-07-22T00:00:00.000Z"),
     );
     expect(feed.hallOfFame[0]).toMatchObject({
       slug: "seongsu-date",
       rank: 1,
-      score: 84,
+      weeklyScraps: 4,
+      score: 20,
     });
   });
 });

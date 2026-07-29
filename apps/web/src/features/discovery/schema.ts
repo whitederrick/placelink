@@ -44,6 +44,7 @@ export const homeFilterOptionSchema = z.object({
 
 export const hallOfFameEntrySchema = courseCardSchema.extend({
   rank: z.number().int().positive(),
+  weeklyScraps: z.number().int().nonnegative(),
   score: z.number().int().nonnegative(),
 });
 

@@ -124,7 +124,8 @@ export function buildHomeFeed(
       .map((course, index) => ({
         ...mapCourse(course, index, locale),
         rank: index + 1,
-        score: course.scrapCount * 5 + course.viewCount,
+        weeklyScraps: course.weeklyScraps,
+        score: course.weeklyScraps * 5,
       }))
       .slice(0, 3),
     filters: {
@@ -157,7 +158,7 @@ export async function loadHomeFeed(
     sort: "latest",
     ...rawQuery,
   };
-  const records = await selectHomeFeedRecords(locale, query);
+  const records = await selectHomeFeedRecords(locale, query, now);
   const hasNextPage = records.courses.length > query.take;
   const visibleCourses = records.courses.slice(0, query.take);
   return {

@@ -9,6 +9,7 @@ import {
   type KakaoPlaceSelectionPolicy,
 } from "../src/kakao-local";
 
+config({ path: "../../apps/web/.env.local" });
 config({ path: "../../apps/web/.env" });
 
 const areas = [
@@ -55,7 +56,14 @@ const categories = [
   {
     category: "ACTIVITY",
     keyword: "산책 명소",
-    policy: { categoryIncludesAny: ["여행 > 관광,명소"] },
+    keywordByArea: {
+      yeonnam: "경의선숲길",
+      mangwon: "산책",
+    },
+    policy: {
+      categoryIncludesAny: ["여행 > 관광,명소", "여행 > 공원"],
+      dedupeByName: true,
+    },
   },
   {
     category: "BAR",
@@ -68,13 +76,31 @@ const categories = [
 ] satisfies ReadonlyArray<{
   category: string;
   keyword: string;
+  keywordByArea?: Partial<Record<(typeof areas)[number]["slug"], string>>;
   policy: KakaoPlaceSelectionPolicy;
 }>;
+
+const approvalSets = {
+  "seongsu-2026-07-29": {
+    area: "seongsu",
+    namesByCategory: {
+      EXHIBITION: ["데어바타테", "포아트 성수"],
+      CAFE: ["에낭 성수점", "맥파이앤타이거 성수티룸", "팟리추얼 성수"],
+      SHOP: ["모나미스토어 성수점", "홈어게인", "사무엘스몰즈"],
+      RESTAURANT: ["스케줄 성수", "삼선회사랑", "카카모루 성수점"],
+      ACTIVITY: ["서울숲공원산책길"],
+      BAR: ["심심", "브레이크 사일런스", "음악창고 LP BAR"],
+    },
+  },
+} as const;
 
 const argumentsSet = new Set(process.argv.slice(2));
 const dryRun = argumentsSet.has("--dry-run");
 const selectedArea = process.argv
   .find((argument) => argument.startsWith("--area="))
+  ?.split("=")[1];
+const selectedApprovalSet = process.argv
+  .find((argument) => argument.startsWith("--approval-set="))
   ?.split("=")[1];
 const restApiKey = process.env.KAKAO_LOCAL_REST_API_KEY;
 
@@ -92,28 +118,42 @@ if (targetAreas.length === 0) {
   throw new Error(`Unknown area: ${selectedArea}`);
 }
 
+const approvalSet = selectedApprovalSet
+  ? approvalSets[selectedApprovalSet as keyof typeof approvalSets]
+  : undefined;
+
+if (selectedApprovalSet && !approvalSet) {
+  throw new Error(`Unknown approval set: ${selectedApprovalSet}`);
+}
+
+if (!dryRun && !approvalSet) {
+  throw new Error(
+    "Database writes require a reviewed --approval-set. Run a dry-run and record human approval first.",
+  );
+}
+
+if (approvalSet && targetAreas.some((area) => area.slug !== approvalSet.area)) {
+  throw new Error(
+    `Approval set ${selectedApprovalSet} is restricted to area ${approvalSet.area}.`,
+  );
+}
+
 const database = getDatabase();
 let created = 0;
 let updated = 0;
+let selected = 0;
 
 async function upsertPlace(
   area: (typeof areas)[number],
   category: (typeof categories)[number]["category"],
   document: KakaoPlaceDocument,
 ) {
-  const existingReference = await database.placeProviderRef.findUnique({
-    where: {
-      provider_externalId: { provider: "KAKAO", externalId: document.id },
-    },
-    select: { placeId: true },
-  });
   const address = document.road_address_name || document.address_name;
-  const placeId = existingReference?.placeId ?? `kakao-place-${document.id}`;
 
   if (dryRun) {
     console.log(
       JSON.stringify({
-        action: existingReference ? "update" : "create",
+        action: "review",
         area: area.slug,
         category,
         name: document.place_name,
@@ -124,6 +164,14 @@ async function upsertPlace(
     );
     return;
   }
+
+  const existingReference = await database.placeProviderRef.findUnique({
+    where: {
+      provider_externalId: { provider: "KAKAO", externalId: document.id },
+    },
+    select: { placeId: true },
+  });
+  const placeId = existingReference?.placeId ?? `kakao-place-${document.id}`;
 
   await database.$transaction(async (transaction) => {
     if (existingReference) {
@@ -188,14 +236,48 @@ async function upsertPlace(
 
 for (const area of targetAreas) {
   for (const category of categories) {
+    const keyword =
+      "keywordByArea" in category
+        ? (category.keywordByArea[area.slug] ?? category.keyword)
+        : category.keyword;
     const candidates = await searchKakaoPlaces({
       restApiKey,
-      query: `${area.label} ${category.keyword}`,
+      query: `${area.label} ${keyword}`,
       center: { lat: area.lat, lng: area.lng },
       radiusMeters: 2_500,
       size: 10,
     });
-    const documents = selectKakaoPlaces(candidates, category.policy, 3);
+    const policySelectedDocuments = selectKakaoPlaces(
+      candidates,
+      category.policy,
+      3,
+    );
+    const approvedNames = approvalSet
+      ? approvalSet.namesByCategory[
+          category.category as keyof typeof approvalSet.namesByCategory
+        ]
+      : undefined;
+    const documents = approvedNames
+      ? policySelectedDocuments.filter((document) =>
+          approvedNames.some((name) => name === document.place_name),
+        )
+      : policySelectedDocuments;
+
+    if (approvedNames) {
+      const returnedNames = new Set(
+        policySelectedDocuments.map((document) => document.place_name),
+      );
+      const missingNames = approvedNames.filter(
+        (name) => !returnedNames.has(name),
+      );
+      if (missingNames.length > 0) {
+        throw new Error(
+          `Approved places missing from Kakao results for ${area.slug}/${category.category}: ${missingNames.join(", ")}`,
+        );
+      }
+    }
+
+    selected += documents.length;
     for (const document of documents) {
       await upsertPlace(
         area,
@@ -211,6 +293,8 @@ console.log(
     provider: "KAKAO",
     dryRun,
     areas: targetAreas.map((area) => area.slug),
+    approvalSet: selectedApprovalSet ?? null,
+    selected,
     created,
     updated,
   }),
