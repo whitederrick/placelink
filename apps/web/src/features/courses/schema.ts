@@ -45,6 +45,9 @@ export const createCourseDraftResponseSchema = z.object({
 export const courseDraftNodeSchema = z.object({
   id: z.string(),
   orderIndex: z.number().int().nonnegative(),
+  dayIndex: z.number().int().min(1).max(3),
+  durationMinutes: z.number().int().min(15).max(480),
+  arrivalMinutes: z.number().int().min(0).max(1440),
   tip: z.string().max(50).nullable(),
   distanceMeters: z.number().int().nonnegative().nullable(),
   walkMinutes: z.number().int().nonnegative().nullable(),
@@ -65,24 +68,67 @@ export const courseDraftSchema = z.object({
   status: z.literal("DRAFT"),
   title: z.string(),
   ownerName: z.string(),
-  nodes: z.array(courseDraftNodeSchema).min(1).max(8),
+  dayCount: z.number().int().min(1).max(3),
+  dayStartMinutes: z.number().int().min(0).max(1439),
+  dayEndMinutes: z.number().int().min(1).max(1440),
+  targetStopCount: z.number().int().min(2).max(24),
+  nodes: z.array(courseDraftNodeSchema).min(1).max(24),
 });
 
 export const courseDraftResponseSchema = z.object({ data: courseDraftSchema });
 
 export const updateCourseDraftRequestSchema = z
   .object({
+    dayCount: z.number().int().min(1).max(3),
+    dayStartMinutes: z.number().int().min(0).max(1439),
+    dayEndMinutes: z.number().int().min(1).max(1440),
+    targetStopCount: z.number().int().min(2).max(24),
     nodes: z
       .array(
         z.object({
           placeId: z.string().min(1),
+          dayIndex: z.number().int().min(1).max(3),
+          durationMinutes: z.number().int().min(15).max(480),
           tip: z.string().trim().max(50).nullable().optional(),
         }),
       )
       .min(1)
-      .max(8),
+      .max(24),
   })
   .superRefine((input, context) => {
+    if (input.dayEndMinutes - input.dayStartMinutes < 180) {
+      context.addIssue({
+        code: "custom",
+        message: "Daily schedule must be at least three hours",
+        path: ["dayEndMinutes"],
+      });
+    }
+    if (
+      input.targetStopCount < Math.max(2, input.dayCount) ||
+      input.targetStopCount > input.dayCount * 8
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Target stops must fit the selected day count",
+        path: ["targetStopCount"],
+      });
+    }
+    if (input.nodes.some((node) => node.dayIndex > input.dayCount)) {
+      context.addIssue({
+        code: "custom",
+        message: "Course nodes must fit the selected day count",
+        path: ["nodes"],
+      });
+    }
+    for (let dayIndex = 1; dayIndex <= input.dayCount; dayIndex += 1) {
+      if (input.nodes.filter((node) => node.dayIndex === dayIndex).length > 8) {
+        context.addIssue({
+          code: "custom",
+          message: "Each day can contain up to eight stops",
+          path: ["nodes"],
+        });
+      }
+    }
     if (
       new Set(input.nodes.map((node) => node.placeId)).size !==
       input.nodes.length
@@ -116,6 +162,10 @@ export const publicCourseSchema = z.object({
   description: z.string().nullable(),
   ownerName: z.string(),
   durationMinutes: z.number().int().positive(),
+  dayCount: z.number().int().min(1).max(3),
+  dayStartMinutes: z.number().int().min(0).max(1439),
+  dayEndMinutes: z.number().int().min(1).max(1440),
+  targetStopCount: z.number().int().min(2).max(24),
   scrapCount: z.number().int().nonnegative(),
   publishedAt: z.string().datetime(),
   tags: z.array(z.string()),
