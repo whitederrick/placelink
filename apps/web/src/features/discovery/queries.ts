@@ -3,7 +3,15 @@ import type { HomeFeedLocale, HomeFeedQuery } from "./schema";
 
 const ANCHOR_LIMIT = 10;
 const HALL_CANDIDATE_LIMIT = 10;
-const HALL_WINDOW_MILLISECONDS = 7 * 24 * 60 * 60 * 1_000;
+const DAY_MILLISECONDS = 24 * 60 * 60 * 1_000;
+
+export function getHallWindowStart(
+  now: Date,
+  ranking: HomeFeedQuery["ranking"],
+) {
+  const days = ranking === "monthly" ? 30 : 7;
+  return new Date(now.getTime() - days * DAY_MILLISECONDS);
+}
 
 export async function selectHomeFeedRecords(
   locale: HomeFeedLocale,
@@ -61,7 +69,7 @@ export async function selectHomeFeedRecords(
     _count: { select: { nodes: true, scraps: true } },
   };
 
-  const [happenings, courses, weeklyScrapGroups, filterTags] =
+  const [happenings, courses, periodScrapGroups, filterTags] =
     await Promise.all([
       database.happening.findMany({
         where: { isAnchor: true, status: { in: ["UPCOMING", "ACTIVE"] } },
@@ -108,7 +116,7 @@ export async function selectHomeFeedRecords(
         by: ["courseId"],
         where: {
           createdAt: {
-            gte: new Date(now.getTime() - HALL_WINDOW_MILLISECONDS),
+            gte: getHallWindowStart(now, query.ranking),
             lte: now,
           },
           course: {
@@ -136,10 +144,10 @@ export async function selectHomeFeedRecords(
       }),
     ]);
 
-  const weeklyScrapsByCourseId = new Map(
-    weeklyScrapGroups.map((group) => [group.courseId, group._count.courseId]),
+  const periodScrapsByCourseId = new Map(
+    periodScrapGroups.map((group) => [group.courseId, group._count.courseId]),
   );
-  const rankedCourseIds = weeklyScrapGroups.map((group) => group.courseId);
+  const rankedCourseIds = periodScrapGroups.map((group) => group.courseId);
   const hallRecords = await database.course.findMany({
     where: rankedCourseIds.length
       ? { id: { in: rankedCourseIds } }
@@ -165,7 +173,7 @@ export async function selectHomeFeedRecords(
     : hallRecords;
   const hallCandidates = orderedHallRecords.map((course) => ({
     ...course,
-    weeklyScraps: weeklyScrapsByCourseId.get(course.id) ?? 0,
+    periodScraps: periodScrapsByCourseId.get(course.id) ?? 0,
   }));
 
   return { happenings, courses, hallCandidates, filterTags };

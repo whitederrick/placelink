@@ -25,6 +25,7 @@ describe("fetchHomeFeedPage", () => {
         locale: "ko",
         take: 20,
         sort: "popular",
+        ranking: "weekly",
         area: "seongsu",
         mood: "cozy",
         cursor: "course-20",
@@ -33,7 +34,7 @@ describe("fetchHomeFeedPage", () => {
     );
 
     expect(request).toHaveBeenCalledWith(
-      "/api/v1/discovery/feed?locale=ko&take=20&sort=popular&area=seongsu&mood=cozy&cursor=course-20",
+      "/api/v1/discovery/feed?locale=ko&take=20&sort=popular&ranking=weekly&area=seongsu&mood=cozy&cursor=course-20",
     );
     expect(result.meta.nextCursor).toBe("course-40");
   });
@@ -44,7 +45,10 @@ describe("fetchHomeFeedPage", () => {
       .mockResolvedValue(new Response(null, { status: 500 }));
 
     await expect(
-      fetchHomeFeedPage({ locale: "en", take: 20, sort: "latest" }, request),
+      fetchHomeFeedPage(
+        { locale: "en", take: 20, sort: "latest", ranking: "weekly" },
+        request,
+      ),
     ).rejects.toThrow("Home feed request failed");
   });
 });

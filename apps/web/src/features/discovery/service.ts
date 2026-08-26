@@ -161,8 +161,8 @@ export function buildHomeFeed(
       .map((course, index) => ({
         ...mapCourse(course, index, locale),
         rank: index + 1,
-        weeklyScraps: course.weeklyScraps,
-        score: course.weeklyScraps * 5,
+        periodScraps: course.periodScraps,
+        score: course.periodScraps * 5,
       }))
       .slice(0, 3),
     filters: {
@@ -193,6 +193,7 @@ export async function loadHomeFeed(
     locale,
     take: DEFAULT_HOME_FEED_LIMIT,
     sort: "latest",
+    ranking: "weekly",
     ...rawQuery,
   };
   const records = await selectHomeFeedRecords(locale, query, now);

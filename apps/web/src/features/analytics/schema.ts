@@ -22,6 +22,7 @@ export const analyticsEventRequestSchema = z.discriminatedUnion("name", [
       surface: z.enum(["home", "explore"]),
       filter: z.enum([
         "sort",
+        "ranking",
         "area",
         "situation",
         "budget",

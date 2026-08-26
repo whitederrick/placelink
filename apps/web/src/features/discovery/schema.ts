@@ -8,6 +8,7 @@ export const homeFeedQuerySchema = z.object({
   cursor: z.string().min(1).optional(),
   take: z.coerce.number().int().min(1).max(50).default(20),
   sort: z.enum(["latest", "popular"]).default("latest"),
+  ranking: z.enum(["weekly", "monthly"]).default("weekly"),
   area: z
     .enum(["seongsu", "yeonnam", "seochon", "hannam", "mangwon"])
     .optional(),
@@ -44,7 +45,7 @@ export const homeFilterOptionSchema = z.object({
 
 export const hallOfFameEntrySchema = courseCardSchema.extend({
   rank: z.number().int().positive(),
-  weeklyScraps: z.number().int().nonnegative(),
+  periodScraps: z.number().int().nonnegative(),
   score: z.number().int().nonnegative(),
 });
 

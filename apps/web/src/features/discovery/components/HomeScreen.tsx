@@ -19,7 +19,7 @@ import { CourseFeed } from "./CourseFeed";
 
 type ActiveFilters = Pick<
   HomeFeedQuery,
-  "sort" | "area" | "situation" | "budget" | "mood"
+  "sort" | "ranking" | "area" | "situation" | "budget" | "mood"
 >;
 
 function homeHref(
@@ -30,6 +30,7 @@ function homeHref(
   const next = { ...filters, ...change };
   const params = new URLSearchParams();
   if (next.sort && next.sort !== "latest") params.set("sort", next.sort);
+  if (next.ranking === "monthly") params.set("ranking", next.ranking);
   for (const key of ["area", "situation", "budget", "mood"] as const) {
     if (next[key]) params.set(key, next[key]);
   }
@@ -179,8 +180,36 @@ export async function HomeScreen({
         <section className="content-section hall-section">
           <div className="section-heading">
             <div>
-              <span className="section-kicker">{t("hallKicker")}</span>
-              <h2>{t("hallTitle")}</h2>
+              <span className="section-kicker">
+                {t(
+                  activeFilters.ranking === "monthly"
+                    ? "hallKickerMonthly"
+                    : "hallKickerWeekly",
+                )}
+              </span>
+              <h2>
+                {t(
+                  activeFilters.ranking === "monthly"
+                    ? "hallTitleMonthly"
+                    : "hallTitleWeekly",
+                )}
+              </h2>
+            </div>
+            <div className="chip-row" aria-label={t("rankingPeriodLabel")}>
+              <Link
+                className={activeFilters.ranking === "weekly" ? "selected" : ""}
+                href={homeHref(locale, activeFilters, { ranking: "weekly" })}
+              >
+                {t("rankingWeekly")}
+              </Link>
+              <Link
+                className={
+                  activeFilters.ranking === "monthly" ? "selected" : ""
+                }
+                href={homeHref(locale, activeFilters, { ranking: "monthly" })}
+              >
+                {t("rankingMonthly")}
+              </Link>
             </div>
           </div>
           <div className="hall-grid">
@@ -198,7 +227,7 @@ export async function HomeScreen({
                 </strong>
                 <small>
                   <Bookmark size={13} />
-                  {t("weeklyScraps", { count: course.weeklyScraps })}
+                  {t("periodScraps", { count: course.periodScraps })}
                   <Eye size={13} />
                   {course.views}
                 </small>

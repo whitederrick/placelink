@@ -15,6 +15,19 @@ describe("analyticsEventRequestSchema", () => {
     ).toMatchObject({ name: "course.shared" });
   });
 
+  it("accepts the monthly hall-of-fame filter", () => {
+    expect(
+      analyticsEventRequestSchema.parse({
+        name: "filter.used",
+        properties: {
+          surface: "home",
+          filter: "ranking",
+          value: "monthly",
+        },
+      }),
+    ).toMatchObject({ name: "filter.used" });
+  });
+
   it("rejects arbitrary event names and properties", () => {
     expect(() =>
       analyticsEventRequestSchema.parse({

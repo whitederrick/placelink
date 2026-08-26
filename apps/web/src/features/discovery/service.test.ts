@@ -59,7 +59,7 @@ describe("buildHomeFeed", () => {
     const feed = buildHomeFeed(
       {
         ...records,
-        hallCandidates: [{ ...records.courses[0]!, weeklyScraps: 4 }],
+        hallCandidates: [{ ...records.courses[0]!, periodScraps: 4 }],
       },
       "en",
       new Date("2026-07-22T00:00:00.000Z"),
@@ -67,7 +67,7 @@ describe("buildHomeFeed", () => {
     expect(feed.hallOfFame[0]).toMatchObject({
       slug: "seongsu-date",
       rank: 1,
-      weeklyScraps: 4,
+      periodScraps: 4,
       score: 20,
     });
   });

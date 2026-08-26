@@ -35,6 +35,10 @@ export default async function HomePage({
       typeof rawSearchParams.sort === "string"
         ? rawSearchParams.sort
         : undefined,
+    ranking:
+      typeof rawSearchParams.ranking === "string"
+        ? rawSearchParams.ranking
+        : undefined,
     area:
       typeof rawSearchParams.area === "string"
         ? rawSearchParams.area
