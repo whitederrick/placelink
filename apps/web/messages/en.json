@@ -11,7 +11,10 @@
     "loading": "Loading date courses",
     "errorTitle": "We lost the link for a moment.",
     "errorBody": "Your saved content is safe. Please try connecting again.",
-    "retry": "Reconnect"
+    "retry": "Reconnect",
+    "loginPausedTitle": "Login is not available yet.",
+    "loginPausedBody": "Account creation and login are paused until the service is ready for launch.",
+    "backHome": "Back to home"
   },
   "home": {
     "hero": {
@@ -134,6 +137,7 @@
     "draftCreated": "Your course draft is ready.",
     "draftError": "The draft could not be saved. Please try again.",
     "signInToCreate": "Sign in to start",
+    "loginPaused": "Login coming soon",
     "stopBadge": "STOP {index}",
     "tipInputPlaceholder": "Your 50-character tip",
     "tipInputLabel": "Tip for {place}",
@@ -321,6 +325,7 @@
     "save": "Save this course",
     "savedCourse": "Saved",
     "signInToSave": "Sign in to save",
+    "loginPaused": "Login coming soon",
     "publishedBadge": "NEWLY PUBLISHED",
     "publishedSuccess": "Your course is live. You can share this link now.",
     "stops": "{count} STOPS",

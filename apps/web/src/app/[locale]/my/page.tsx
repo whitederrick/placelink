@@ -6,6 +6,7 @@ import { loadHumanActor } from "@/features/auth";
 import { CoupleControls } from "@/features/couples/components/CoupleControls";
 import { loadMyOverview, type MyOverview } from "@/features/my";
 import { isLocale } from "@/i18n/config";
+import { webEnv } from "@/lib/env";
 
 function CourseList({
   courses,
@@ -81,6 +82,21 @@ export default async function MyPage({
 }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
+  if (!webEnv.AUTH_LOGIN_ENABLED) {
+    const t = await getTranslations("common");
+    return (
+      <div className="screen-page my-page">
+        <section className="builder-card empty-state">
+          <span className="section-kicker">PRE-LAUNCH</span>
+          <h1>{t("loginPausedTitle")}</h1>
+          <p>{t("loginPausedBody")}</p>
+          <a className="summary-link" href={`/${locale}`}>
+            {t("backHome")}
+          </a>
+        </section>
+      </div>
+    );
+  }
   const session = await auth();
   const actor = session?.user?.id
     ? await loadHumanActor(session.user.id)

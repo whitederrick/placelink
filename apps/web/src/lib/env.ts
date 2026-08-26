@@ -14,6 +14,9 @@ const webEnvSchema = z.object({
   AUTH_KAKAO_SECRET: z.string().min(1).optional(),
   AUTH_GOOGLE_ID: z.string().min(1).optional(),
   AUTH_GOOGLE_SECRET: z.string().min(1).optional(),
+  AUTH_LOGIN_ENABLED: z
+    .enum(["true", "false"])
+    .transform((value) => value === "true"),
   ADMIN_USER_IDS: z
     .string()
     .default("")
@@ -42,6 +45,9 @@ export const webEnv = webEnvSchema.parse({
   AUTH_KAKAO_SECRET: process.env.AUTH_KAKAO_SECRET || undefined,
   AUTH_GOOGLE_ID: process.env.AUTH_GOOGLE_ID || undefined,
   AUTH_GOOGLE_SECRET: process.env.AUTH_GOOGLE_SECRET || undefined,
+  AUTH_LOGIN_ENABLED:
+    process.env.AUTH_LOGIN_ENABLED ??
+    (process.env.NODE_ENV === "production" ? "false" : "true"),
   ADMIN_USER_IDS: process.env.ADMIN_USER_IDS,
   NODE_ENV: process.env.NODE_ENV,
 });

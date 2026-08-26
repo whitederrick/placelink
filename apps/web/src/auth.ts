@@ -6,8 +6,9 @@ import { ensureAuthenticatedUser, loadDevelopmentUser } from "@/features/auth";
 import { webEnv } from "@/lib/env";
 
 const providers: NextAuthConfig["providers"] = [];
+const loginEnabled = webEnv.AUTH_LOGIN_ENABLED;
 
-if (webEnv.AUTH_KAKAO_ID && webEnv.AUTH_KAKAO_SECRET) {
+if (loginEnabled && webEnv.AUTH_KAKAO_ID && webEnv.AUTH_KAKAO_SECRET) {
   providers.push(
     Kakao({
       clientId: webEnv.AUTH_KAKAO_ID,
@@ -15,7 +16,7 @@ if (webEnv.AUTH_KAKAO_ID && webEnv.AUTH_KAKAO_SECRET) {
     }),
   );
 }
-if (webEnv.AUTH_GOOGLE_ID && webEnv.AUTH_GOOGLE_SECRET) {
+if (loginEnabled && webEnv.AUTH_GOOGLE_ID && webEnv.AUTH_GOOGLE_SECRET) {
   providers.push(
     Google({
       clientId: webEnv.AUTH_GOOGLE_ID,
@@ -23,7 +24,7 @@ if (webEnv.AUTH_GOOGLE_ID && webEnv.AUTH_GOOGLE_SECRET) {
     }),
   );
 }
-if (webEnv.NODE_ENV !== "production") {
+if (loginEnabled && webEnv.NODE_ENV !== "production") {
   const developmentUsers = [
     {
       providerId: "development-user-jihoon",
@@ -63,6 +64,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
   callbacks: {
     async signIn({ user, account }) {
+      if (!loginEnabled) return false;
       if (!account) return false;
       if (account.provider.startsWith("development-user-")) return true;
       const provider =
@@ -81,11 +83,15 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       return authenticatedUser.status === "ACTIVE";
     },
     jwt({ token, user }) {
+      if (!loginEnabled) {
+        delete token.userId;
+        return token;
+      }
       if (user?.id) token.userId = user.id;
       return token;
     },
     session({ session, token }) {
-      if (session.user && typeof token.userId === "string")
+      if (loginEnabled && session.user && typeof token.userId === "string")
         session.user.id = token.userId;
       return session;
     },

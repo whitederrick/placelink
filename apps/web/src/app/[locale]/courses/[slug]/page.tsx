@@ -11,6 +11,7 @@ import {
 } from "@/features/courses";
 import { isLocale } from "@/i18n/config";
 import { createPlaceMapUrl } from "@/lib/adapters/maps";
+import { webEnv } from "@/lib/env";
 import { getLocalizedAlternates } from "@/lib/site-url";
 
 const getCourse = cache(async (slug: string, locale: string) =>
@@ -224,6 +225,7 @@ export default async function CourseDetailPage({
         title={course.title}
         slug={course.slug}
         initialScrapCount={course.scrapCount}
+        loginEnabled={webEnv.AUTH_LOGIN_ENABLED}
       />
       <script
         type="application/ld+json"
