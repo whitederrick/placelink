@@ -9,6 +9,7 @@ import {
 } from "@/features/courses";
 import { findNearbyPlaces } from "@/features/places";
 import { isLocale } from "@/i18n/config";
+import { webEnv } from "@/lib/env";
 import { notFound } from "next/navigation";
 
 export default async function CreatePage({
@@ -57,6 +58,7 @@ export default async function CreatePage({
       locale={locale}
       anchors={anchorPage.data}
       signedIn={Boolean(actor)}
+      loginEnabled={webEnv.AUTH_LOGIN_ENABLED}
     />
   );
 }

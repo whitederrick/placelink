@@ -12,12 +12,14 @@ interface AnchorSelectionScreenProps {
   locale: "ko" | "en";
   anchors: CourseAnchor[];
   signedIn: boolean;
+  loginEnabled: boolean;
 }
 
 export function AnchorSelectionScreen({
   locale,
   anchors,
   signedIn,
+  loginEnabled,
 }: AnchorSelectionScreenProps) {
   const t = useTranslations("create");
   const router = useRouter();
@@ -149,7 +151,7 @@ export function AnchorSelectionScreen({
                 : t("createDraft")}
             <ArrowRight size={18} />
           </button>
-        ) : (
+        ) : loginEnabled ? (
           <a
             className="summary-link"
             href={`/api/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`}
@@ -157,6 +159,10 @@ export function AnchorSelectionScreen({
             {t("signInToCreate")}
             <ArrowRight size={18} />
           </a>
+        ) : (
+          <button type="button" disabled>
+            {t("loginPaused")}
+          </button>
         )}
       </div>
     </div>

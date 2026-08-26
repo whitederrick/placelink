@@ -23,11 +23,13 @@ export function CourseShareActions({
   title,
   slug,
   initialScrapCount,
+  loginEnabled,
 }: {
   locale: "ko" | "en";
   title: string;
   slug: string;
   initialScrapCount: number;
+  loginEnabled: boolean;
 }) {
   const t = useTranslations("course");
   const [copied, setCopied] = useState(false);
@@ -51,6 +53,7 @@ export function CourseShareActions({
     });
   };
   const toggleScrap = () => {
+    if (!loginEnabled) return;
     if (scrap.status.signedIn === false) {
       window.location.href = `/api/auth/signin?callbackUrl=${encodeURIComponent(window.location.href)}`;
       return;
@@ -71,14 +74,16 @@ export function CourseShareActions({
         className={`scrap-action ${scrap.status.scrapped ? "active" : ""}`}
         type="button"
         onClick={toggleScrap}
-        disabled={scrap.isLoading || scrap.mutation.isPending}
+        disabled={!loginEnabled || scrap.isLoading || scrap.mutation.isPending}
         aria-pressed={scrap.status.scrapped}
       >
         <Bookmark
           size={18}
           fill={scrap.status.scrapped ? "currentColor" : "none"}
         />
-        {scrap.status.signedIn === false
+        {!loginEnabled
+          ? t("loginPaused")
+          : scrap.status.signedIn === false
           ? t("signInToSave")
           : scrap.status.scrapped
             ? t("savedCourse")
