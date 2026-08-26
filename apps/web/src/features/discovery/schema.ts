@@ -66,3 +66,5 @@ export const homeFeedResponseSchema = z.object({
 
 export type HomeFeed = z.infer<typeof homeFeedSchema>;
 export type HomeFeedQuery = z.infer<typeof homeFeedQuerySchema>;
+export type HomeFeedResponse = z.infer<typeof homeFeedResponseSchema>;
+export type CourseCard = z.infer<typeof courseCardSchema>;

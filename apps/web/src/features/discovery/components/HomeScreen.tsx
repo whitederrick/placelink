@@ -1,7 +1,6 @@
 import {
   ArrowUpRight,
   Bookmark,
-  Clock3,
   Crown,
   Eye,
   MapPin,
@@ -12,7 +11,9 @@ import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { AnalyticsEventOnMount } from "@/features/analytics/components/AnalyticsEventOnMount";
 import type { Locale } from "@/i18n/config";
-import type { HomeFeed, HomeFeedQuery } from "../schema";
+import type { HomeFeed, HomeFeedQuery, HomeFeedResponse } from "../schema";
+import { findTrackedHomeFilter } from "../tracking";
+import { CourseFeed } from "./CourseFeed";
 
 type ActiveFilters = Pick<
   HomeFeedQuery,
@@ -36,21 +37,23 @@ function homeHref(
 
 export async function HomeScreen({
   feed,
+  nextCursor,
+  pageSize,
   locale,
   activeFilters,
 }: Readonly<{
   feed: HomeFeed;
+  nextCursor?: string;
+  pageSize: number;
   locale: Locale;
-  activeFilters: ActiveFilters;
+  activeFilters: HomeFeedQuery;
 }>) {
   const t = await getTranslations("home");
-  const trackedFilter = (Object.entries(activeFilters).find(([key, value]) =>
-    key !== "sort" ? Boolean(value) : value === "popular",
-  ) ?? []) as [keyof ActiveFilters | undefined, string | undefined];
+  const trackedFilter = findTrackedHomeFilter(activeFilters);
 
   return (
     <div className="home-screen">
-      {trackedFilter[0] && trackedFilter[1] ? (
+      {trackedFilter ? (
         <AnalyticsEventOnMount
           event={{
             name: "filter.used",
@@ -231,8 +234,8 @@ export async function HomeScreen({
             ) : null,
           )}
         </div>
-        <div className="course-grid">
-          {feed.courses.length === 0 ? (
+        {feed.courses.length === 0 ? (
+          <div className="course-grid">
             <div className="empty-state">
               <strong>{t("emptyCoursesTitle")}</strong>
               <p>{t("emptyCoursesBody")}</p>
@@ -240,55 +243,19 @@ export async function HomeScreen({
                 {t("createCta")}
               </Link>
             </div>
-          ) : (
-            feed.courses.map((course, index) => (
-              <Link
-                className="course-card"
-                href={`/${locale}/courses/${course.slug}`}
-                key={course.slug}
-              >
-                <div className={`course-cover ${course.tone}`}>
-                  <span className="cover-number">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <span className="cover-place">{course.neighborhood}</span>
-                  <span className="bookmark-button" aria-hidden="true">
-                    <Bookmark size={18} />
-                  </span>
-                  <div className="cover-route">
-                    <i />
-                    <i />
-                    <i />
-                    <i />
-                  </div>
-                </div>
-                <div className="course-copy">
-                  <div className="course-owner">
-                    <span>{course.coupleName}</span>
-                    <small>{t("courseSuffix")}</small>
-                  </div>
-                  <div className="course-stats">
-                    <span>
-                      <Clock3 size={14} />
-                      {course.duration}
-                    </span>
-                    <span>{t("stops", { count: course.stops })}</span>
-                    <span>{t("scraps", { count: course.scraps })}</span>
-                    <span>
-                      <Eye size={14} />
-                      {course.views}
-                    </span>
-                  </div>
-                  <div className="tag-row">
-                    {course.tags.map((tag) => (
-                      <span key={tag}>#{tag}</span>
-                    ))}
-                  </div>
-                </div>
-              </Link>
-            ))
-          )}
-        </div>
+          </div>
+        ) : (
+          <CourseFeed
+            filters={{ ...activeFilters, locale, take: pageSize }}
+            initialPage={
+              {
+                data: feed,
+                meta: { nextCursor },
+              } satisfies HomeFeedResponse
+            }
+            locale={locale}
+          />
+        )}
       </section>
     </div>
   );

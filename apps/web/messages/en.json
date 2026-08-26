@@ -41,7 +41,10 @@
     "emptyAnchorsTitle": "Choosing this week's anchors.",
     "emptyAnchorsBody": "Fresh pop-ups and exhibitions will be linked here soon.",
     "emptyCoursesTitle": "Be the first to leave a course.",
-    "emptyCoursesBody": "Connect places you love and inspire someone's next date."
+    "emptyCoursesBody": "Connect places you love and inspire someone's next date.",
+    "loadingMore": "Loading more courses",
+    "loadMoreRetry": "Try loading more courses again",
+    "feedEnd": "You have seen every course available right now."
   },
   "explore": {
     "kicker": "EXPLORE SEOUL",

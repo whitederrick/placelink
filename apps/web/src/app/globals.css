@@ -385,6 +385,35 @@ a {
   display: grid;
   gap: 18px;
 }
+.feed-pagination-state {
+  min-height: 64px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  text-align: center;
+}
+.feed-pagination-state span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 800;
+}
+.feed-pagination-state span svg {
+  animation: feed-spin 0.9s linear infinite;
+}
+.feed-pagination-state button {
+  border: 1px solid var(--ink);
+  background: #fff;
+  padding: 10px 14px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.feed-pagination-state small {
+  font-size: 11px;
+}
 .course-card {
   background: #fff;
   border: 1px solid var(--ink);
@@ -1927,6 +1956,11 @@ a {
   50% {
     opacity: 0.35;
     transform: scale(0.7);
+  }
+}
+@keyframes feed-spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 @keyframes shimmer {

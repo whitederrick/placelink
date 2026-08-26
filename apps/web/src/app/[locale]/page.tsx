@@ -20,6 +20,10 @@ export default async function HomePage({
   if (!isLocale(locale)) notFound();
   const query = homeFeedQuerySchema.parse({
     locale,
+    take:
+      typeof rawSearchParams.take === "string"
+        ? rawSearchParams.take
+        : undefined,
     sort:
       typeof rawSearchParams.sort === "string"
         ? rawSearchParams.sort
@@ -41,8 +45,16 @@ export default async function HomePage({
         ? rawSearchParams.mood
         : undefined,
   });
-  const { data: feed } = await loadHomeFeed(locale, query);
-  return <HomeScreen feed={feed} locale={locale} activeFilters={query} />;
+  const { data: feed, nextCursor } = await loadHomeFeed(locale, query);
+  return (
+    <HomeScreen
+      feed={feed}
+      nextCursor={nextCursor}
+      pageSize={query.take}
+      locale={locale}
+      activeFilters={query}
+    />
+  );
 }
 
 export const dynamic = "force-dynamic";

@@ -41,7 +41,10 @@
     "emptyAnchorsTitle": "이번 주 앵커를 고르는 중이에요.",
     "emptyAnchorsBody": "곧 새로운 팝업과 전시를 연결해 드릴게요.",
     "emptyCoursesTitle": "가장 먼저 코스를 남겨보세요.",
-    "emptyCoursesBody": "좋아하는 장소를 이어 누군가의 다음 데이트를 만들어 주세요."
+    "emptyCoursesBody": "좋아하는 장소를 이어 누군가의 다음 데이트를 만들어 주세요.",
+    "loadingMore": "다음 코스를 불러오는 중",
+    "loadMoreRetry": "다음 코스 다시 불러오기",
+    "feedEnd": "지금 볼 수 있는 코스를 모두 확인했어요."
   },
   "explore": {
     "kicker": "EXPLORE SEOUL",
