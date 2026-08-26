@@ -29,32 +29,36 @@ PostGIS 확장을 지원해야 하며 serverless 환경에서는 풀링 연결 �
 
 ## 최초 배포 순서
 
+마이그레이션은 앱 빌드와 분리한다. `next build` 또는 Vercel Build Command에서
+`prisma migrate deploy`를 실행하지 않는다. Preview는 전용 Preview DB에 자동 적용하고,
+Production은 승인된 배포 단계에서 아래 명령을 먼저 실행한 뒤 앱을 배포한다.
+
 1. Preview와 Production 환경 변수의 값 입력을 완료한다.
-2. Production DB에 PostGIS와 Prisma 마이그레이션을 적용한다.
+2. 새 Production DB에서는 PostGIS 확장을 먼저 활성화한다. Supabase는 Database
+   Extensions 화면에서 `postgis`를 활성화한다. 일반 PostgreSQL에서는 권한이 있는
+   계정으로 `CREATE EXTENSION IF NOT EXISTS postgis;`를 실행한다.
+3. Production DB에 Prisma 마이그레이션을 적용한다.
 
 ```bash
 npx vercel env run -e production -- pnpm db:deploy
 ```
 
-3. 최초 데이터가 없는 경우에만 seed를 실행한다.
+4. 최초 데이터가 없는 개발·검증 환경에서만 seed를 실행한다. 실제 운영 데이터가
+   있는 Production에는 개발 seed를 실행하지 않는다.
 
 ```bash
 npx vercel env run -e production -- pnpm db:seed
 ```
 
-4. 기능 브랜치 Preview를 다시 배포하고 `/ko`, `/en`, `/robots.txt`,
+5. 기능 브랜치 Preview를 다시 배포하고 `/ko`, `/en`, `/robots.txt`,
    `/sitemap.xml`과 로그인 흐름을 확인한다.
-5. PR의 `Quality`, `E2E`, `Vercel` 체크가 모두 통과하면 `main`에 병합한다.
-6. Production 배포가 완료되면 동일 경로와 공개 코스 상세의 canonical,
+6. PR의 `Quality`, `E2E`, `Vercel` 체크가 모두 통과하면 `main`에 병합한다.
+7. Production 배포가 완료되면 동일 경로와 공개 코스 상세의 canonical,
    ko/en hreflang, Open Graph 이미지를 확인한다.
 
 ## 현재 상태
 
-- Draft PR: <https://github.com/whitederrick/placelink/pull/1>
-- GitHub Actions `Quality`, `E2E`: 통과
-- 최초 Vercel Preview: `DATABASE_URL` 미설정으로 실패
-- Vercel 변수 이름: 사용자 등록 완료
-- 환경 변수 실제 값과 운영 DB: 준비 중이며 아직 검증하지 않음
-- 로컬 SEO 커밋 `5111551`: 원격 기능 브랜치보다 1개 앞서 있으며 값 입력 전에는
-  push하지 않음
-- 환경 변수 값 입력 및 운영 DB 준비 후 migration → 필요 시 seed → push/재배포 필요
+- 기존 Production: <https://placelink-umber.vercel.app/ko>
+- 개발·검증용 Supabase와 Production 운영 DB는 아직 분리되지 않았다.
+- `place-link.com` DNS와 Kakao/Google OAuth 콘솔 설정은 보류 중이다.
+- Production 마이그레이션은 DB 분리와 수동 승인 절차를 확인하기 전까지 실행하지 않는다.

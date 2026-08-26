@@ -46,19 +46,16 @@ export function RouteBuilderScreen({
   const availableSuggestions = suggestions.filter(
     (suggestion) => !nodes.some((node) => node.place.id === suggestion.id),
   );
-  const totalWalkMinutes = useMemo(
-    () => {
-      const visitedDays = new Set<number>();
-      return nodes.reduce((total, node) => {
-        if (!visitedDays.has(node.dayIndex)) {
-          visitedDays.add(node.dayIndex);
-          return total;
-        }
-        return total + (node.walkMinutes ?? 0);
-      }, 0);
-    },
-    [nodes],
-  );
+  const totalWalkMinutes = useMemo(() => {
+    const visitedDays = new Set<number>();
+    return nodes.reduce((total, node) => {
+      if (!visitedDays.has(node.dayIndex)) {
+        visitedDays.add(node.dayIndex);
+        return total;
+      }
+      return total + (node.walkMinutes ?? 0);
+    }, 0);
+  }, [nodes]);
   const scheduledNodes = useMemo(() => {
     const elapsedByDay = new Map<number, number>();
     return nodes.map((node, orderIndex) => {
@@ -123,9 +120,10 @@ export function RouteBuilderScreen({
           arrivalMinutes: dayStartMinutes,
           tip: null,
           distanceMeters: place.distanceMeters ?? null,
-          walkMinutes: activeDayStops > 0 && place.distanceMeters
-            ? Math.max(1, Math.ceil(place.distanceMeters / 80))
-            : null,
+          walkMinutes:
+            activeDayStops > 0 && place.distanceMeters
+              ? Math.max(1, Math.ceil(place.distanceMeters / 80))
+              : null,
           place,
         },
       ].sort(
@@ -288,7 +286,7 @@ export function RouteBuilderScreen({
                 onClick={() => setActiveDay(dayOffset + 1)}
                 key={dayOffset + 1}
               >
-                DAY {dayOffset + 1}
+                {t("dayHeading", { day: dayOffset + 1 })}
               </button>
             ))}
           </div>

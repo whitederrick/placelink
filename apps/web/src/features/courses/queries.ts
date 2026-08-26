@@ -226,17 +226,18 @@ export async function replaceDraftNodes(
   }>,
 ) {
   const database = getDatabase();
-  await database.$transaction([
-    database.courseNode.deleteMany({ where: { courseId } }),
-    database.courseNode.createMany({
-      data: nodes.map((node) => ({ ...node, courseId })),
-    }),
-    database.course.update({
-      where: { id: courseId },
+  return database.$transaction(async (transaction) => {
+    const updated = await transaction.course.updateMany({
+      where: { id: courseId, status: "DRAFT", deletedAt: null },
       data: { ...schedule, updatedAt: new Date() },
-      select: { id: true },
-    }),
-  ]);
+    });
+    if (updated.count !== 1) return false;
+    await transaction.courseNode.deleteMany({ where: { courseId } });
+    await transaction.courseNode.createMany({
+      data: nodes.map((node) => ({ ...node, courseId })),
+    });
+    return true;
+  });
 }
 
 export async function publishDraftCourse(

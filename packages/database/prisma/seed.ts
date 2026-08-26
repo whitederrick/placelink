@@ -2,7 +2,7 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/client/client";
 import { readDatabaseEnv } from "../src/env";
-import { createSeedPlaces } from "../src/seed-data";
+import { createSeedHappeningWindow, createSeedPlaces } from "../src/seed-data";
 
 const adapter = new PrismaPg({
   connectionString: readDatabaseEnv().DATABASE_URL,
@@ -142,7 +142,7 @@ async function seed() {
     })),
   });
 
-  const activeHappeningEnd = new Date("2026-07-31T14:59:59.000Z");
+  const happeningWindow = createSeedHappeningWindow(new Date());
   const anchorPlaceIndexes = [0, 18, 12] as const;
   for (let index = 0; index < anchorPlaceIndexes.length; index += 1) {
     const happeningId = `seed-happening-${index + 1}`;
@@ -153,8 +153,8 @@ async function seed() {
         placeId: anchorPlace.id,
         sourceType: "EDITOR",
         status: "ACTIVE",
-        startsAt: new Date("2026-07-18T00:00:00.000Z"),
-        endsAt: activeHappeningEnd,
+        startsAt: happeningWindow.startsAt,
+        endsAt: happeningWindow.endsAt,
         isAnchor: true,
         translations: {
           create: [

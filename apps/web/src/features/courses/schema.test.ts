@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { updateCourseDraftRequestSchema } from "./schema";
+import { publicCourseSchema, updateCourseDraftRequestSchema } from "./schema";
 
 const placeNode = (placeId: string, dayIndex: number) => ({
   placeId,
@@ -56,5 +56,46 @@ describe("multi-day course contract", () => {
 
     expect(shortDay.success).toBe(false);
     expect(crowdedDay.success).toBe(false);
+  });
+
+  it("accepts a published multi-day route with more than eight total stops", () => {
+    const nodes = Array.from({ length: 9 }, (_, index) => ({
+      id: `node-${index + 1}`,
+      orderIndex: index,
+      dayIndex: index < 5 ? 1 : 2,
+      durationMinutes: 60,
+      arrivalMinutes: 600 + (index % 5) * 75,
+      tip: null,
+      distanceMeters: index === 0 || index === 5 ? null : 1_000,
+      walkMinutes: index === 0 || index === 5 ? null : 13,
+      place: {
+        id: `place-${index + 1}`,
+        name: `Place ${index + 1}`,
+        address: "Seoul",
+        area: "seongsu",
+        category: "CAFE",
+        lat: 37.5,
+        lng: 127,
+      },
+      happening: null,
+    }));
+
+    const result = publicCourseSchema.safeParse({
+      slug: "two-day-course",
+      title: "Two day course",
+      description: null,
+      ownerName: "PlaceLink",
+      durationMinutes: 660,
+      dayCount: 2,
+      dayStartMinutes: 600,
+      dayEndMinutes: 1320,
+      targetStopCount: 9,
+      scrapCount: 0,
+      publishedAt: "2026-08-26T00:00:00.000Z",
+      tags: [],
+      nodes,
+    });
+
+    expect(result.success).toBe(true);
   });
 });

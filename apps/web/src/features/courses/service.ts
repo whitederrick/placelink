@@ -283,7 +283,7 @@ export async function updateCourseDraft(
       "One or more days exceed the selected end time",
       400,
     );
-  await replaceDraftNodes(
+  const replaced = await replaceDraftNodes(
     existing.id,
     {
       dayCount: input.dayCount,
@@ -293,6 +293,12 @@ export async function updateCourseDraft(
     },
     persistedNodes,
   );
+  if (!replaced)
+    throw new AppError(
+      ErrorCode.INVALID_INPUT,
+      "Draft is no longer editable",
+      409,
+    );
   const updated = await selectDraftCourse(slug, actor, locale);
   if (!updated)
     throw new AppError(
