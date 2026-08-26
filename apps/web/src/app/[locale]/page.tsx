@@ -2,9 +2,16 @@ import {
   HomeScreen,
   homeFeedQuerySchema,
   loadHomeFeed,
+  loadHomeHero,
 } from "@/features/discovery";
 import { isLocale } from "@/i18n/config";
+import { createKmaWeatherProvider } from "@/lib/adapters/weather";
+import { webEnv } from "@/lib/env";
 import { notFound } from "next/navigation";
+
+const weatherProvider = webEnv.KMA_SERVICE_KEY
+  ? createKmaWeatherProvider(webEnv.KMA_SERVICE_KEY)
+  : undefined;
 
 export default async function HomePage({
   params,
@@ -45,7 +52,11 @@ export default async function HomePage({
         ? rawSearchParams.mood
         : undefined,
   });
-  const { data: feed, nextCursor } = await loadHomeFeed(locale, query);
+  const now = new Date();
+  const [{ data: feed, nextCursor }, hero] = await Promise.all([
+    loadHomeFeed(locale, query, now),
+    loadHomeHero(now, weatherProvider),
+  ]);
   return (
     <HomeScreen
       feed={feed}
@@ -53,6 +64,8 @@ export default async function HomePage({
       pageSize={query.take}
       locale={locale}
       activeFilters={query}
+      dayPeriod={hero.dayPeriod}
+      weather={hero.weather}
     />
   );
 }

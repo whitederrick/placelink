@@ -205,6 +205,15 @@ a {
   position: relative;
   z-index: 2;
 }
+.hero-section .weather-attribution {
+  display: inline-block;
+  position: relative;
+  z-index: 3;
+  color: #a8aa9f;
+  font-size: 10px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .hero-actions {
   display: flex;
   gap: 9px;

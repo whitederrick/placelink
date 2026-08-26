@@ -14,9 +14,36 @@
     "retry": "Reconnect"
   },
   "home": {
-    "eyebrow": "SEOUL · 27°C · CLEAR AFTER RAIN",
-    "headline": "Where will you<br></br><accent>fall in love</accent> today?",
-    "subhead": "Discover real Seoul date routes made by real couples, then connect the places into a day of your own.",
+    "hero": {
+      "morning": {
+        "eyebrow": "SEOUL · MORNING",
+        "headline": "Where will you <accent>start</accent><br></br>this morning?",
+        "subhead": "Find a Seoul date route that starts light and stays with you."
+      },
+      "afternoon": {
+        "eyebrow": "SEOUL · AFTERNOON",
+        "headline": "Where will you <accent>wander</accent><br></br>this afternoon?",
+        "subhead": "Connect a Seoul date route that is ready to begin right now."
+      },
+      "evening": {
+        "eyebrow": "SEOUL · EVENING",
+        "headline": "Where will you <accent>fall in love</accent><br></br>this evening?",
+        "subhead": "Follow a real couple's route and make the most of the evening."
+      },
+      "night": {
+        "eyebrow": "SEOUL · NIGHT",
+        "headline": "Where will you <accent>dream of</accent><br></br>tonight?",
+        "subhead": "Plan your next Seoul date and connect the places into a day of your own."
+      }
+    },
+    "weather": {
+      "temperatureEyebrow": "SEOUL · {temperature}°C",
+      "rainEyebrow": "SEOUL · {temperature}°C · RAIN",
+      "snowEyebrow": "SEOUL · {temperature}°C · SNOW",
+      "rainSubhead": "Stay dry with an indoor Seoul date route chosen by real couples.",
+      "snowSubhead": "Choose a warm Seoul date route for a snowy day together.",
+      "source": "Weather data: Korea Meteorological Administration"
+    },
     "exploreCta": "Explore courses",
     "createCta": "Create our route",
     "anchorKicker": "THIS WEEK",

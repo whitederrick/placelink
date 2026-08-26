@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildHomeFeed } from "./service";
+import { buildHomeFeed, getSeoulDayPeriod, loadHomeHero } from "./service";
 import type { HomeFeedRecords } from "./queries";
 
 const records: HomeFeedRecords = {
@@ -70,5 +70,44 @@ describe("buildHomeFeed", () => {
       weeklyScraps: 4,
       score: 20,
     });
+  });
+});
+
+describe("getSeoulDayPeriod", () => {
+  it.each([
+    ["2026-08-25T21:30:00.000Z", "morning"],
+    ["2026-08-26T03:00:00.000Z", "afternoon"],
+    ["2026-08-26T10:00:00.000Z", "evening"],
+    ["2026-08-26T15:00:00.000Z", "night"],
+  ] as const)("maps %s to the Seoul %s period", (value, expected) => {
+    expect(getSeoulDayPeriod(new Date(value))).toBe(expected);
+  });
+});
+
+describe("loadHomeHero", () => {
+  it("combines the Seoul day period with a KMA observation", async () => {
+    const now = new Date("2026-08-26T10:00:00.000Z");
+    await expect(
+      loadHomeHero(now, {
+        getCurrentSeoulWeather: async () => ({
+          temperatureC: 23.8,
+          precipitation: "rain",
+        }),
+      }),
+    ).resolves.toEqual({
+      dayPeriod: "evening",
+      weather: { temperatureC: 23.8, precipitation: "rain" },
+    });
+  });
+
+  it("falls back to time-only content when weather is unavailable", async () => {
+    const now = new Date("2026-08-26T10:00:00.000Z");
+    await expect(
+      loadHomeHero(now, {
+        getCurrentSeoulWeather: async () => {
+          throw new Error("weather offline");
+        },
+      }),
+    ).resolves.toEqual({ dayPeriod: "evening" });
   });
 });

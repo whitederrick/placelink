@@ -11,7 +11,9 @@ import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { AnalyticsEventOnMount } from "@/features/analytics/components/AnalyticsEventOnMount";
 import type { Locale } from "@/i18n/config";
+import type { WeatherSnapshot } from "@/lib/adapters/weather";
 import type { HomeFeed, HomeFeedQuery, HomeFeedResponse } from "../schema";
+import type { HomeDayPeriod } from "../service";
 import { findTrackedHomeFilter } from "../tracking";
 import { CourseFeed } from "./CourseFeed";
 
@@ -41,15 +43,38 @@ export async function HomeScreen({
   pageSize,
   locale,
   activeFilters,
+  dayPeriod,
+  weather,
 }: Readonly<{
   feed: HomeFeed;
   nextCursor?: string;
   pageSize: number;
   locale: Locale;
   activeFilters: HomeFeedQuery;
+  dayPeriod: HomeDayPeriod;
+  weather?: WeatherSnapshot;
 }>) {
   const t = await getTranslations("home");
   const trackedFilter = findTrackedHomeFilter(activeFilters);
+  const weatherEyebrow = !weather
+    ? t(`hero.${dayPeriod}.eyebrow`)
+    : weather.precipitation === "rain"
+      ? t("weather.rainEyebrow", {
+          temperature: Math.round(weather.temperatureC),
+        })
+      : weather.precipitation === "snow"
+        ? t("weather.snowEyebrow", {
+            temperature: Math.round(weather.temperatureC),
+          })
+        : t("weather.temperatureEyebrow", {
+            temperature: Math.round(weather.temperatureC),
+          });
+  const heroSubhead =
+    weather?.precipitation === "rain"
+      ? t("weather.rainSubhead")
+      : weather?.precipitation === "snow"
+        ? t("weather.snowSubhead")
+        : t(`hero.${dayPeriod}.subhead`);
 
   return (
     <div className="home-screen">
@@ -68,15 +93,25 @@ export async function HomeScreen({
       <section className="hero-section">
         <div className="eyebrow">
           <span className="live-dot" />
-          {t("eyebrow")}
+          {weatherEyebrow}
         </div>
         <h1>
-          {t.rich("headline", {
+          {t.rich(`hero.${dayPeriod}.headline`, {
             accent: (chunks) => <em>{chunks}</em>,
             br: () => <br />,
           })}
         </h1>
-        <p>{t("subhead")}</p>
+        <p>{heroSubhead}</p>
+        {weather ? (
+          <a
+            className="weather-attribution"
+            href="https://www.data.go.kr/data/15084084/openapi.do"
+            rel="noreferrer"
+            target="_blank"
+          >
+            {t("weather.source")}
+          </a>
+        ) : null}
         <div className="hero-actions">
           <Link className="button primary" href={`/${locale}/explore`}>
             {t("exploreCta")}

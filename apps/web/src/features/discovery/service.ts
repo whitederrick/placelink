@@ -4,12 +4,17 @@ import {
   type HomeFeedLocale,
   type HomeFeedQuery,
 } from "./schema";
+import type {
+  WeatherProvider,
+  WeatherSnapshot,
+} from "../../lib/adapters/weather";
 import { selectHomeFeedRecords, type HomeFeedRecords } from "./queries";
 
 const MILLISECONDS_PER_DAY = 86_400_000;
 const DEFAULT_HOME_FEED_LIMIT = 20;
 const HAPPENING_TONES = ["lime", "pink", "blue"] as const;
 const COURSE_TONES = ["sunset", "mono", "violet"] as const;
+const SEOUL_TIME_ZONE = "Asia/Seoul";
 const AREA_LABELS = {
   seongsu: { ko: "성수", en: "Seongsu" },
   yeonnam: { ko: "연남", en: "Yeonnam" },
@@ -17,6 +22,38 @@ const AREA_LABELS = {
   hannam: { ko: "한남", en: "Hannam" },
   mangwon: { ko: "망원", en: "Mangwon" },
 } as const;
+
+export type HomeDayPeriod = "morning" | "afternoon" | "evening" | "night";
+
+export function getSeoulDayPeriod(now: Date): HomeDayPeriod {
+  const hour = Number(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: SEOUL_TIME_ZONE,
+      hour: "numeric",
+      hourCycle: "h23",
+    }).format(now),
+  );
+  if (hour >= 5 && hour < 12) return "morning";
+  if (hour >= 12 && hour < 18) return "afternoon";
+  if (hour >= 18 && hour < 23) return "evening";
+  return "night";
+}
+
+export async function loadHomeHero(
+  now: Date,
+  weatherProvider?: WeatherProvider,
+): Promise<{ dayPeriod: HomeDayPeriod; weather?: WeatherSnapshot }> {
+  const dayPeriod = getSeoulDayPeriod(now);
+  if (!weatherProvider) return { dayPeriod };
+  try {
+    return {
+      dayPeriod,
+      weather: await weatherProvider.getCurrentSeoulWeather(now),
+    };
+  } catch {
+    return { dayPeriod };
+  }
+}
 
 function formatDate(date: Date): string {
   const month = String(date.getUTCMonth() + 1).padStart(2, "0");

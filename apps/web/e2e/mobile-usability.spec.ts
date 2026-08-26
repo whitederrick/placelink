@@ -18,7 +18,9 @@ async function expectNoHorizontalOverflow(page: Page) {
 test("keeps the core planning flow clear on a phone", async ({ page }) => {
   await page.goto("/ko");
   await expect(
-    page.getByRole("heading", { name: "오늘은, 어디서 사랑할까요?" }),
+    page.getByRole("heading", {
+      name: /오늘 (아침|오후|저녁|밤), 어디서 사랑할까요\?/,
+    }),
   ).toBeVisible();
   await expect(page.locator(".tabbar")).toBeVisible();
   await expect(page.locator(".desktop-nav")).toBeHidden();

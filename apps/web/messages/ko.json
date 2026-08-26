@@ -14,9 +14,36 @@
     "retry": "다시 연결하기"
   },
   "home": {
-    "eyebrow": "SEOUL · 27°C · 비 온 뒤 맑음",
-    "headline": "오늘은, <accent>어디서</accent><br></br>사랑할까요?",
-    "subhead": "진짜 커플이 만든 서울의 데이트 코스를 발견하고, 우리만의 하루를 이어보세요.",
+    "hero": {
+      "morning": {
+        "eyebrow": "SEOUL · MORNING",
+        "headline": "오늘 아침, <accent>어디서</accent><br></br>사랑할까요?",
+        "subhead": "가볍게 시작해 오래 기억할, 서울의 데이트 코스를 발견해 보세요."
+      },
+      "afternoon": {
+        "eyebrow": "SEOUL · AFTERNOON",
+        "headline": "오늘 오후, <accent>어디서</accent><br></br>사랑할까요?",
+        "subhead": "지금 출발하기 좋은 서울의 데이트 코스를 이어보세요."
+      },
+      "evening": {
+        "eyebrow": "SEOUL · EVENING",
+        "headline": "오늘 저녁, <accent>어디서</accent><br></br>사랑할까요?",
+        "subhead": "저녁의 분위기를 놓치지 않도록 실제 커플의 코스를 골라보세요."
+      },
+      "night": {
+        "eyebrow": "SEOUL · NIGHT",
+        "headline": "오늘 밤, <accent>어디서</accent><br></br>사랑할까요?",
+        "subhead": "다음 데이트를 미리 그리며 우리만의 서울 코스를 이어보세요."
+      }
+    },
+    "weather": {
+      "temperatureEyebrow": "SEOUL · {temperature}°C",
+      "rainEyebrow": "SEOUL · {temperature}°C · 비",
+      "snowEyebrow": "SEOUL · {temperature}°C · 눈",
+      "rainSubhead": "비 오는 지금은 실제 커플이 고른 서울의 실내 데이트 코스를 이어보세요.",
+      "snowSubhead": "눈 오는 서울을 따뜻하게 즐길 수 있는 데이트 코스를 골라보세요.",
+      "source": "날씨 데이터: 기상청"
+    },
     "exploreCta": "코스 탐색하기",
     "createCta": "우리 코스 만들기",
     "anchorKicker": "THIS WEEK",
