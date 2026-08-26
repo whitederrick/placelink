@@ -18,6 +18,7 @@ concurrency:
 env:
   DATABASE_URL: postgresql://placelink:placelink_local@localhost:54329/placelink?schema=public
   AUTH_SECRET: placelink-ci-auth-secret-must-be-at-least-32-characters
+  ADMIN_USER_IDS: seed-user-jihoon
   LOG_LEVEL: info
 
 jobs:
