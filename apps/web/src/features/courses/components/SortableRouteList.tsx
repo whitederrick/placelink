@@ -112,7 +112,7 @@ function SortableNode({
               >
                 {Array.from({ length: dayCount }, (_, dayOffset) => (
                   <option value={dayOffset + 1} key={dayOffset + 1}>
-                    DAY {dayOffset + 1}
+                    {t("dayHeading", { day: dayOffset + 1 })}
                   </option>
                 ))}
               </select>
@@ -230,7 +230,7 @@ export default function SortableRouteList({
             return (
               <section className="route-day-group" key={dayIndex}>
                 <header>
-                  <strong>DAY {dayIndex}</strong>
+                  <strong>{t("dayHeading", { day: dayIndex })}</strong>
                   <span>{t("dayStopCount", { count: dayNodes.length })}</span>
                 </header>
                 {dayNodes.length === 0 ? (

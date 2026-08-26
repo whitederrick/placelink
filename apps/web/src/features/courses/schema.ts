@@ -182,7 +182,7 @@ export const publicCourseSchema = z.object({
       }),
     )
     .min(1)
-    .max(8),
+    .max(24),
 });
 
 export type AnchorListQuery = z.infer<typeof anchorListQuerySchema>;

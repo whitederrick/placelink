@@ -159,7 +159,7 @@ export default async function CourseDetailPage({
             return (
               <section className="timeline-day" key={dayIndex}>
                 <header>
-                  <strong>DAY {dayIndex}</strong>
+                  <strong>{t("dayHeading", { day: dayIndex })}</strong>
                   <span>
                     {formatTime(course.dayStartMinutes)}–
                     {formatTime(course.dayEndMinutes)}

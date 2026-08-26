@@ -86,8 +86,10 @@ export function PublishCourseScreen({
           <div>
             <small>
               {draft.nodes[0]?.place.area?.toUpperCase() ?? "SEOUL"} ·{" "}
-              {draft.dayCount} {draft.dayCount === 1 ? "DAY" : "DAYS"} ·{" "}
-              {draft.nodes.length} STOPS
+              {t("previewStats", {
+                days: draft.dayCount,
+                stops: draft.nodes.length,
+              })}
             </small>
             <strong>{title || defaultTitle}</strong>
             <p>{description || t("previewFallback")}</p>
@@ -114,7 +116,7 @@ export function PublishCourseScreen({
             );
             return (
               <div key={dayIndex}>
-                <strong>DAY {dayIndex}</strong>
+                <strong>{t("dayHeading", { day: dayIndex })}</strong>
                 <span>
                   {t("dayPublishSummary", {
                     count: dayNodes.length,
