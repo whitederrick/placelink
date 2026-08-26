@@ -5,9 +5,8 @@
 ## 운영 상태
 
 - 운영 사이트: `https://place-link.com`
-- 운영 통합 기준 커밋: `8f5acf0`
-- 로그인 차단 변경: `codex/pause-production-login`, 커밋 `4e7d92a`
-- 로그인 차단 변경은 필수 CI를 통과한 PR로 `main`에 병합해야 한다.
+- 운영 통합 기준 커밋: `d5d8d34` (PR #8 병합)
+- 로그인 차단 변경은 필수 CI와 자동 Production 배포를 모두 통과했다.
 - Production 로그인은 `AUTH_LOGIN_ENABLED=true`일 때만 열리도록 구현했다.
 - 별도 Production 배포로 로그인 차단이 현재 운영에 반영됐으며, 로그인 API 503,
   세션 API 200/null, 내 페이지·만들기 페이지의 안내 문구를 확인했다.
@@ -22,11 +21,10 @@
 
 ## 다음 우선순위
 
-1. 로그인 차단 브랜치 PR 생성 → CI → `main` 병합 → 운영 확인
-2. `KMA_SERVICE_KEY` 등록과 실응답 확인
-3. 실제 사용자 ID 확인 후 `ADMIN_USER_IDS` 등록
-4. OAuth 콜백, 행사 날짜, 데모 데이터, 모바일 핵심 흐름 최종 QA
-5. 출시 승인 시에만 `AUTH_LOGIN_ENABLED=true` 설정 후 재배포
+1. `KMA_SERVICE_KEY` 등록과 실응답 확인
+2. 실제 사용자 ID 확인 후 `ADMIN_USER_IDS` 등록
+3. OAuth 콜백, 행사 날짜, 데모 데이터, 모바일 핵심 흐름 최종 QA
+4. 출시 승인 시에만 `AUTH_LOGIN_ENABLED=true` 설정 후 재배포
 
 ## 주의 사항
 
