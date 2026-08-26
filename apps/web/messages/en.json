@@ -234,6 +234,28 @@
     "error": "We could not load or accept this invite. Please try again.",
     "retry": "Try again"
   },
+  "curation": {
+    "kicker": "OPERATIONS · HOME ANCHORS",
+    "title": "Home anchor curation",
+    "subtitle": "Choose the pop-ups and exhibitions shown on home with a safe audit trail.",
+    "viewAnalytics": "View analytics",
+    "filterLabel": "Happening operations filters",
+    "allStatuses": "All statuses",
+    "allAnchors": "All",
+    "anchoredOnly": "Anchored",
+    "unanchoredOnly": "Not anchored",
+    "currentlyAnchored": "Shown on home",
+    "assignAnchor": "Show on home",
+    "removeAnchor": "Remove from home",
+    "updating": "Updating",
+    "updateError": "The change failed. Please try again.",
+    "empty": "No happenings match these filters.",
+    "status": {
+      "upcoming": "Upcoming",
+      "active": "Active",
+      "ended": "Ended"
+    }
+  },
   "analytics": {
     "kicker": "INTERNAL OPERATIONS",
     "title": "Analytics event dashboard",

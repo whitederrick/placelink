@@ -234,6 +234,28 @@
     "error": "초대를 불러오거나 수락하지 못했습니다. 잠시 후 다시 시도해 주세요.",
     "retry": "다시 시도"
   },
+  "curation": {
+    "kicker": "OPERATIONS · HOME ANCHORS",
+    "title": "홈 앵커 큐레이션",
+    "subtitle": "홈에 노출할 팝업과 전시를 지정하고 변경 이력을 안전하게 남깁니다.",
+    "viewAnalytics": "분석 현황 보기",
+    "filterLabel": "행사 운영 필터",
+    "allStatuses": "모든 상태",
+    "allAnchors": "전체",
+    "anchoredOnly": "노출 중",
+    "unanchoredOnly": "미노출",
+    "currentlyAnchored": "홈 노출 중",
+    "assignAnchor": "홈에 노출",
+    "removeAnchor": "노출 해제",
+    "updating": "변경 중",
+    "updateError": "변경하지 못했습니다. 다시 시도해 주세요.",
+    "empty": "조건에 맞는 행사가 없습니다.",
+    "status": {
+      "upcoming": "예정",
+      "active": "진행 중",
+      "ended": "종료"
+    }
+  },
   "analytics": {
     "kicker": "INTERNAL OPERATIONS",
     "title": "분석 이벤트 대시보드",

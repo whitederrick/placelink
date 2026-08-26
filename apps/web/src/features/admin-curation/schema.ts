@@ -43,3 +43,6 @@ export type HappeningCurationListInput = z.input<
   typeof happeningCurationListQuerySchema
 >;
 export type AnchorCurationRequest = z.infer<typeof anchorCurationRequestSchema>;
+export type HappeningCurationEntry = z.infer<
+  typeof happeningCurationEntrySchema
+>;
