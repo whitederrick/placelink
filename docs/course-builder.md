@@ -27,7 +27,8 @@ The client edits local state, uses the API for mutations, and accepts the return
 ## Public detail
 
 - `/{locale}/courses/{slug}` reads only non-deleted `PUBLISHED` courses through the course service.
-- The server-rendered page includes localized places, tips, walking time, event period or ended status, map links, Open Graph metadata, and schema.org JSON-LD.
+- The server-rendered page includes localized places, tips, walking time, event period or ended status, Open Graph metadata, and schema.org JSON-LD.
+- Stop map links open Kakao Map's documented `link/map` URL for `ko` and a Google Maps `api=1` search URL for `en`; both use the stored place coordinates and require no client API key.
 - Public detail uses a five-minute revalidation window. Draft and private courses return the not-found surface.
 
 ## Scraps and My Place

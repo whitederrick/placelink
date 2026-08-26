@@ -10,6 +10,7 @@ import {
   loadPublishedCourse,
 } from "@/features/courses";
 import { isLocale } from "@/i18n/config";
+import { createPlaceMapUrl } from "@/lib/adapters/maps";
 import { getLocalizedAlternates } from "@/lib/site-url";
 
 const getCourse = cache(async (slug: string, locale: string) =>
@@ -158,7 +159,7 @@ export default async function CourseDetailPage({
         </div>
         <div className="timeline">
           {course.nodes.map((node, index) => {
-            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${node.place.lat},${node.place.lng}`;
+            const mapUrl = createPlaceMapUrl(locale, node.place);
             const happening = node.happening;
             const period = happening
               ? `${new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }).format(new Date(happening.startsAt))} – ${new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }).format(new Date(happening.endsAt))}`
@@ -181,7 +182,7 @@ export default async function CourseDetailPage({
                   <p>{node.tip || t("noTip")}</p>
                   <a href={mapUrl} target="_blank" rel="noreferrer">
                     <MapPin size={13} />
-                    {t("openMap")}
+                    {t(locale === "ko" ? "openKakaoMap" : "openGoogleMap")}
                   </a>
                   {index < course.nodes.length - 1 ? (
                     <em>
