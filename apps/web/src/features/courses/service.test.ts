@@ -82,6 +82,10 @@ describe("updateCourseDraft", () => {
     slug: "course-slug",
     status: "DRAFT" as const,
     title: "성수 여름 팝업 데이트",
+    dayCount: 1,
+    dayStartMinutes: 600,
+    dayEndMinutes: 1320,
+    targetStopCount: 3,
     creatorUserId: null,
     creatorUser: null,
     couple: {
@@ -93,6 +97,8 @@ describe("updateCourseDraft", () => {
       {
         id: "node-1",
         orderIndex: 0,
+        dayIndex: 1,
+        durationMinutes: 60,
         tip: null,
         distanceMeters: null,
         place: {
@@ -124,6 +130,8 @@ describe("updateCourseDraft", () => {
           {
             id: "node-2",
             orderIndex: 1,
+            dayIndex: 1,
+            durationMinutes: 60,
             tip: "창가 자리",
             distanceMeters: 190,
             place: { ...secondPlace, status: "ACTIVE" },
@@ -134,12 +142,28 @@ describe("updateCourseDraft", () => {
       { ...anchor.place, category: "EXHIBITION" },
       secondPlace,
     ]);
-    queryMocks.replaceDraftNodes.mockResolvedValue(undefined);
+    queryMocks.replaceDraftNodes.mockResolvedValue(true);
     const result = await updateCourseDraft(actor, "course-slug", "ko", {
-      nodes: [{ placeId: "place-1" }, { placeId: "place-2", tip: "창가 자리" }],
+      dayCount: 1,
+      dayStartMinutes: 600,
+      dayEndMinutes: 1320,
+      targetStopCount: 3,
+      nodes: [
+        { placeId: "place-1", dayIndex: 1, durationMinutes: 60 },
+        {
+          placeId: "place-2",
+          dayIndex: 1,
+          durationMinutes: 60,
+          tip: "창가 자리",
+        },
+      ],
     });
     expect(queryMocks.replaceDraftNodes).toHaveBeenCalledWith(
       "course-1",
+      expect.objectContaining({
+        dayCount: 1,
+        targetStopCount: 3,
+      }),
       expect.arrayContaining([
         expect.objectContaining({
           placeId: "place-2",
@@ -151,11 +175,49 @@ describe("updateCourseDraft", () => {
     expect(result.data.nodes[1]?.walkMinutes).toBe(3);
   });
 
+  it("rejects a route save when the draft was published concurrently", async () => {
+    const secondPlace = {
+      id: "place-2",
+      areaSlug: "seongsu",
+      category: "CAFE",
+      lat: 37.546,
+      lng: 127.057,
+      translations: [{ name: "성수 카페", address: "서울 성수" }],
+    };
+    queryMocks.selectDraftCourse.mockResolvedValue(draftRecord);
+    queryMocks.selectRoutePlaces.mockResolvedValue([
+      { ...anchor.place, category: "EXHIBITION" },
+      secondPlace,
+    ]);
+    queryMocks.replaceDraftNodes.mockResolvedValue(false);
+
+    await expect(
+      updateCourseDraft(actor, "course-slug", "ko", {
+        dayCount: 1,
+        dayStartMinutes: 600,
+        dayEndMinutes: 1320,
+        targetStopCount: 3,
+        nodes: [
+          { placeId: "place-1", dayIndex: 1, durationMinutes: 60 },
+          { placeId: "place-2", dayIndex: 1, durationMinutes: 60 },
+        ],
+      }),
+    ).rejects.toMatchObject({ code: "INVALID_INPUT", status: 409 });
+    expect(queryMocks.selectDraftCourse).toHaveBeenCalledTimes(1);
+  });
+
   it("rejects moving the anchor away from the first stop", async () => {
     queryMocks.selectDraftCourse.mockResolvedValue(draftRecord);
     await expect(
       updateCourseDraft(actor, "course-slug", "ko", {
-        nodes: [{ placeId: "place-2" }, { placeId: "place-1" }],
+        dayCount: 1,
+        dayStartMinutes: 600,
+        dayEndMinutes: 1320,
+        targetStopCount: 3,
+        nodes: [
+          { placeId: "place-2", dayIndex: 1, durationMinutes: 60 },
+          { placeId: "place-1", dayIndex: 1, durationMinutes: 60 },
+        ],
       }),
     ).rejects.toMatchObject({ code: "INVALID_INPUT" });
     expect(queryMocks.replaceDraftNodes).not.toHaveBeenCalled();
@@ -169,6 +231,10 @@ describe("publishCourseDraft", () => {
     slug: "course-slug",
     status: "DRAFT" as const,
     title: "기존 제목",
+    dayCount: 1,
+    dayStartMinutes: 600,
+    dayEndMinutes: 1320,
+    targetStopCount: 3,
     creatorUserId: null,
     creatorUser: null,
     couple: {
@@ -180,6 +246,8 @@ describe("publishCourseDraft", () => {
       {
         id: "node-1",
         orderIndex: 0,
+        dayIndex: 1,
+        durationMinutes: 60,
         tip: null,
         distanceMeters: null,
         place: {
@@ -191,6 +259,8 @@ describe("publishCourseDraft", () => {
       {
         id: "node-2",
         orderIndex: 1,
+        dayIndex: 1,
+        durationMinutes: 60,
         tip: "창가 자리",
         distanceMeters: 190,
         place: {

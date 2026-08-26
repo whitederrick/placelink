@@ -13,6 +13,15 @@ export interface SeedPlace {
   lng: number;
 }
 
+const MILLISECONDS_PER_DAY = 86_400_000;
+
+export function createSeedHappeningWindow(now: Date) {
+  return {
+    startsAt: new Date(now.getTime() - 7 * MILLISECONDS_PER_DAY),
+    endsAt: new Date(now.getTime() + 90 * MILLISECONDS_PER_DAY),
+  };
+}
+
 const neighborhoods = [
   { slug: "seongsu", ko: "성수", en: "Seongsu", lat: 37.5446, lng: 127.0559 },
   { slug: "yeonnam", ko: "연남", en: "Yeonnam", lat: 37.5627, lng: 126.9258 },

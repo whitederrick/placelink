@@ -41,6 +41,12 @@ const DRAFT_RATE_WINDOW_MILLISECONDS = 10 * 60 * 1000;
 const DRAFT_RATE_LIMIT = 10;
 const WALKING_METERS_PER_MINUTE = 80;
 
+function walkingMinutes(distanceMeters: number | null) {
+  return distanceMeters === null
+    ? null
+    : Math.max(1, Math.ceil(distanceMeters / WALKING_METERS_PER_MINUTE));
+}
+
 function shortDate(date: Date) {
   return `${String(date.getUTCMonth() + 1).padStart(2, "0")}.${String(date.getUTCDate()).padStart(2, "0")}`;
 }
@@ -151,34 +157,45 @@ function resolveOwnerName(
 }
 
 function mapDraft(record: DraftCourseRecord, locale: string): CourseDraft {
+  const elapsedByDay = new Map<number, number>();
   return {
     id: record.id,
     slug: record.slug,
     status: "DRAFT",
     title: record.title,
     ownerName: resolveOwnerName(record, locale),
-    nodes: record.nodes.map((node) => ({
-      id: node.id,
-      orderIndex: node.orderIndex,
-      tip: node.tip,
-      distanceMeters: node.distanceMeters,
-      walkMinutes:
-        node.distanceMeters === null
-          ? null
-          : Math.max(
-              1,
-              Math.ceil(node.distanceMeters / WALKING_METERS_PER_MINUTE),
-            ),
-      place: {
-        id: node.place.id,
-        name: node.place.translations[0]?.name ?? node.place.id,
-        address: node.place.translations[0]?.address ?? "",
-        area: node.place.areaSlug,
-        category: node.place.category,
-        lat: Number(node.place.lat),
-        lng: Number(node.place.lng),
-      },
-    })),
+    dayCount: record.dayCount,
+    dayStartMinutes: record.dayStartMinutes,
+    dayEndMinutes: record.dayEndMinutes,
+    targetStopCount: record.targetStopCount,
+    nodes: record.nodes.map((node) => {
+      const dayIndex = node.dayIndex;
+      const walkMinutes = walkingMinutes(node.distanceMeters);
+      const arrivalMinutes =
+        (elapsedByDay.get(dayIndex) ?? record.dayStartMinutes) +
+        (elapsedByDay.has(dayIndex) ? (walkMinutes ?? 0) : 0);
+      const durationMinutes = node.durationMinutes ?? 60;
+      elapsedByDay.set(dayIndex, arrivalMinutes + durationMinutes);
+      return {
+        id: node.id,
+        orderIndex: node.orderIndex,
+        dayIndex,
+        durationMinutes,
+        arrivalMinutes,
+        tip: node.tip,
+        distanceMeters: node.distanceMeters,
+        walkMinutes,
+        place: {
+          id: node.place.id,
+          name: node.place.translations[0]?.name ?? node.place.id,
+          address: node.place.translations[0]?.address ?? "",
+          area: node.place.areaSlug,
+          category: node.place.category,
+          lat: Number(node.place.lat),
+          lng: Number(node.place.lng),
+        },
+      };
+    }),
   };
 }
 
@@ -213,6 +230,12 @@ export async function updateCourseDraft(
       "Anchor must remain the first stop",
       400,
     );
+  if (input.nodes[0]?.dayIndex !== 1)
+    throw new AppError(
+      ErrorCode.INVALID_INPUT,
+      "Anchor must remain on day one",
+      400,
+    );
   const places = await selectRoutePlaces(
     input.nodes.map((node) => node.placeId),
     locale,
@@ -224,20 +247,58 @@ export async function updateCourseDraft(
       400,
     );
   const byId = new Map(places.map((place) => [place.id, place]));
-  const persistedNodes = input.nodes.map((node, index) => ({
-    id: randomUUID(),
-    placeId: node.placeId,
-    orderIndex: index,
-    tip: node.tip?.trim() || null,
-    distanceMeters:
-      index === 0
-        ? null
-        : distanceMeters(
-            byId.get(input.nodes[index - 1]!.placeId)!,
-            byId.get(node.placeId)!,
-          ),
-  }));
-  await replaceDraftNodes(existing.id, persistedNodes);
+  const orderedNodes = input.nodes
+    .map((node, inputIndex) => ({ ...node, inputIndex }))
+    .sort(
+      (first, second) =>
+        first.dayIndex - second.dayIndex ||
+        first.inputIndex - second.inputIndex,
+    );
+  const elapsedByDay = new Map<number, number>();
+  const persistedNodes = orderedNodes.map((node, index) => {
+    const previous = orderedNodes[index - 1];
+    const distance =
+      previous?.dayIndex === node.dayIndex
+        ? distanceMeters(byId.get(previous.placeId)!, byId.get(node.placeId)!)
+        : null;
+    const arrivalMinutes =
+      (elapsedByDay.get(node.dayIndex) ?? input.dayStartMinutes) +
+      (elapsedByDay.has(node.dayIndex) ? (walkingMinutes(distance) ?? 0) : 0);
+    elapsedByDay.set(node.dayIndex, arrivalMinutes + node.durationMinutes);
+    return {
+      id: randomUUID(),
+      placeId: node.placeId,
+      orderIndex: index,
+      dayIndex: node.dayIndex,
+      durationMinutes: node.durationMinutes,
+      tip: node.tip?.trim() || null,
+      distanceMeters: distance,
+    };
+  });
+  if (
+    [...elapsedByDay.values()].some((minutes) => minutes > input.dayEndMinutes)
+  )
+    throw new AppError(
+      ErrorCode.INVALID_INPUT,
+      "One or more days exceed the selected end time",
+      400,
+    );
+  const replaced = await replaceDraftNodes(
+    existing.id,
+    {
+      dayCount: input.dayCount,
+      dayStartMinutes: input.dayStartMinutes,
+      dayEndMinutes: input.dayEndMinutes,
+      targetStopCount: input.targetStopCount,
+    },
+    persistedNodes,
+  );
+  if (!replaced)
+    throw new AppError(
+      ErrorCode.INVALID_INPUT,
+      "Draft is no longer editable",
+      409,
+    );
   const updated = await selectDraftCourse(slug, actor, locale);
   if (!updated)
     throw new AppError(
@@ -271,24 +332,29 @@ export async function publishCourseDraft(
       "A published course requires at least two stops",
       400,
     );
+  for (let dayIndex = 1; dayIndex <= existing.dayCount; dayIndex += 1) {
+    if (!existing.nodes.some((node) => node.dayIndex === dayIndex))
+      throw new AppError(
+        ErrorCode.INVALID_INPUT,
+        "Every selected day requires at least one stop",
+        400,
+      );
+  }
   if (existing.nodes.some((node) => node.place.status !== "ACTIVE"))
     throw new AppError(
       ErrorCode.INVALID_INPUT,
       "A course contains an unavailable place",
       400,
     );
-  const walkingMinutes = existing.nodes.reduce(
-    (total, node) =>
-      total +
-      (node.distanceMeters === null
-        ? 0
-        : Math.max(
-            1,
-            Math.ceil(node.distanceMeters / WALKING_METERS_PER_MINUTE),
-          )),
+  const totalWalkingMinutes = existing.nodes.reduce(
+    (total, node) => total + (walkingMinutes(node.distanceMeters) ?? 0),
     0,
   );
-  const durationMinutes = existing.nodes.length * 60 + walkingMinutes;
+  const durationMinutes =
+    existing.nodes.reduce(
+      (total, node) => total + (node.durationMinutes ?? 60),
+      0,
+    ) + totalWalkingMinutes;
   const published = await publishDraftCourse(
     existing.id,
     {
@@ -319,46 +385,56 @@ function mapPublishedCourse(record: PublishedCourseRecord, locale: string) {
       ? record.couple.displayName
       : (record.creatorUser?.nickname ??
         (locale === "ko" ? "익명" : "Anonymous"));
+  const elapsedByDay = new Map<number, number>();
   return publicCourseSchema.parse({
     slug: record.slug,
     title: record.title,
     description: record.description,
     ownerName,
     durationMinutes: record.durationMinutes ?? record.nodes.length * 60,
+    dayCount: record.dayCount,
+    dayStartMinutes: record.dayStartMinutes,
+    dayEndMinutes: record.dayEndMinutes,
+    targetStopCount: record.targetStopCount,
     scrapCount: record.scrapCount,
     publishedAt: record.publishedAt?.toISOString(),
     tags: record.tags.map(({ tag }) =>
       locale === "ko" ? tag.labelKo : tag.labelEn,
     ),
-    nodes: record.nodes.map((node) => ({
-      id: node.id,
-      orderIndex: node.orderIndex,
-      tip: node.tip,
-      distanceMeters: node.distanceMeters,
-      walkMinutes:
-        node.distanceMeters === null
-          ? null
-          : Math.max(
-              1,
-              Math.ceil(node.distanceMeters / WALKING_METERS_PER_MINUTE),
-            ),
-      happening: node.place.happenings[0]
-        ? {
-            status: node.place.happenings[0].status,
-            startsAt: node.place.happenings[0].startsAt.toISOString(),
-            endsAt: node.place.happenings[0].endsAt.toISOString(),
-          }
-        : null,
-      place: {
-        id: node.place.id,
-        name: node.place.translations[0]?.name ?? node.place.id,
-        address: node.place.translations[0]?.address ?? "",
-        area: node.place.areaSlug,
-        category: node.place.category,
-        lat: Number(node.place.lat),
-        lng: Number(node.place.lng),
-      },
-    })),
+    nodes: record.nodes.map((node) => {
+      const walkMinutes = walkingMinutes(node.distanceMeters);
+      const arrivalMinutes =
+        (elapsedByDay.get(node.dayIndex) ?? record.dayStartMinutes) +
+        (elapsedByDay.has(node.dayIndex) ? (walkMinutes ?? 0) : 0);
+      const durationMinutes = node.durationMinutes ?? 60;
+      elapsedByDay.set(node.dayIndex, arrivalMinutes + durationMinutes);
+      return {
+        id: node.id,
+        orderIndex: node.orderIndex,
+        dayIndex: node.dayIndex,
+        durationMinutes,
+        arrivalMinutes,
+        tip: node.tip,
+        distanceMeters: node.distanceMeters,
+        walkMinutes,
+        happening: node.place.happenings[0]
+          ? {
+              status: node.place.happenings[0].status,
+              startsAt: node.place.happenings[0].startsAt.toISOString(),
+              endsAt: node.place.happenings[0].endsAt.toISOString(),
+            }
+          : null,
+        place: {
+          id: node.place.id,
+          name: node.place.translations[0]?.name ?? node.place.id,
+          address: node.place.translations[0]?.address ?? "",
+          area: node.place.areaSlug,
+          category: node.place.category,
+          lat: Number(node.place.lat),
+          lng: Number(node.place.lng),
+        },
+      };
+    }),
   });
 }
 

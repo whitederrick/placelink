@@ -27,8 +27,15 @@ export function PublishCourseScreen({
       draft.nodes.reduce((total, node) => total + (node.walkMinutes ?? 0), 0),
     [draft.nodes],
   );
-  const durationMinutes = draft.nodes.length * 60 + walkingMinutes;
-  const canPublish = draft.nodes.length >= 2 && title.trim().length >= 3;
+  const scheduledDurationMinutes =
+    draft.nodes.reduce((total, node) => total + node.durationMinutes, 0) +
+    walkingMinutes;
+  const hasEveryDay = Array.from(
+    { length: draft.dayCount },
+    (_, dayOffset) => dayOffset + 1,
+  ).every((dayIndex) => draft.nodes.some((node) => node.dayIndex === dayIndex));
+  const canPublish =
+    draft.nodes.length >= 2 && hasEveryDay && title.trim().length >= 3;
   const publish = () =>
     publishDraft.mutate(
       { title, description: description || null },
@@ -79,7 +86,10 @@ export function PublishCourseScreen({
           <div>
             <small>
               {draft.nodes[0]?.place.area?.toUpperCase() ?? "SEOUL"} ·{" "}
-              {draft.nodes.length} STOPS
+              {t("previewStats", {
+                days: draft.dayCount,
+                stops: draft.nodes.length,
+              })}
             </small>
             <strong>{title || defaultTitle}</strong>
             <p>{description || t("previewFallback")}</p>
@@ -88,8 +98,8 @@ export function PublishCourseScreen({
             <span>
               <Clock3 size={13} />
               {t("durationHours", {
-                hours: Math.floor(durationMinutes / 60),
-                minutes: durationMinutes % 60,
+                hours: Math.floor(scheduledDurationMinutes / 60),
+                minutes: scheduledDurationMinutes % 60,
               })}
             </span>
             <span>
@@ -97,6 +107,26 @@ export function PublishCourseScreen({
               {draft.nodes[0]?.place.name}
             </span>
           </footer>
+        </div>
+        <div className="publish-day-summary">
+          {Array.from({ length: draft.dayCount }, (_, dayOffset) => {
+            const dayIndex = dayOffset + 1;
+            const dayNodes = draft.nodes.filter(
+              (node) => node.dayIndex === dayIndex,
+            );
+            return (
+              <div key={dayIndex}>
+                <strong>{t("dayHeading", { day: dayIndex })}</strong>
+                <span>
+                  {t("dayPublishSummary", {
+                    count: dayNodes.length,
+                    start: `${String(Math.floor(draft.dayStartMinutes / 60)).padStart(2, "0")}:${String(draft.dayStartMinutes % 60).padStart(2, "0")}`,
+                    end: `${String(Math.floor(draft.dayEndMinutes / 60)).padStart(2, "0")}:${String(draft.dayEndMinutes % 60).padStart(2, "0")}`,
+                  })}
+                </span>
+              </div>
+            );
+          })}
         </div>
         <label className="publish-field">
           <span>
@@ -137,9 +167,11 @@ export function PublishCourseScreen({
             {t("publishPublicNotice")}
           </span>
         </div>
-        {draft.nodes.length < 2 ? (
+        {draft.nodes.length < 2 || !hasEveryDay ? (
           <p className="form-error" role="alert">
-            {t("publishMinStops")}
+            {draft.nodes.length < 2
+              ? t("publishMinStops")
+              : t("publishMissingDay")}
           </p>
         ) : null}
         {publishDraft.isError ? (
