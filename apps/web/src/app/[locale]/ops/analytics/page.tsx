@@ -52,6 +52,10 @@ export default async function AnalyticsOperationsPage({
         <span className="section-kicker">{t("kicker")}</span>
         <h1>{t("title")}</h1>
         <p>{t("subtitle", { days })}</p>
+        <div className="ingestion-nav">
+          <Link href={`/${locale}/studio/ingestions`}>{t("viewIngestions")}</Link>
+          <Link href={`/${locale}/studio/happenings`}>{t("viewCuration")}</Link>
+        </div>
         <nav className="chip-row" aria-label={t("rangeLabel")}>
           <Link className={days === 7 ? "selected" : ""} href="?days=7">
             {t("days", { days: 7 })}

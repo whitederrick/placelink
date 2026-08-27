@@ -9,6 +9,7 @@ export const authenticationProfileSchema = z.object({
   provider: authenticationProviderSchema,
   externalId: z.string().min(1).max(255),
   nickname: z.string().trim().min(1).max(50),
+  email: z.string().trim().toLowerCase().email().nullable(),
 });
 
 export type AuthenticationProfile = z.infer<typeof authenticationProfileSchema>;

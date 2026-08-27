@@ -16,6 +16,15 @@
     "loginPausedBody": "Account creation and login are paused until the service is ready for launch.",
     "backHome": "Back to home"
   },
+  "studioAccess": {
+    "kicker": "PLACE-LINK STUDIO",
+    "title": "Operations studio",
+    "body": "Sign in with a registered operator account.",
+    "forbidden": "The signed-in account does not have studio access.",
+    "unavailable": "No operator account has been registered yet.",
+    "signIn": "Operator sign in",
+    "backHome": "Back to home"
+  },
   "home": {
     "hero": {
       "morning": {
@@ -320,6 +329,8 @@
     "kicker": "INTERNAL OPERATIONS",
     "title": "Analytics event dashboard",
     "subtitle": "Collection health and usage for the last {days} days.",
+    "viewIngestions": "Review ingested data",
+    "viewCuration": "View home curation",
     "rangeLabel": "Date range",
     "days": "{days} days",
     "lastEvent": "Last event",

@@ -59,8 +59,8 @@ export default async function HappeningOperationsPage({
         <h1>{t("title")}</h1>
         <p>{t("subtitle")}</p>
         <div className="ingestion-nav">
-          <Link href={`/${locale}/ops/ingestions`}>{t("viewIngestions")}</Link>
-          <Link href={`/${locale}/ops/analytics`}>{t("viewAnalytics")}</Link>
+          <Link href={`/${locale}/studio/ingestions`}>{t("viewIngestions")}</Link>
+          <Link href={`/${locale}/studio/analytics`}>{t("viewAnalytics")}</Link>
         </div>
       </header>
 

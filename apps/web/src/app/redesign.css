@@ -1081,6 +1081,29 @@ textarea:focus-visible {
   margin: 0;
 }
 
+.studio-access-page {
+  display: grid;
+  min-height: calc(100dvh - 8rem);
+  place-items: center;
+}
+
+.studio-access-card {
+  display: flex;
+  width: min(100%, 34rem);
+  flex-direction: column;
+  gap: 1rem;
+  padding: clamp(1.5rem, 5vw, 3rem);
+  border: 1px solid var(--line);
+  border-radius: 1.5rem;
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.studio-access-card h1,
+.studio-access-card p {
+  margin: 0;
+}
+
 .analytics-heading h1 {
   font-size: clamp(34px, 6vw, 64px);
   line-height: 0.98;

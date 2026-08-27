@@ -2,13 +2,19 @@ import NextAuth, { type NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import Kakao from "next-auth/providers/kakao";
-import { ensureAuthenticatedUser, loadDevelopmentUser } from "@/features/auth";
+import {
+  ensureAuthenticatedUser,
+  isStudioOperatorEmail,
+  loadDevelopmentUser,
+} from "@/features/auth";
 import { webEnv } from "@/lib/env";
 
 const providers: NextAuthConfig["providers"] = [];
 const loginEnabled = webEnv.AUTH_LOGIN_ENABLED;
+const studioLoginEnabled = webEnv.STUDIO_OPERATOR_EMAILS.length > 0;
+const authenticationEnabled = loginEnabled || studioLoginEnabled;
 
-if (loginEnabled && webEnv.AUTH_KAKAO_ID && webEnv.AUTH_KAKAO_SECRET) {
+if (authenticationEnabled && webEnv.AUTH_KAKAO_ID && webEnv.AUTH_KAKAO_SECRET) {
   providers.push(
     Kakao({
       clientId: webEnv.AUTH_KAKAO_ID,
@@ -16,7 +22,11 @@ if (loginEnabled && webEnv.AUTH_KAKAO_ID && webEnv.AUTH_KAKAO_SECRET) {
     }),
   );
 }
-if (loginEnabled && webEnv.AUTH_GOOGLE_ID && webEnv.AUTH_GOOGLE_SECRET) {
+if (
+  authenticationEnabled &&
+  webEnv.AUTH_GOOGLE_ID &&
+  webEnv.AUTH_GOOGLE_SECRET
+) {
   providers.push(
     Google({
       clientId: webEnv.AUTH_GOOGLE_ID,
@@ -64,9 +74,14 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
   callbacks: {
     async signIn({ user, account }) {
-      if (!loginEnabled) return false;
       if (!account) return false;
-      if (account.provider.startsWith("development-user-")) return true;
+      if (account.provider.startsWith("development-user-")) return loginEnabled;
+      const email = user.email?.trim().toLowerCase() ?? null;
+      if (
+        !loginEnabled &&
+        !isStudioOperatorEmail(email, webEnv.STUDIO_OPERATOR_EMAILS)
+      )
+        return false;
       const provider =
         account.provider === "kakao"
           ? "KAKAO"
@@ -78,20 +93,26 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         provider,
         externalId: account.providerAccountId,
         nickname: user.name?.trim() || "place-link user",
+        email,
       });
       user.id = authenticatedUser.id;
       return authenticatedUser.status === "ACTIVE";
     },
     jwt({ token, user }) {
-      if (!loginEnabled) {
+      if (user?.id) token.userId = user.id;
+      if (user?.email) token.email = user.email.trim().toLowerCase();
+      const isStudioOperator = isStudioOperatorEmail(
+        typeof token.email === "string" ? token.email : null,
+        webEnv.STUDIO_OPERATOR_EMAILS,
+      );
+      if (!loginEnabled && !isStudioOperator) {
         delete token.userId;
         return token;
       }
-      if (user?.id) token.userId = user.id;
       return token;
     },
     session({ session, token }) {
-      if (loginEnabled && session.user && typeof token.userId === "string")
+      if (session.user && typeof token.userId === "string")
         session.user.id = token.userId;
       return session;
     },

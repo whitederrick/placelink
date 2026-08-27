@@ -94,8 +94,8 @@ export default async function IngestionOperationsPage({
         <h1>{t("title")}</h1>
         <p>{t("subtitle")}</p>
         <div className="ingestion-nav">
-          <Link href={`/${locale}/ops/happenings`}>{t("viewCuration")}</Link>
-          <Link href={`/${locale}/ops/analytics`}>{t("viewAnalytics")}</Link>
+          <Link href={`/${locale}/studio/happenings`}>{t("viewCuration")}</Link>
+          <Link href={`/${locale}/studio/analytics`}>{t("viewAnalytics")}</Link>
         </div>
       </header>
 

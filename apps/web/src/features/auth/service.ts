@@ -10,6 +10,7 @@ import {
   insertAuthenticatedUser,
   selectUserByIdentity,
   selectUserForActor,
+  updateAuthenticatedUserEmail,
 } from "./queries";
 import { resolveActorRole } from "./role";
 
@@ -19,7 +20,11 @@ export async function ensureAuthenticatedUser(input: AuthenticationProfile) {
     profile.provider,
     profile.externalId,
   );
-  if (existing) return existing.user;
+  if (existing) {
+    if (profile.email && existing.user.email !== profile.email)
+      return updateAuthenticatedUserEmail(existing.user.id, profile.email);
+    return existing.user;
+  }
   return insertAuthenticatedUser(profile);
 }
 
@@ -29,7 +34,12 @@ export async function loadHumanActor(userId: string): Promise<Actor | null> {
   return {
     id: user.id,
     type: "HUMAN",
-    role: resolveActorRole(user.id, webEnv.ADMIN_USER_IDS),
+    role: resolveActorRole(
+      user.id,
+      user.email,
+      webEnv.ADMIN_USER_IDS,
+      webEnv.STUDIO_OPERATOR_EMAILS,
+    ),
   };
 }
 

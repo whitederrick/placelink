@@ -28,6 +28,15 @@ const webEnvSchema = z.object({
         .map((id) => id.trim())
         .filter(Boolean),
     ),
+  STUDIO_OPERATOR_EMAILS: z
+    .string()
+    .default("")
+    .transform((value) =>
+      value
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean),
+    ),
   NODE_ENV: z
     .enum(["development", "test", "production"])
     .default("development"),
@@ -54,5 +63,6 @@ export const webEnv = webEnvSchema.parse({
     process.env.AUTH_LOGIN_ENABLED ??
     (process.env.NODE_ENV === "production" ? "false" : "true"),
   ADMIN_USER_IDS: process.env.ADMIN_USER_IDS,
+  STUDIO_OPERATOR_EMAILS: process.env.STUDIO_OPERATOR_EMAILS,
   NODE_ENV: process.env.NODE_ENV,
 });
