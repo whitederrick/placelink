@@ -9,6 +9,8 @@ import {
 } from "../../lib/adapters/schedules";
 import { webEnv } from "../../lib/env";
 import {
+  createIngestionRun,
+  failIngestionRun,
   mergeIngestionTransaction,
   rejectIngestionTransaction,
   stageIngestionBatch,
@@ -77,33 +79,48 @@ async function syncScheduleIngestions(
       : webEnv.CULTURE_PORTAL_SERVICE_KEY
         ? createCulturePortalScheduleProvider(webEnv.CULTURE_PORTAL_SERVICE_KEY)
         : null);
-  if (!scheduleProvider) {
-    throw new AppError(
-      ErrorCode.INTEGRATION_NOT_CONFIGURED,
-      `${providerName} integration is not configured`,
-      503,
+  const run = await createIngestionRun(actor, providerName, request, now);
+  try {
+    if (!scheduleProvider) {
+      throw new AppError(
+        ErrorCode.INTEGRATION_NOT_CONFIGURED,
+        `${providerName} integration is not configured`,
+        503,
+      );
+    }
+    const batch = await scheduleProvider.fetchBatch(request);
+    if (batch.provider !== providerName)
+      throw new AppError(
+        ErrorCode.INTEGRATION_FAILURE,
+        `${providerName} integration returned mismatched provenance`,
+        502,
+      );
+    const finishedAt = new Date();
+    const { inserted } = await stageIngestionBatch(
+      actor,
+      batch,
+      run.id,
+      now,
+      finishedAt,
     );
+    const selected = batch.records.length;
+    return ingestionSyncResponseSchema.parse({
+      data: {
+        provider: batch.provider,
+        fetched: batch.fetched,
+        selected,
+        inserted,
+        unchanged: selected - inserted,
+        totalAvailable: batch.totalAvailable,
+        fetchedAt: now.toISOString(),
+      },
+    });
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message.slice(0, 1_000) : "Unknown error";
+    await failIngestionRun(actor, run.id, message, new Date());
+    throw error;
   }
-  const batch = await scheduleProvider.fetchBatch(request);
-  if (batch.provider !== providerName)
-    throw new AppError(
-      ErrorCode.INTEGRATION_FAILURE,
-      `${providerName} integration returned mismatched provenance`,
-      502,
-    );
-  const { inserted } = await stageIngestionBatch(actor, batch, now);
-  const selected = batch.records.length;
-  return ingestionSyncResponseSchema.parse({
-    data: {
-      provider: batch.provider,
-      fetched: batch.fetched,
-      selected,
-      inserted,
-      unchanged: selected - inserted,
-      totalAvailable: batch.totalAvailable,
-      fetchedAt: now.toISOString(),
-    },
-  });
 }
 
 export function syncSeoulIngestions(

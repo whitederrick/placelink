@@ -25,6 +25,57 @@ function toJson(value: unknown) {
   return JSON.parse(JSON.stringify(value));
 }
 
+export async function createIngestionRun(
+  actor: Actor,
+  provider: "SEOUL_OPEN_DATA" | "CULTURE_PORTAL",
+  request: unknown,
+  startedAt: Date,
+) {
+  return getDatabase().ingestionRun.create({
+    data: {
+      provider,
+      status: "RUNNING",
+      trigger: actor.type === "AGENT" ? "SCHEDULED" : "MANUAL",
+      actorId: actor.id,
+      actorType: actor.type,
+      requestPayload: toJson(request),
+      startedAt,
+    },
+    select: { id: true },
+  });
+}
+
+export async function failIngestionRun(
+  actor: Actor,
+  runId: string,
+  errorMessage: string,
+  finishedAt: Date,
+) {
+  return getDatabase().$transaction(async (transaction) => {
+    const failed = await transaction.ingestionRun.updateMany({
+      where: { id: runId, status: "RUNNING" },
+      data: {
+        status: "FAILED",
+        errorMessage,
+        finishedAt,
+      },
+    });
+    if (failed.count !== 1) return false;
+    await transaction.auditLog.create({
+      data: {
+        actorId: actor.id,
+        actorType: actor.type,
+        action: "ingestion.run_failed",
+        targetType: "IngestionRun",
+        targetId: runId,
+        before: { status: "RUNNING" },
+        after: { status: "FAILED", errorMessage },
+      },
+    });
+    return true;
+  });
+}
+
 export async function selectIngestionsForReview(query: IngestionListQuery) {
   const records = await getDatabase().ingestionRecord.findMany({
     where: {
@@ -349,11 +400,14 @@ export async function rejectIngestionTransaction(
 export async function stageIngestionBatch(
   actor: Actor,
   batch: StageIngestionBatch,
+  runId: string,
   fetchedAt: Date,
+  finishedAt: Date,
 ) {
   return getDatabase().$transaction(async (transaction) => {
     const created = await transaction.ingestionRecord.createMany({
       data: batch.records.map((record) => ({
+        ingestionRunId: runId,
         provider: batch.provider,
         externalId: record.externalId,
         checksum: record.checksum,
@@ -366,20 +420,38 @@ export async function stageIngestionBatch(
       skipDuplicates: true,
     });
     const selected = batch.records.length;
+    const completed = await transaction.ingestionRun.updateMany({
+      where: { id: runId, status: "RUNNING" },
+      data: {
+        status: "SUCCEEDED",
+        totalAvailable: batch.totalAvailable,
+        fetched: batch.fetched,
+        selected,
+        inserted: created.count,
+        unchanged: selected - created.count,
+        errorMessage: null,
+        finishedAt,
+      },
+    });
+    if (completed.count !== 1)
+      throw new Error("Ingestion run was already finalized");
     await transaction.auditLog.create({
       data: {
         actorId: actor.id,
         actorType: actor.type,
-        action: "ingestion.synced",
-        targetType: "ExternalProvider",
-        targetId: batch.provider,
+        action: "ingestion.run_succeeded",
+        targetType: "IngestionRun",
+        targetId: runId,
         after: {
+          provider: batch.provider,
+          status: "SUCCEEDED",
           fetched: batch.fetched,
           selected,
           inserted: created.count,
           unchanged: selected - created.count,
           totalAvailable: batch.totalAvailable,
           fetchedAt: fetchedAt.toISOString(),
+          finishedAt: finishedAt.toISOString(),
         },
       },
     });

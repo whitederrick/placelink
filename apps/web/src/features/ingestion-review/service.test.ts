@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const queryMocks = vi.hoisted(() => ({
+  createIngestionRun: vi.fn(),
+  failIngestionRun: vi.fn(),
   selectIngestionsForReview: vi.fn(),
   selectIngestionForReview: vi.fn(),
   mergeIngestionTransaction: vi.fn(),
@@ -45,7 +47,11 @@ const normalized = {
 };
 
 describe("ingestion review", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    queryMocks.createIngestionRun.mockResolvedValue({ id: "run-1" });
+    queryMocks.failIngestionRun.mockResolvedValue(true);
+  });
 
   it("rejects non-admin callers", async () => {
     await expect(listIngestionsForReview(user)).rejects.toMatchObject({
@@ -181,16 +187,24 @@ describe("ingestion review", () => {
     expect(queryMocks.stageIngestionBatch).toHaveBeenCalledWith(
       admin,
       expect.objectContaining({ provider: "SEOUL_OPEN_DATA" }),
+      "run-1",
       now,
+      expect.any(Date),
     );
   });
 
-  it("reports missing provider configuration without attempting a write", async () => {
+  it("records missing provider configuration as a failed run", async () => {
     await expect(syncSeoulIngestions(admin, {})).rejects.toMatchObject({
       code: "INTEGRATION_NOT_CONFIGURED",
       status: 503,
     });
     expect(queryMocks.stageIngestionBatch).not.toHaveBeenCalled();
+    expect(queryMocks.failIngestionRun).toHaveBeenCalledWith(
+      admin,
+      "run-1",
+      "SEOUL_OPEN_DATA integration is not configured",
+      expect.any(Date),
+    );
   });
 
   it("adds a one-year date window when staging Culture Portal records", async () => {
