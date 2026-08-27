@@ -5,9 +5,10 @@ import { fileURLToPath } from "node:url";
 const webRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const workspaceRoot = resolve(webRoot, "../..");
 
-function run(command, args, cwd) {
+function run(command, args, cwd, env = process.env) {
   const result = spawnSync(command, args, {
     cwd,
+    env,
     stdio: "inherit",
   });
 
@@ -16,6 +17,16 @@ function run(command, args, cwd) {
 }
 
 if (process.env.VERCEL_ENV === "production") {
+  const migrationEnvironment = { ...process.env };
+  const databaseUrl = new URL(migrationEnvironment.DATABASE_URL);
+  if (
+    databaseUrl.hostname.endsWith(".pooler.supabase.com") &&
+    databaseUrl.port === "6543"
+  ) {
+    databaseUrl.port = "5432";
+    migrationEnvironment.DATABASE_URL = databaseUrl.toString();
+  }
+
   run(
     process.execPath,
     [
@@ -26,6 +37,7 @@ if (process.env.VERCEL_ENV === "production") {
       join(workspaceRoot, "packages/database/prisma.config.ts"),
     ],
     workspaceRoot,
+    migrationEnvironment,
   );
 }
 
