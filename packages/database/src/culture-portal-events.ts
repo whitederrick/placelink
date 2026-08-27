@@ -214,7 +214,7 @@ export async function fetchCulturePortalEvents({
     keyword: "",
     sortStdr: "1",
   });
-  const url = `https://apis.data.go.kr/B553457/nopenapi/rest/publicperformancedisplays/period?${params.toString()}&serviceKey=${encodedServiceKey(apiKey)}`;
+  const url = `https://apis.data.go.kr/B553457/cultureinfo/period2?${params.toString()}&serviceKey=${encodedServiceKey(apiKey)}`;
   const response = await fetcher(url, { signal: AbortSignal.timeout(10_000) });
   const body = await response.text();
   if (!response.ok) {

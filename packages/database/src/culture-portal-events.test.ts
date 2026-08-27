@@ -79,6 +79,7 @@ describe("Culture Portal event adapter", () => {
       }),
     ).resolves.toMatchObject({ totalCount: 1 });
     const requestedUrl = String(vi.mocked(fetcher).mock.calls[0]?.[0]);
+    expect(requestedUrl).toContain("/B553457/cultureinfo/period2?");
     expect(requestedUrl).toContain("from=20260827&to=20270827");
     expect(requestedUrl).toContain("serviceKey=encoded%2Bkey");
   });

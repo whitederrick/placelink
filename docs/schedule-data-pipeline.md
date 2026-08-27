@@ -62,11 +62,11 @@ CLI는 `packages/database/.env`에 설정하며 비밀값은 로컬/배포 환�
 `한눈에보는문화정보 조회서비스`의 기간별 목록이며, 나머지는 공급자 확장 시 검토한다.
 
 - 한눈에보는문화정보 조회서비스
-  - 기간별 목록: `/publicperformancedisplays/period` (현재 연동)
-  - 지역별 목록: `/publicperformancedisplays/area`
-  - 분야별 목록: `/publicperformancedisplays/realm`
-  - 상세정보: `/publicperformancedisplays/detail?seq={공연/전시일련번호}`
-  - 문화캘린더: `/publicperformancedisplays/livelihood`
+  - 기간별 목록: `/cultureinfo/period2` (현재 연동)
+  - 지역별 목록: `/cultureinfo/area2`
+  - 분야별 목록: `/cultureinfo/realm2`
+  - 상세정보: `/cultureinfo/detail2`
+  - 문화캘린더: `/cultureinfo/livelihood2`
 - 문화시설 조회서비스
   - 공연장: `/cultureartspaces/performingplace`
   - 미술관: `/cultureartspaces/museum`
@@ -79,9 +79,11 @@ CLI는 `packages/database/.env`에 설정하며 비밀값은 로컬/배포 환�
   - 할인 목록: `/ticketdiscounts/list`
   - 할인 상세: `/ticketdiscounts/detail`
 
-공통 Base URL은 `https://apis.data.go.kr/B553457/nopenapi/rest`다. 신청은 개별
-오퍼레이션이 아니라 조회서비스 단위로 하며, 실제 활용 전 각 서비스의 승인 범위와
-응답 필드를 확인한다.
+한눈에보는문화정보 조회서비스의 현재 Base URL은
+`https://apis.data.go.kr/B553457/cultureinfo`다. 문화포털 일반 사용가이드에 남아 있는
+`/nopenapi/rest/publicperformancedisplays/*` 주소는 실제 승인 상세화면의 오류 12 응답으로
+폐기된 것을 확인했다. 신청은 개별 오퍼레이션이 아니라 조회서비스 단위로 하며, 실제
+활용 전 각 서비스의 승인 범위와 응답 필드를 확인한다.
 
 ## 운영자 검수
 
