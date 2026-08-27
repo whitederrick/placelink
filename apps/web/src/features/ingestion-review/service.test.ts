@@ -5,10 +5,16 @@ const queryMocks = vi.hoisted(() => ({
   selectIngestionForReview: vi.fn(),
   mergeIngestionTransaction: vi.fn(),
   rejectIngestionTransaction: vi.fn(),
+  stageIngestionBatch: vi.fn(),
 }));
 vi.mock("./queries", () => queryMocks);
+vi.mock("../../lib/env", () => ({ webEnv: {} }));
 
-import { listIngestionsForReview, reviewIngestion } from "./service";
+import {
+  listIngestionsForReview,
+  reviewIngestion,
+  syncSeoulIngestions,
+} from "./service";
 
 const admin = { id: "admin-1", type: "HUMAN" as const, role: "ADMIN" as const };
 const user = { id: "user-1", type: "HUMAN" as const, role: "USER" as const };
@@ -126,5 +132,63 @@ describe("ingestion review", () => {
     ).resolves.toEqual({
       data: { id: "ingestion-1", status: "REJECTED" },
     });
+  });
+
+  it("stages a bounded provider batch and reports duplicate records", async () => {
+    const provider = {
+      fetchBatch: vi.fn().mockResolvedValue({
+        provider: "SEOUL_OPEN_DATA" as const,
+        totalAvailable: 300,
+        fetched: 100,
+        records: [
+          {
+            externalId: normalized.externalId,
+            checksum: "checksum-1",
+            sourceUrl: normalized.officialUrl,
+            rawPayload: { TITLE: normalized.title },
+            normalizedPayload: normalized,
+          },
+        ],
+      }),
+    };
+    queryMocks.stageIngestionBatch.mockResolvedValue({ inserted: 0 });
+    const now = new Date("2026-08-27T03:00:00.000Z");
+
+    await expect(
+      syncSeoulIngestions(
+        admin,
+        { start: 1, end: 100, from: "2026-08-27" },
+        provider,
+        now,
+      ),
+    ).resolves.toEqual({
+      data: {
+        provider: "SEOUL_OPEN_DATA",
+        fetched: 100,
+        selected: 1,
+        inserted: 0,
+        unchanged: 1,
+        totalAvailable: 300,
+        fetchedAt: now.toISOString(),
+      },
+    });
+    expect(provider.fetchBatch).toHaveBeenCalledWith({
+      start: 1,
+      end: 100,
+      from: "2026-08-27",
+    });
+    expect(queryMocks.stageIngestionBatch).toHaveBeenCalledWith(
+      admin,
+      expect.objectContaining({ provider: "SEOUL_OPEN_DATA" }),
+      now,
+    );
+  });
+
+  it("reports missing provider configuration without attempting a write", async () => {
+    await expect(syncSeoulIngestions(admin, {})).rejects.toMatchObject({
+      code: "INTEGRATION_NOT_CONFIGURED",
+      status: 503,
+    });
+    expect(queryMocks.stageIngestionBatch).not.toHaveBeenCalled();
   });
 });

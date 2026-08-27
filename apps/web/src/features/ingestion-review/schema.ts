@@ -69,6 +69,41 @@ export const ingestionReviewRequestSchema = z.discriminatedUnion("decision", [
     .strict(),
 ]);
 
+const scheduleDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+export const ingestionSyncRequestSchema = z
+  .object({
+    start: z.coerce.number().int().min(1).default(1),
+    end: z.coerce.number().int().min(1).max(1_000).default(100),
+    from: scheduleDateSchema.optional(),
+    to: scheduleDateSchema.optional(),
+  })
+  .strict()
+  .refine((value) => value.end >= value.start, {
+    message: "end must be greater than or equal to start",
+    path: ["end"],
+  })
+  .refine((value) => value.end - value.start + 1 <= 1_000, {
+    message: "range cannot exceed 1,000 records",
+    path: ["end"],
+  })
+  .refine((value) => !value.from || !value.to || value.from <= value.to, {
+    message: "to must be on or after from",
+    path: ["to"],
+  });
+
+export const ingestionSyncResponseSchema = z.object({
+  data: z.object({
+    provider: z.literal("SEOUL_OPEN_DATA"),
+    fetched: z.number().int().nonnegative(),
+    selected: z.number().int().nonnegative(),
+    inserted: z.number().int().nonnegative(),
+    unchanged: z.number().int().nonnegative(),
+    totalAvailable: z.number().int().nonnegative(),
+    fetchedAt: z.string().datetime(),
+  }),
+});
+
 export const ingestionReviewEntrySchema = z.object({
   id: z.string().min(1),
   provider: z.enum(INGESTION_PROVIDERS),
@@ -104,6 +139,7 @@ export const ingestionReviewResponseSchema = z.object({
 });
 
 export type IngestionListQuery = z.infer<typeof ingestionListQuerySchema>;
+export type IngestionSyncRequest = z.infer<typeof ingestionSyncRequestSchema>;
 export type IngestionReviewRequest = z.infer<
   typeof ingestionReviewRequestSchema
 >;

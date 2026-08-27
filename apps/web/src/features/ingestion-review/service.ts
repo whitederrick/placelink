@@ -3,8 +3,14 @@ import { normalizedCulturalEventSchema } from "@placelink/database";
 import type { Actor } from "../../lib/auth/actor";
 import { AppError, ErrorCode } from "../../lib/errors";
 import {
+  createSeoulScheduleProvider,
+  type ScheduleIngestionProvider,
+} from "../../lib/adapters/schedules";
+import { webEnv } from "../../lib/env";
+import {
   mergeIngestionTransaction,
   rejectIngestionTransaction,
+  stageIngestionBatch,
   selectIngestionForReview,
   selectIngestionsForReview,
 } from "./queries";
@@ -13,12 +19,50 @@ import {
   ingestionListResponseSchema,
   ingestionReviewRequestSchema,
   ingestionReviewResponseSchema,
+  ingestionSyncRequestSchema,
+  ingestionSyncResponseSchema,
   type IngestionReviewRequest,
 } from "./schema";
 
 function assertAdmin(actor: Actor) {
   if (actor.role !== "ADMIN")
     throw new AppError(ErrorCode.FORBIDDEN, "Admin permission required", 403);
+}
+
+export async function syncSeoulIngestions(
+  actor: Actor,
+  rawInput: unknown,
+  provider?: ScheduleIngestionProvider,
+  now = new Date(),
+) {
+  assertAdmin(actor);
+  const input = ingestionSyncRequestSchema.parse(rawInput);
+  const scheduleProvider =
+    provider ??
+    (webEnv.SEOUL_OPEN_DATA_API_KEY
+      ? createSeoulScheduleProvider(webEnv.SEOUL_OPEN_DATA_API_KEY)
+      : null);
+  if (!scheduleProvider) {
+    throw new AppError(
+      ErrorCode.INTEGRATION_NOT_CONFIGURED,
+      "Seoul Open Data integration is not configured",
+      503,
+    );
+  }
+  const batch = await scheduleProvider.fetchBatch(input);
+  const { inserted } = await stageIngestionBatch(actor, batch, now);
+  const selected = batch.records.length;
+  return ingestionSyncResponseSchema.parse({
+    data: {
+      provider: batch.provider,
+      fetched: batch.fetched,
+      selected,
+      inserted,
+      unchanged: selected - inserted,
+      totalAvailable: batch.totalAvailable,
+      fetchedAt: now.toISOString(),
+    },
+  });
 }
 
 function venueExternalId(

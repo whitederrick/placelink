@@ -5,6 +5,11 @@ export {
   PLACE_KINDS,
   ingestionListQuerySchema,
   ingestionReviewRequestSchema,
+  ingestionSyncRequestSchema,
 } from "./schema";
-export { listIngestionsForReview, reviewIngestion } from "./service";
+export {
+  listIngestionsForReview,
+  reviewIngestion,
+  syncSeoulIngestions,
+} from "./service";
 export type { IngestionReviewEntry } from "./schema";

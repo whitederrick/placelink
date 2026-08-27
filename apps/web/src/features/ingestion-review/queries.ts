@@ -8,6 +8,23 @@ import {
 import type { Actor } from "../../lib/auth/actor";
 import type { IngestionListQuery } from "./schema";
 
+interface StageIngestionBatch {
+  provider: "SEOUL_OPEN_DATA";
+  totalAvailable: number;
+  fetched: number;
+  records: Array<{
+    externalId: string;
+    checksum: string;
+    sourceUrl: string | null;
+    rawPayload: unknown;
+    normalizedPayload: unknown;
+  }>;
+}
+
+function toJson(value: unknown) {
+  return JSON.parse(JSON.stringify(value));
+}
+
 export async function selectIngestionsForReview(query: IngestionListQuery) {
   const records = await getDatabase().ingestionRecord.findMany({
     where: {
@@ -325,5 +342,46 @@ export async function rejectIngestionTransaction(
       },
     });
     return true;
+  });
+}
+
+export async function stageIngestionBatch(
+  actor: Actor,
+  batch: StageIngestionBatch,
+  fetchedAt: Date,
+) {
+  return getDatabase().$transaction(async (transaction) => {
+    const created = await transaction.ingestionRecord.createMany({
+      data: batch.records.map((record) => ({
+        provider: batch.provider,
+        externalId: record.externalId,
+        checksum: record.checksum,
+        status: "NORMALIZED",
+        sourceUrl: record.sourceUrl,
+        rawPayload: toJson(record.rawPayload),
+        normalizedPayload: toJson(record.normalizedPayload),
+        fetchedAt,
+      })),
+      skipDuplicates: true,
+    });
+    const selected = batch.records.length;
+    await transaction.auditLog.create({
+      data: {
+        actorId: actor.id,
+        actorType: actor.type,
+        action: "ingestion.synced",
+        targetType: "ExternalProvider",
+        targetId: batch.provider,
+        after: {
+          fetched: batch.fetched,
+          selected,
+          inserted: created.count,
+          unchanged: selected - created.count,
+          totalAvailable: batch.totalAvailable,
+          fetchedAt: fetchedAt.toISOString(),
+        },
+      },
+    });
+    return { inserted: created.count };
   });
 }

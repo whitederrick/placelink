@@ -9,6 +9,7 @@ import {
   listIngestionsForReview,
 } from "@/features/ingestion-review";
 import { IngestionReviewPanel } from "@/features/ingestion-review/components/IngestionReviewPanel";
+import { IngestionSyncControl } from "@/features/ingestion-review/components/IngestionSyncControl";
 import { loadHumanActor } from "@/features/auth";
 import { isLocale } from "@/i18n/config";
 
@@ -26,6 +27,15 @@ function cursorHref(current: URLSearchParams, cursor: string) {
   const next = new URLSearchParams(current);
   next.set("cursor", cursor);
   return `?${next.toString()}`;
+}
+
+function seoulDate(now: Date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
 }
 
 export default async function IngestionOperationsPage({
@@ -88,6 +98,8 @@ export default async function IngestionOperationsPage({
           <Link href={`/${locale}/ops/analytics`}>{t("viewAnalytics")}</Link>
         </div>
       </header>
+
+      <IngestionSyncControl fromDate={seoulDate(new Date())} />
 
       <nav className="ingestion-filters" aria-label={t("filterLabel")}>
         <div className="chip-row">

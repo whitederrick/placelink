@@ -9,6 +9,7 @@ const webEnvSchema = z.object({
   NEXT_PUBLIC_KAKAO_MAP_APP_KEY: z.string().min(1).optional(),
   NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: z.string().min(1).optional(),
   KMA_SERVICE_KEY: z.string().min(1).optional(),
+  SEOUL_OPEN_DATA_API_KEY: z.string().min(1).optional(),
   AUTH_SECRET: z.string().min(32).optional(),
   AUTH_KAKAO_ID: z.string().min(1).optional(),
   AUTH_KAKAO_SECRET: z.string().min(1).optional(),
@@ -40,6 +41,8 @@ export const webEnv = webEnvSchema.parse({
   NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || undefined,
   KMA_SERVICE_KEY: process.env.KMA_SERVICE_KEY || undefined,
+  SEOUL_OPEN_DATA_API_KEY:
+    process.env.SEOUL_OPEN_DATA_API_KEY || undefined,
   AUTH_SECRET: process.env.AUTH_SECRET || undefined,
   AUTH_KAKAO_ID: process.env.AUTH_KAKAO_ID || undefined,
   AUTH_KAKAO_SECRET: process.env.AUTH_KAKAO_SECRET || undefined,

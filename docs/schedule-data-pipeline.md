@@ -51,7 +51,8 @@ pnpm db:sync:cultural -- --end=100 --from=2026-08-27
 pnpm db:sync:cultural -- --stage --end=100 --from=2026-08-27
 ```
 
-`SEOUL_OPEN_DATA_API_KEY`가 필요하다. 비밀값은 로컬/배포 환경 변수로만 관리한다.
+`SEOUL_OPEN_DATA_API_KEY`가 필요하다. 웹 운영 화면은 `apps/web/.env.local`, CLI는
+`packages/database/.env`에 설정하며 비밀값은 로컬/배포 환경 변수로만 관리한다.
 
 ## 운영자 검수
 
@@ -64,6 +65,9 @@ pnpm db:sync:cultural -- --stage --end=100 --from=2026-08-27
   운영시간은 `scheduleText` 원문과 공식 링크를 유지한다.
 - 운영 API는 `GET /api/v1/admin/ingestions`와
   `PATCH /api/v1/admin/ingestions/{id}/review`이며 관리자 인증이 필요하다.
+- 운영자는 검수 화면의 수동 가져오기 또는 `POST /api/v1/admin/ingestions/sync`로
+  서울시 최신 데이터를 멱등 적재한다. 실행 결과도 `ingestion.synced` 감사 로그로
+  남긴다. 실제 데이터를 충분히 검수한 뒤 동일 서비스를 cron으로 승격한다.
 
 ## 공급자 도입 순서
 
