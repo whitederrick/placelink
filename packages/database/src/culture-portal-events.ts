@@ -48,6 +48,28 @@ const culturePortalResponseSchema = z.object({
   }),
 });
 
+const standardItemsSchema = z.preprocess(
+  (value) => (value === "" ? undefined : value),
+  z
+    .object({
+      item: eventListSchema,
+    })
+    .optional(),
+);
+
+const standardCulturePortalResponseSchema = z.object({
+  response: z.object({
+    header: z.object({
+      resultCode: stringValueSchema,
+      resultMsg: stringValueSchema.optional(),
+    }),
+    body: z.object({
+      totalCount: stringValueSchema.transform(Number),
+      items: standardItemsSchema,
+    }),
+  }),
+});
+
 const culturePortalErrorSchema = z.object({
   OpenAPI_ServiceResponse: z.object({
     cmmMsgHeader: z.object({
@@ -160,20 +182,38 @@ export function parseCulturePortalEventsXml(xml: string) {
       `Culture Portal rejected the request (${header.returnReasonCode}: ${header.returnAuthMsg ?? header.errMsg ?? "unknown error"})`,
     );
   }
-  const parsed = culturePortalResponseSchema.parse(raw);
-  const header = parsed.response.comMsgHeader;
-  if (header && header.returnReasonCode !== "00")
+  const legacy = culturePortalResponseSchema.safeParse(raw);
+  if (legacy.success) {
+    const header = legacy.data.response.comMsgHeader;
+    if (header && header.returnReasonCode !== "00")
+      throw new Error(
+        `Culture Portal rejected the request (${header.returnReasonCode}: ${header.returnAuthMsg ?? header.errMsg ?? "unknown error"})`,
+      );
+    if (
+      !Number.isInteger(legacy.data.response.msgBody.totalCount) ||
+      legacy.data.response.msgBody.totalCount < 0
+    )
+      throw new Error("Culture Portal returned an invalid total count");
+    return {
+      totalCount: legacy.data.response.msgBody.totalCount,
+      events: legacy.data.response.msgBody.perforList,
+    };
+  }
+
+  const current = standardCulturePortalResponseSchema.parse(raw);
+  const header = current.response.header;
+  if (!['0', '00'].includes(header.resultCode))
     throw new Error(
-      `Culture Portal rejected the request (${header.returnReasonCode}: ${header.returnAuthMsg ?? header.errMsg ?? "unknown error"})`,
+      `Culture Portal rejected the request (${header.resultCode}: ${header.resultMsg ?? "unknown error"})`,
     );
   if (
-    !Number.isInteger(parsed.response.msgBody.totalCount) ||
-    parsed.response.msgBody.totalCount < 0
+    !Number.isInteger(current.response.body.totalCount) ||
+    current.response.body.totalCount < 0
   )
     throw new Error("Culture Portal returned an invalid total count");
   return {
-    totalCount: parsed.response.msgBody.totalCount,
-    events: parsed.response.msgBody.perforList,
+    totalCount: current.response.body.totalCount,
+    events: current.response.body.items?.item ?? [],
   };
 }
 

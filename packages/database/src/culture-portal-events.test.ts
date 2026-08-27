@@ -20,9 +20,30 @@ const successXml = `<?xml version="1.0" encoding="UTF-8"?>
   </msgBody>
 </response>`;
 
+const currentSuccessXml = `<?xml version="1.0" encoding="UTF-8"?>
+<response>
+  <header><resultCode>00</resultCode><resultMsg>NORMAL SERVICE.</resultMsg></header>
+  <body>
+    <items><item>
+      <seq>394040</seq><title>다시 보는 제헌절</title>
+      <startDate>20260716</startDate><endDate>20261012</endDate>
+      <place>대한민국역사박물관</place><realmName>전시</realmName><area>서울</area>
+      <thumbnail></thumbnail><gpsX>126.9789</gpsX><gpsY>37.5738</gpsY>
+    </item></items>
+    <numOfRows>10</numOfRows><pageNo>1</pageNo><totalCount>1</totalCount>
+  </body>
+</response>`;
+
 describe("Culture Portal event adapter", () => {
   it("parses a singleton XML list and preserves its total count", () => {
     expect(parseCulturePortalEventsXml(successXml)).toMatchObject({
+      totalCount: 1,
+      events: [{ seq: "394040", title: "다시 보는 제헌절" }],
+    });
+  });
+
+  it("parses the current public-data standard XML envelope", () => {
+    expect(parseCulturePortalEventsXml(currentSuccessXml)).toMatchObject({
       totalCount: 1,
       events: [{ seq: "394040", title: "다시 보는 제헌절" }],
     });
