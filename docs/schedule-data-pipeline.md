@@ -56,6 +56,33 @@ pnpm db:sync:cultural -- --stage --end=100 --from=2026-08-27
 `CULTURE_PORTAL_SERVICE_KEY`가 필요하다. 웹 운영 화면은 `apps/web/.env.local`,
 CLI는 `packages/database/.env`에 설정하며 비밀값은 로컬/배포 환경 변수로만 관리한다.
 
+## 문화포털 API 참고 목록
+
+문화포털 사용가이드에서 확인한 후보 API를 다음과 같이 기록한다. 현재 연동 범위는
+`한눈에보는문화정보 조회서비스`의 기간별 목록이며, 나머지는 공급자 확장 시 검토한다.
+
+- 한눈에보는문화정보 조회서비스
+  - 기간별 목록: `/publicperformancedisplays/period` (현재 연동)
+  - 지역별 목록: `/publicperformancedisplays/area`
+  - 분야별 목록: `/publicperformancedisplays/realm`
+  - 상세정보: `/publicperformancedisplays/detail?seq={공연/전시일련번호}`
+  - 문화캘린더: `/publicperformancedisplays/livelihood`
+- 문화시설 조회서비스
+  - 공연장: `/cultureartspaces/performingplace`
+  - 미술관: `/cultureartspaces/museum`
+  - 문화·복지 시군구회관: `/cultureartspaces/hall`
+  - 도서관: `/cultureartspaces/library`
+  - 공간 상세정보: `/cultureartspaces/detail?seq={공간번호}`
+  - 박물관 목록은 사용가이드 화면에 `/publicperformancedisplays/realm`으로 표기되어
+    있어 오기 가능성이 있다. 실제 연동 전 개발가이드와 응답을 다시 확인한다.
+- 문화릴레이티켓할인 조회서비스
+  - 할인 목록: `/ticketdiscounts/list`
+  - 할인 상세: `/ticketdiscounts/detail`
+
+공통 Base URL은 `https://apis.data.go.kr/B553457/nopenapi/rest`다. 신청은 개별
+오퍼레이션이 아니라 조회서비스 단위로 하며, 실제 활용 전 각 서비스의 승인 범위와
+응답 필드를 확인한다.
+
 ## 운영자 검수
 
 - `/ko/studio/ingestions`에서 공급자, 행사 유형, 운영 주체, 처리 상태별로 확인한다.
