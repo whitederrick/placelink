@@ -50,6 +50,23 @@ describe("Culture Portal event adapter", () => {
     );
   });
 
+  it("surfaces official errors contained in an HTTP error response", async () => {
+    const xml = `<OpenAPI_ServiceResponse><cmmMsgHeader><errMsg>SERVICE ERROR</errMsg><returnAuthMsg>SERVICE_ACCESS_DENIED_ERROR</returnAuthMsg><returnReasonCode>20</returnReasonCode></cmmMsgHeader></OpenAPI_ServiceResponse>`;
+    const fetcher: typeof fetch = vi.fn(
+      async () => new Response(xml, { status: 400 }),
+    );
+    await expect(
+      fetchCulturePortalEvents({
+        apiKey: "key",
+        from: "2026-08-27",
+        to: "2027-08-27",
+        fetcher,
+      }),
+    ).rejects.toThrow(
+      "Culture Portal rejected the request (20: SERVICE_ACCESS_DENIED_ERROR)",
+    );
+  });
+
   it("requests the official period endpoint with bounded paging", async () => {
     const fetcher: typeof fetch = vi.fn(async () => new Response(successXml));
     await expect(

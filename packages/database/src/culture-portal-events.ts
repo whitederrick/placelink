@@ -216,7 +216,18 @@ export async function fetchCulturePortalEvents({
   });
   const url = `https://apis.data.go.kr/B553457/nopenapi/rest/publicperformancedisplays/period?${params.toString()}&serviceKey=${encodedServiceKey(apiKey)}`;
   const response = await fetcher(url, { signal: AbortSignal.timeout(10_000) });
-  if (!response.ok)
+  const body = await response.text();
+  if (!response.ok) {
+    try {
+      parseCulturePortalEventsXml(body);
+    } catch (error: unknown) {
+      if (
+        error instanceof Error &&
+        error.message.startsWith("Culture Portal rejected the request")
+      )
+        throw error;
+    }
     throw new Error(`Culture Portal request failed (${response.status})`);
-  return parseCulturePortalEventsXml(await response.text());
+  }
+  return parseCulturePortalEventsXml(body);
 }
