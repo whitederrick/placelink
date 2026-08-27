@@ -68,4 +68,35 @@ describe("Culture Portal schedule provider", () => {
       rows: 100,
     });
   });
+
+  it("paginates requests without exceeding the provider page-size limit", async () => {
+    databaseMocks.fetchCulturePortalEvents
+      .mockResolvedValueOnce({ totalCount: 250, events: Array(100).fill({}) })
+      .mockResolvedValueOnce({ totalCount: 250, events: Array(100).fill({}) })
+      .mockResolvedValueOnce({ totalCount: 250, events: Array(50).fill({}) });
+    databaseMocks.normalizeCulturePortalEvent.mockReturnValue({
+      provider: "CULTURE_PORTAL",
+      externalId: "event-id",
+      officialUrl: "https://www.culture.go.kr/event/event-id",
+    });
+
+    const provider = createCulturePortalScheduleProvider("service-key");
+    const result = await provider.fetchBatch({
+      start: 1,
+      end: 250,
+      from: "2026-08-27",
+      to: "2027-08-27",
+    });
+
+    expect(databaseMocks.fetchCulturePortalEvents).toHaveBeenCalledTimes(3);
+    expect(databaseMocks.fetchCulturePortalEvents).toHaveBeenLastCalledWith({
+      apiKey: "service-key",
+      from: "2026-08-27",
+      to: "2027-08-27",
+      page: 3,
+      rows: 100,
+    });
+    expect(result).toMatchObject({ totalAvailable: 250, fetched: 250 });
+    expect(result.records).toHaveLength(250);
+  });
 });

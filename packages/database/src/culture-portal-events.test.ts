@@ -65,4 +65,15 @@ describe("Culture Portal event adapter", () => {
     expect(requestedUrl).toContain("from=20260827&to=20270827");
     expect(requestedUrl).toContain("serviceKey=encoded%2Bkey");
   });
+
+  it("rejects page sizes above the provider limit", async () => {
+    await expect(
+      fetchCulturePortalEvents({
+        apiKey: "key",
+        from: "2026-08-27",
+        to: "2027-08-27",
+        rows: 101,
+      }),
+    ).rejects.toThrow("Culture Portal rows must contain 1 to 100 records");
+  });
 });

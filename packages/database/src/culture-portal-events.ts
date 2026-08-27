@@ -198,8 +198,8 @@ export async function fetchCulturePortalEvents({
 }) {
   if (!Number.isInteger(page) || page < 1)
     throw new Error("Culture Portal page must be a positive integer");
-  if (!Number.isInteger(rows) || rows < 1 || rows > 1_000)
-    throw new Error("Culture Portal rows must contain 1 to 1,000 records");
+  if (!Number.isInteger(rows) || rows < 1 || rows > 100)
+    throw new Error("Culture Portal rows must contain 1 to 100 records");
   const date = (value: string) => value.replaceAll("-", "");
   const params = new URLSearchParams({
     from: date(from),
