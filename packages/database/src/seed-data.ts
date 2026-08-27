@@ -13,6 +13,21 @@ export interface SeedPlace {
   lng: number;
 }
 
+export function placeKindForCategory(category: string) {
+  switch (category) {
+    case "CAFE":
+    case "RESTAURANT":
+    case "BAR":
+    case "SHOP":
+    case "ACTIVITY":
+      return category;
+    case "EXHIBITION":
+      return "GALLERY";
+    default:
+      return "OTHER";
+  }
+}
+
 const MILLISECONDS_PER_DAY = 86_400_000;
 
 export function createSeedHappeningWindow(now: Date) {

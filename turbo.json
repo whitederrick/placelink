@@ -10,7 +10,8 @@
     "KAKAO_LOCAL_REST_API_KEY",
     "LOG_LEVEL",
     "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY",
-    "NEXT_PUBLIC_KAKAO_MAP_APP_KEY"
+    "NEXT_PUBLIC_KAKAO_MAP_APP_KEY",
+    "SEOUL_OPEN_DATA_API_KEY"
   ],
   "tasks": {
     "dev": { "cache": false, "persistent": true },

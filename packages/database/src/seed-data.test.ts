@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { createSeedHappeningWindow, createSeedPlaces } from "./seed-data";
+import {
+  createSeedHappeningWindow,
+  createSeedPlaces,
+  placeKindForCategory,
+} from "./seed-data";
 
 describe("createSeedPlaces", () => {
   it("creates the reproducible thirty-place development catalog", () => {
@@ -7,6 +11,12 @@ describe("createSeedPlaces", () => {
     expect(places).toHaveLength(30);
     expect(new Set(places.map((place) => place.id)).size).toBe(30);
     expect(new Set(places.map((place) => place.neighborhood)).size).toBe(5);
+  });
+
+  it("maps legacy categories to managed place kinds", () => {
+    expect(placeKindForCategory("CAFE")).toBe("CAFE");
+    expect(placeKindForCategory("EXHIBITION")).toBe("GALLERY");
+    expect(placeKindForCategory("UNRECOGNIZED")).toBe("OTHER");
   });
 });
 

@@ -8,6 +8,7 @@ import {
   type KakaoPlaceDocument,
   type KakaoPlaceSelectionPolicy,
 } from "../src/kakao-local";
+import { placeKindForCategory } from "../src/seed-data";
 
 config({ path: "../../apps/web/.env.local" });
 config({ path: "../../apps/web/.env" });
@@ -180,6 +181,7 @@ async function upsertPlace(
         data: {
           status: "ACTIVE",
           category,
+          kind: placeKindForCategory(category),
           areaSlug: area.slug,
           lat: Number(document.y),
           lng: Number(document.x),
@@ -195,6 +197,7 @@ async function upsertPlace(
           sourceType: "PUBLIC_API",
           status: "ACTIVE",
           category,
+          kind: placeKindForCategory(category),
           areaSlug: area.slug,
           lat: Number(document.y),
           lng: Number(document.x),

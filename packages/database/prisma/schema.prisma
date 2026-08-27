@@ -36,18 +36,67 @@ enum PlaceStatus {
   MERGED
 }
 
+enum PlaceKind {
+  CAFE
+  RESTAURANT
+  BAR
+  SHOP
+  CINEMA
+  MUSEUM
+  GALLERY
+  PARK
+  ACTIVITY
+  CULTURAL_VENUE
+  OTHER
+}
+
+enum VenueOperatorType {
+  PUBLIC
+  PRIVATE
+  NONPROFIT
+  UNKNOWN
+}
+
 enum ExternalProvider {
   KAKAO
   NAVER
   GOOGLE
   TOUR_API
   SEOUL_OPEN_DATA
+  CULTURE_PORTAL
+  KOPIS
+  KOBIS
+  OFFICIAL_SITE
 }
 
 enum HappeningStatus {
   UPCOMING
   ACTIVE
   ENDED
+}
+
+enum HappeningKind {
+  EXHIBITION
+  POPUP
+  FESTIVAL
+  PERFORMANCE
+  SCREENING
+  WORKSHOP
+  EVENT
+  OTHER
+}
+
+enum IngestionStatus {
+  STAGED
+  NORMALIZED
+  MERGED
+  FAILED
+}
+
+enum ScheduleOccurrenceStatus {
+  SCHEDULED
+  CANCELLED
+  SOLD_OUT
 }
 
 enum CourseStatus {
@@ -152,25 +201,31 @@ model CoupleInvite {
 }
 
 model Place {
-  id           String                                @id @default(cuid())
-  sourceType   SourceType                            @map("source_type")
-  status       PlaceStatus                           @default(ACTIVE)
-  category     String
-  areaSlug     String?                               @map("area_slug")
-  lat          Decimal                               @db.Decimal(9, 6)
-  lng          Decimal                               @db.Decimal(9, 6)
-  location     Unsupported("geography(Point,4326)")?
-  phone        String?
-  websiteUrl   String?                               @map("website_url")
-  createdAt    DateTime                              @default(now()) @map("created_at")
-  updatedAt    DateTime                              @updatedAt @map("updated_at")
-  translations PlaceTranslation[]
-  providerRefs PlaceProviderRef[]
-  happenings   Happening[]
-  courseNodes  CourseNode[]
-  tags         PlaceTag[]
+  id                String                                @id @default(cuid())
+  sourceType        SourceType                            @map("source_type")
+  status            PlaceStatus                           @default(ACTIVE)
+  category          String
+  kind              PlaceKind?
+  operatorType      VenueOperatorType                     @default(UNKNOWN) @map("operator_type")
+  areaSlug          String?                               @map("area_slug")
+  lat               Decimal                               @db.Decimal(9, 6)
+  lng               Decimal                               @db.Decimal(9, 6)
+  location          Unsupported("geography(Point,4326)")?
+  phone             String?
+  websiteUrl        String?                               @map("website_url")
+  createdAt         DateTime                              @default(now()) @map("created_at")
+  updatedAt         DateTime                              @updatedAt @map("updated_at")
+  translations      PlaceTranslation[]
+  providerRefs      PlaceProviderRef[]
+  openingPeriods    PlaceOpeningPeriod[]
+  openingExceptions PlaceOpeningException[]
+  happenings        Happening[]
+  courseNodes       CourseNode[]
+  tags              PlaceTag[]
 
   @@index([status, category])
+  @@index([status, kind, areaSlug])
+  @@index([operatorType, kind])
   @@index([status, areaSlug, category, id])
   @@index([sourceType, createdAt])
   @@index([location], type: Gist, map: "places_location_gist_idx")
@@ -209,6 +264,7 @@ model Happening {
   placeId      String                 @map("place_id")
   sourceType   SourceType             @map("source_type")
   status       HappeningStatus        @default(UPCOMING)
+  kind         HappeningKind?
   startsAt     DateTime               @map("starts_at")
   endsAt       DateTime               @map("ends_at")
   isAnchor     Boolean                @default(false) @map("is_anchor")
@@ -216,23 +272,105 @@ model Happening {
   updatedAt    DateTime               @updatedAt @map("updated_at")
   place        Place                  @relation(fields: [placeId], references: [id], onDelete: Restrict)
   translations HappeningTranslation[]
+  providerRefs HappeningProviderRef[]
+  occurrences  ScheduleOccurrence[]
 
   @@index([status, startsAt, endsAt])
+  @@index([kind, status, startsAt])
   @@index([isAnchor, status, endsAt])
   @@index([placeId])
   @@map("happenings")
 }
 
 model HappeningTranslation {
-  id          String    @id @default(cuid())
-  happeningId String    @map("happening_id")
-  locale      String    @db.VarChar(10)
-  title       String
-  description String?
-  happening   Happening @relation(fields: [happeningId], references: [id], onDelete: Cascade)
+  id           String    @id @default(cuid())
+  happeningId  String    @map("happening_id")
+  locale       String    @db.VarChar(10)
+  title        String
+  description  String?
+  scheduleText String?   @map("schedule_text")
+  happening    Happening @relation(fields: [happeningId], references: [id], onDelete: Cascade)
 
   @@unique([happeningId, locale])
   @@map("happening_translations")
+}
+
+model HappeningProviderRef {
+  id            String           @id @default(cuid())
+  happeningId   String           @map("happening_id")
+  provider      ExternalProvider
+  externalId    String           @map("external_id")
+  sourceUrl     String?          @map("source_url")
+  bookingUrl    String?          @map("booking_url")
+  lastFetchedAt DateTime         @map("last_fetched_at")
+  happening     Happening        @relation(fields: [happeningId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, externalId])
+  @@index([happeningId])
+  @@index([provider, lastFetchedAt])
+  @@map("happening_provider_refs")
+}
+
+model ScheduleOccurrence {
+  id          String                   @id @default(cuid())
+  happeningId String                   @map("happening_id")
+  startsAt    DateTime                 @map("starts_at")
+  endsAt      DateTime?                @map("ends_at")
+  status      ScheduleOccurrenceStatus @default(SCHEDULED)
+  bookingUrl  String?                  @map("booking_url")
+  happening   Happening                @relation(fields: [happeningId], references: [id], onDelete: Cascade)
+
+  @@unique([happeningId, startsAt])
+  @@index([status, startsAt])
+  @@map("schedule_occurrences")
+}
+
+model PlaceOpeningPeriod {
+  id              String @id @default(cuid())
+  placeId         String @map("place_id")
+  dayOfWeek       Int    @map("day_of_week")
+  opensAtMinutes  Int    @map("opens_at_minutes")
+  closesAtMinutes Int    @map("closes_at_minutes")
+  place           Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@unique([placeId, dayOfWeek, opensAtMinutes])
+  @@index([placeId, dayOfWeek])
+  @@map("place_opening_periods")
+}
+
+model PlaceOpeningException {
+  id              String   @id @default(cuid())
+  placeId         String   @map("place_id")
+  date            DateTime @db.Date
+  isClosed        Boolean  @default(false) @map("is_closed")
+  opensAtMinutes  Int?     @map("opens_at_minutes")
+  closesAtMinutes Int?     @map("closes_at_minutes")
+  note            String?
+  place           Place    @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@unique([placeId, date])
+  @@index([date])
+  @@map("place_opening_exceptions")
+}
+
+model IngestionRecord {
+  id                String           @id @default(cuid())
+  provider          ExternalProvider
+  externalId        String           @map("external_id")
+  checksum          String
+  status            IngestionStatus  @default(STAGED)
+  sourceUrl         String?          @map("source_url")
+  rawPayload        Json             @map("raw_payload")
+  normalizedPayload Json?            @map("normalized_payload")
+  errorMessage      String?          @map("error_message")
+  fetchedAt         DateTime         @map("fetched_at")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+
+  @@unique([provider, externalId, checksum])
+  @@index([status, fetchedAt])
+  @@index([provider, fetchedAt])
+  @@map("ingestion_records")
 }
 
 model Course {
@@ -241,6 +379,7 @@ model Course {
   creatorUserId   String?      @map("creator_user_id")
   coupleId        String?      @map("couple_id")
   status          CourseStatus @default(DRAFT)
+  sourceType      SourceType?  @map("source_type")
   title           String
   description     String?
   coverImageUrl   String?      @map("cover_image_url")
@@ -262,6 +401,7 @@ model Course {
   scraps          Scrap[]
 
   @@index([status, publishedAt, id])
+  @@index([sourceType, status, publishedAt, id])
   @@index([coupleId, createdAt])
   @@index([creatorUserId, createdAt])
   @@map("courses")
