@@ -71,8 +71,14 @@ export const ingestionReviewRequestSchema = z.discriminatedUnion("decision", [
 
 const scheduleDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
+export const SYNC_INGESTION_PROVIDERS = [
+  "SEOUL_OPEN_DATA",
+  "CULTURE_PORTAL",
+] as const;
+
 export const ingestionSyncRequestSchema = z
   .object({
+    provider: z.enum(SYNC_INGESTION_PROVIDERS).default("SEOUL_OPEN_DATA"),
     start: z.coerce.number().int().min(1).default(1),
     end: z.coerce.number().int().min(1).max(1_000).default(100),
     from: scheduleDateSchema.optional(),
@@ -94,7 +100,7 @@ export const ingestionSyncRequestSchema = z
 
 export const ingestionSyncResponseSchema = z.object({
   data: z.object({
-    provider: z.literal("SEOUL_OPEN_DATA"),
+    provider: z.enum(SYNC_INGESTION_PROVIDERS),
     fetched: z.number().int().nonnegative(),
     selected: z.number().int().nonnegative(),
     inserted: z.number().int().nonnegative(),
@@ -143,6 +149,4 @@ export type IngestionSyncRequest = z.infer<typeof ingestionSyncRequestSchema>;
 export type IngestionReviewRequest = z.infer<
   typeof ingestionReviewRequestSchema
 >;
-export type IngestionReviewEntry = z.infer<
-  typeof ingestionReviewEntrySchema
->;
+export type IngestionReviewEntry = z.infer<typeof ingestionReviewEntrySchema>;

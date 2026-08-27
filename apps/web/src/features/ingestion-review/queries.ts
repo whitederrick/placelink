@@ -9,7 +9,7 @@ import type { Actor } from "../../lib/auth/actor";
 import type { IngestionListQuery } from "./schema";
 
 interface StageIngestionBatch {
-  provider: "SEOUL_OPEN_DATA";
+  provider: "SEOUL_OPEN_DATA" | "CULTURE_PORTAL";
   totalAvailable: number;
   fetched: number;
   records: Array<{
@@ -160,7 +160,9 @@ export async function mergeIngestionTransaction(
     if (claimed.count !== 1) return { outcome: "conflict" as const };
 
     let placeId =
-      selectedPlace?.id ?? venueReference?.placeId ?? `seoul-${input.venueExternalId}`;
+      selectedPlace?.id ??
+      venueReference?.placeId ??
+      `${input.event.provider.toLowerCase().replaceAll("_", "-")}-${input.venueExternalId}`;
 
     if (!selectedPlace && !venueReference) {
       const place = await transaction.place.create({
@@ -216,8 +218,7 @@ export async function mergeIngestionTransaction(
     const description = [input.event.audience, input.event.feeText]
       .filter(Boolean)
       .join(" · ");
-    let happeningId =
-      eventReference?.happeningId ?? input.happeningCanonicalId;
+    let happeningId = eventReference?.happeningId ?? input.happeningCanonicalId;
 
     if (eventReference) {
       await transaction.happening.update({

@@ -1273,7 +1273,7 @@ textarea:focus-visible {
 
 .ingestion-sync-panel {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   align-items: end;
   gap: 16px;
   padding: 20px;
@@ -1296,7 +1296,8 @@ textarea:focus-visible {
   font-size: 13px;
 }
 
-.ingestion-sync-panel input {
+.ingestion-sync-panel input,
+.ingestion-sync-panel select {
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 10px;

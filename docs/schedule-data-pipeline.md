@@ -40,8 +40,9 @@
 4. canonical Place/Happening 병합은 관리자 검수 큐에서 승인한 항목만 처리한다.
 5. 서로 다른 공급자의 장소 중복은 자동 병합하지 않는다.
 
-현재 구현된 첫 공급자는 서울 열린데이터광장의 `culturalEventInfo`다. 전시·공연·축제
-분류, 기간, 자유 형식 운영시간, 장소 좌표, 요금, 공식 상세 및 예매 링크를 정규화한다.
+현재 구현된 공급자는 서울 열린데이터광장의 `culturalEventInfo`와 문화포털의
+기간별 공연·전시 API다. 전시·공연·축제 분류, 기간, 장소 좌표와 공식 상세 링크를
+공통 형식으로 정규화하며, 서울시 응답에 있는 운영시간·요금·예매 링크도 보존한다.
 
 ```bash
 # DB에 쓰지 않고 최근 응답 검토
@@ -51,8 +52,9 @@ pnpm db:sync:cultural -- --end=100 --from=2026-08-27
 pnpm db:sync:cultural -- --stage --end=100 --from=2026-08-27
 ```
 
-`SEOUL_OPEN_DATA_API_KEY`가 필요하다. 웹 운영 화면은 `apps/web/.env.local`, CLI는
-`packages/database/.env`에 설정하며 비밀값은 로컬/배포 환경 변수로만 관리한다.
+서울시에는 `SEOUL_OPEN_DATA_API_KEY`, 문화포털에는 공공데이터포털에서 발급한
+`CULTURE_PORTAL_SERVICE_KEY`가 필요하다. 웹 운영 화면은 `apps/web/.env.local`,
+CLI는 `packages/database/.env`에 설정하며 비밀값은 로컬/배포 환경 변수로만 관리한다.
 
 ## 운영자 검수
 
@@ -65,20 +67,22 @@ pnpm db:sync:cultural -- --stage --end=100 --from=2026-08-27
   운영시간은 `scheduleText` 원문과 공식 링크를 유지한다.
 - 운영 API는 `GET /api/v1/admin/ingestions`와
   `PATCH /api/v1/admin/ingestions/{id}/review`이며 관리자 인증이 필요하다.
-- 운영자는 검수 화면의 수동 가져오기 또는 `POST /api/v1/admin/ingestions/sync`로
-  서울시 최신 데이터를 멱등 적재한다. 실행 결과도 `ingestion.synced` 감사 로그로
-  남긴다.
+- 운영자는 검수 화면에서 서울시 또는 문화포털을 선택하거나
+  `POST /api/v1/admin/ingestions/sync`의 `provider` 값으로 공급자를 지정해 최신
+  데이터를 멱등 적재한다. 실행 결과도 `ingestion.synced` 감사 로그로 남긴다.
 - Vercel Cron은 매일 UTC 21:10(한국시간 다음 날 06:10)에
-  `GET /api/v1/cron/ingestions/seoul`을 호출한다. 호출은 `CRON_SECRET` Bearer 인증을
-  통과해야 하며 `schedule-ingestion-cron` AGENT가 실행한 것으로 감사 기록한다.
+  `GET /api/v1/cron/ingestions/schedules`를 호출한다. 호출은 `CRON_SECRET` Bearer
+  인증을 통과해야 하며 `schedule-ingestion-cron` AGENT가 실행한 것으로 감사
+  기록한다. 문화포털 키가 아직 없으면 서울시만 수집하고, 키 등록 후에는 두 공급자를
+  병렬로 수집한다.
 - 정기 실행은 현재 날짜에 종료되지 않은 최대 1,000건을 가져오며 checksum이 같은
   기존 원본은 다시 만들지 않는다. Vercel Hobby 플랜은 실행 시각이 해당 시간대 안에서
   지연될 수 있으므로 정확한 분 단위 실행을 전제로 하지 않는다.
 
 ## 공급자 도입 순서
 
-1. 서울 열린데이터광장 문화행사
-2. 문화포털 공연·전시와 KOPIS 공연·축제
+1. 서울 열린데이터광장 문화행사와 문화포털 공연·전시
+2. KOPIS 공연·축제
 3. 박물관·미술관 및 공공시설 운영시간
 4. 영화관은 공식 상영시간표·예매 링크 우선, 정식 제휴 데이터가 확보되면 회차 저장
 5. 기업 팝업은 공식 링크 수집과 에디터 검수 후 파트너 직접 입력으로 전환

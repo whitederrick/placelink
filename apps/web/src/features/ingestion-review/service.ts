@@ -3,6 +3,7 @@ import { normalizedCulturalEventSchema } from "@placelink/database";
 import type { Actor } from "../../lib/auth/actor";
 import { AppError, ErrorCode } from "../../lib/errors";
 import {
+  createCulturePortalScheduleProvider,
   createSeoulScheduleProvider,
   type ScheduleIngestionProvider,
 } from "../../lib/adapters/schedules";
@@ -29,27 +30,67 @@ function assertAdmin(actor: Actor) {
     throw new AppError(ErrorCode.FORBIDDEN, "Admin permission required", 403);
 }
 
-export async function syncSeoulIngestions(
+function seoulDate(now: Date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+}
+
+function oneYearAfter(date: string) {
+  const instant = new Date(`${date}T00:00:00Z`);
+  instant.setUTCFullYear(instant.getUTCFullYear() + 1);
+  return instant.toISOString().slice(0, 10);
+}
+
+async function syncScheduleIngestions(
   actor: Actor,
   rawInput: unknown,
-  provider?: ScheduleIngestionProvider,
+  providerName: "SEOUL_OPEN_DATA" | "CULTURE_PORTAL",
+  injectedProvider?: ScheduleIngestionProvider,
   now = new Date(),
 ) {
   assertAdmin(actor);
-  const input = ingestionSyncRequestSchema.parse(rawInput);
+  const parsedInput = ingestionSyncRequestSchema.parse(rawInput);
+  const input = {
+    start: parsedInput.start,
+    end: parsedInput.end,
+    from: parsedInput.from,
+    to: parsedInput.to,
+  };
+  const request =
+    providerName === "CULTURE_PORTAL"
+      ? {
+          ...input,
+          from: input.from ?? seoulDate(now),
+          to: input.to ?? oneYearAfter(input.from ?? seoulDate(now)),
+        }
+      : input;
   const scheduleProvider =
-    provider ??
-    (webEnv.SEOUL_OPEN_DATA_API_KEY
-      ? createSeoulScheduleProvider(webEnv.SEOUL_OPEN_DATA_API_KEY)
-      : null);
+    injectedProvider ??
+    (providerName === "SEOUL_OPEN_DATA"
+      ? webEnv.SEOUL_OPEN_DATA_API_KEY
+        ? createSeoulScheduleProvider(webEnv.SEOUL_OPEN_DATA_API_KEY)
+        : null
+      : webEnv.CULTURE_PORTAL_SERVICE_KEY
+        ? createCulturePortalScheduleProvider(webEnv.CULTURE_PORTAL_SERVICE_KEY)
+        : null);
   if (!scheduleProvider) {
     throw new AppError(
       ErrorCode.INTEGRATION_NOT_CONFIGURED,
-      "Seoul Open Data integration is not configured",
+      `${providerName} integration is not configured`,
       503,
     );
   }
-  const batch = await scheduleProvider.fetchBatch(input);
+  const batch = await scheduleProvider.fetchBatch(request);
+  if (batch.provider !== providerName)
+    throw new AppError(
+      ErrorCode.INTEGRATION_FAILURE,
+      `${providerName} integration returned mismatched provenance`,
+      502,
+    );
   const { inserted } = await stageIngestionBatch(actor, batch, now);
   const selected = batch.records.length;
   return ingestionSyncResponseSchema.parse({
@@ -63,6 +104,47 @@ export async function syncSeoulIngestions(
       fetchedAt: now.toISOString(),
     },
   });
+}
+
+export function syncSeoulIngestions(
+  actor: Actor,
+  rawInput: unknown,
+  provider?: ScheduleIngestionProvider,
+  now = new Date(),
+) {
+  return syncScheduleIngestions(
+    actor,
+    rawInput,
+    "SEOUL_OPEN_DATA",
+    provider,
+    now,
+  );
+}
+
+export function syncCulturePortalIngestions(
+  actor: Actor,
+  rawInput: unknown,
+  provider?: ScheduleIngestionProvider,
+  now = new Date(),
+) {
+  return syncScheduleIngestions(
+    actor,
+    rawInput,
+    "CULTURE_PORTAL",
+    provider,
+    now,
+  );
+}
+
+export function syncIngestions(
+  actor: Actor,
+  rawInput: unknown,
+  now = new Date(),
+) {
+  const input = ingestionSyncRequestSchema.parse(rawInput);
+  return input.provider === "CULTURE_PORTAL"
+    ? syncCulturePortalIngestions(actor, input, undefined, now)
+    : syncSeoulIngestions(actor, input, undefined, now);
 }
 
 function venueExternalId(

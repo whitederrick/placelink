@@ -8,3 +8,9 @@ export {
   normalizedCulturalEventSchema,
 } from "./cultural-events";
 export type { NormalizedCulturalEvent } from "./cultural-events";
+export {
+  fetchCulturePortalEvents,
+  normalizeCulturePortalEvent,
+  parseCulturePortalEventsXml,
+} from "./culture-portal-events";
+export type { CulturePortalEvent } from "./culture-portal-events";

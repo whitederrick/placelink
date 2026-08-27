@@ -31,7 +31,7 @@ const seoulCulturalEventsResponseSchema = z.object({
 });
 
 export const normalizedCulturalEventSchema = z.object({
-  provider: z.literal("SEOUL_OPEN_DATA"),
+  provider: z.enum(["SEOUL_OPEN_DATA", "CULTURE_PORTAL"]),
   externalId: z.string().min(1),
   title: z.string().min(1),
   categoryLabel: z.string(),
@@ -153,7 +153,7 @@ export function normalizeSeoulCulturalEvent(
   });
 }
 
-export function checksumPayload(payload: SeoulCulturalEvent): string {
+export function checksumPayload(payload: unknown): string {
   return createHash("sha256").update(JSON.stringify(payload)).digest("hex");
 }
 

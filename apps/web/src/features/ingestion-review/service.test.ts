@@ -13,6 +13,7 @@ vi.mock("../../lib/env", () => ({ webEnv: {} }));
 import {
   listIngestionsForReview,
   reviewIngestion,
+  syncCulturePortalIngestions,
   syncSeoulIngestions,
 } from "./service";
 
@@ -190,5 +191,53 @@ describe("ingestion review", () => {
       status: 503,
     });
     expect(queryMocks.stageIngestionBatch).not.toHaveBeenCalled();
+  });
+
+  it("adds a one-year date window when staging Culture Portal records", async () => {
+    const cultureEvent = {
+      ...normalized,
+      provider: "CULTURE_PORTAL" as const,
+      externalId: "394040",
+    };
+    const provider = {
+      fetchBatch: vi.fn().mockResolvedValue({
+        provider: "CULTURE_PORTAL" as const,
+        totalAvailable: 1,
+        fetched: 1,
+        records: [
+          {
+            externalId: cultureEvent.externalId,
+            checksum: "culture-checksum",
+            sourceUrl: cultureEvent.officialUrl,
+            rawPayload: { seq: cultureEvent.externalId },
+            normalizedPayload: cultureEvent,
+          },
+        ],
+      }),
+    };
+    queryMocks.stageIngestionBatch.mockResolvedValue({ inserted: 1 });
+    const now = new Date("2026-08-27T03:00:00.000Z");
+
+    await expect(
+      syncCulturePortalIngestions(
+        admin,
+        { provider: "CULTURE_PORTAL", start: 1, end: 100 },
+        provider,
+        now,
+      ),
+    ).resolves.toMatchObject({
+      data: {
+        provider: "CULTURE_PORTAL",
+        fetched: 1,
+        selected: 1,
+        inserted: 1,
+      },
+    });
+    expect(provider.fetchBatch).toHaveBeenCalledWith({
+      start: 1,
+      end: 100,
+      from: "2026-08-27",
+      to: "2027-08-27",
+    });
   });
 });

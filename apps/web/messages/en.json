@@ -309,13 +309,14 @@
     "reviewError": "The review failed. For rejections, enter a reason of at least three characters.",
     "rejectPlaceholder": "Duplicate, invalid schedule, or another reason",
     "sync": {
-      "title": "Import Seoul cultural events",
-      "description": "Add up to 100 current records to the review queue without creating duplicates.",
+      "title": "Import external schedule data",
+      "description": "Add up to 100 current Seoul or Culture Portal records to the review queue without duplicates.",
+      "provider": "Data source",
       "fromDate": "Minimum event end date",
       "run": "Import now",
       "running": "Importing",
       "result": "{fetched} fetched · {selected} selected · {inserted} added · {unchanged} unchanged",
-      "error": "The import failed. Check the Seoul API key and external service status."
+      "error": "The import failed. Check the selected provider key and external service status."
     },
     "fields": { "placeKind": "Place type", "happeningKind": "Event type", "operatorType": "Operator", "rejectReason": "Rejection reason" },
     "all": { "provider": "All sources", "happeningKind": "All events", "operatorType": "All operators" },

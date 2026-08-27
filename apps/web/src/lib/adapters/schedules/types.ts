@@ -16,12 +16,14 @@ export interface ScheduleIngestionRecord {
 }
 
 export interface ScheduleIngestionBatch {
-  provider: "SEOUL_OPEN_DATA";
+  provider: "SEOUL_OPEN_DATA" | "CULTURE_PORTAL";
   totalAvailable: number;
   fetched: number;
   records: ScheduleIngestionRecord[];
 }
 
 export interface ScheduleIngestionProvider {
-  fetchBatch(request: ScheduleIngestionRequest): Promise<ScheduleIngestionBatch>;
+  fetchBatch(
+    request: ScheduleIngestionRequest,
+  ): Promise<ScheduleIngestionBatch>;
 }

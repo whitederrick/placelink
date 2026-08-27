@@ -309,13 +309,14 @@
     "reviewError": "처리하지 못했습니다. 반려 시 사유를 3자 이상 입력했는지 확인해 주세요.",
     "rejectPlaceholder": "중복, 잘못된 일정 등 반려 사유",
     "sync": {
-      "title": "서울시 문화행사 가져오기",
-      "description": "선택한 날짜 이후의 최신 100개 항목을 검수 대기열에 중복 없이 추가합니다.",
+      "title": "외부 일정 데이터 가져오기",
+      "description": "서울시 또는 문화포털의 최신 100개 항목을 검수 대기열에 중복 없이 추가합니다.",
+      "provider": "데이터 출처",
       "fromDate": "종료일 기준 시작 날짜",
       "run": "지금 가져오기",
       "running": "가져오는 중",
       "result": "{fetched}개 확인 · {selected}개 선택 · {inserted}개 추가 · {unchanged}개 기존 항목",
-      "error": "가져오지 못했습니다. 서울시 API 키와 외부 서비스 상태를 확인해 주세요."
+      "error": "가져오지 못했습니다. 선택한 출처의 API 키와 외부 서비스 상태를 확인해 주세요."
     },
     "fields": { "placeKind": "장소 유형", "happeningKind": "행사 유형", "operatorType": "운영 주체", "rejectReason": "반려 사유" },
     "all": { "provider": "모든 출처", "happeningKind": "모든 행사", "operatorType": "모든 운영 주체" },
