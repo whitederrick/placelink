@@ -90,6 +90,7 @@ enum IngestionStatus {
   STAGED
   NORMALIZED
   MERGED
+  REJECTED
   FAILED
 }
 

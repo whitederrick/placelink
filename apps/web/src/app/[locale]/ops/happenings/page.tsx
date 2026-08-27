@@ -58,7 +58,10 @@ export default async function HappeningOperationsPage({
         <span className="section-kicker">{t("kicker")}</span>
         <h1>{t("title")}</h1>
         <p>{t("subtitle")}</p>
-        <Link href={`/${locale}/ops/analytics`}>{t("viewAnalytics")}</Link>
+        <div className="ingestion-nav">
+          <Link href={`/${locale}/ops/ingestions`}>{t("viewIngestions")}</Link>
+          <Link href={`/${locale}/ops/analytics`}>{t("viewAnalytics")}</Link>
+        </div>
       </header>
 
       <nav className="curation-filters" aria-label={t("filterLabel")}>

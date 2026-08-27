@@ -265,6 +265,7 @@
     "title": "홈 앵커 큐레이션",
     "subtitle": "홈에 노출할 팝업과 전시를 지정하고 변경 이력을 안전하게 남깁니다.",
     "viewAnalytics": "분석 현황 보기",
+    "viewIngestions": "수집 데이터 검수",
     "filterLabel": "행사 운영 필터",
     "allStatuses": "모든 상태",
     "allAnchors": "전체",
@@ -281,6 +282,30 @@
       "active": "진행 중",
       "ended": "종료"
     }
+  },
+  "ingestionReview": {
+    "kicker": "OPERATIONS · DATA INTAKE",
+    "title": "수집 데이터 검수",
+    "subtitle": "외부에서 수집한 행사와 장소 정보를 확인하고 PlaceLink의 공식 데이터로 병합합니다.",
+    "viewCuration": "홈 큐레이션 보기",
+    "viewAnalytics": "분석 현황 보기",
+    "filterLabel": "수집 데이터 필터",
+    "nextPage": "다음 항목 보기",
+    "empty": "조건에 맞는 수집 데이터가 없습니다.",
+    "officialLink": "공식 정보",
+    "bookingLink": "예약·예매",
+    "approve": "확인 후 병합",
+    "reject": "반려",
+    "reviewing": "처리 중",
+    "reviewError": "처리하지 못했습니다. 반려 시 사유를 3자 이상 입력했는지 확인해 주세요.",
+    "rejectPlaceholder": "중복, 잘못된 일정 등 반려 사유",
+    "fields": { "placeKind": "장소 유형", "happeningKind": "행사 유형", "operatorType": "운영 주체", "rejectReason": "반려 사유" },
+    "all": { "provider": "모든 출처", "happeningKind": "모든 행사", "operatorType": "모든 운영 주체" },
+    "status": { "normalized": "검수 대기", "merged": "병합 완료", "rejected": "반려", "failed": "수집 실패" },
+    "provider": { "seoul_open_data": "서울 열린데이터", "culture_portal": "문화포털", "kopis": "KOPIS", "kobis": "KOBIS", "official_site": "공식 사이트" },
+    "placeKind": { "cafe": "카페", "restaurant": "음식점", "bar": "바", "shop": "상점", "cinema": "영화관", "museum": "박물관", "gallery": "갤러리", "park": "공원", "activity": "체험 공간", "cultural_venue": "문화시설", "other": "기타" },
+    "happeningKind": { "exhibition": "전시", "popup": "팝업", "festival": "축제", "performance": "공연", "screening": "상영", "workshop": "워크숍", "event": "행사", "other": "기타" },
+    "operatorType": { "public": "공공", "private": "민간", "nonprofit": "비영리", "unknown": "미확인" }
   },
   "analytics": {
     "kicker": "INTERNAL OPERATIONS",

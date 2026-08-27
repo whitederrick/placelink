@@ -265,6 +265,7 @@
     "title": "Home anchor curation",
     "subtitle": "Choose the pop-ups and exhibitions shown on home with a safe audit trail.",
     "viewAnalytics": "View analytics",
+    "viewIngestions": "Review ingested data",
     "filterLabel": "Happening operations filters",
     "allStatuses": "All statuses",
     "allAnchors": "All",
@@ -281,6 +282,30 @@
       "active": "Active",
       "ended": "Ended"
     }
+  },
+  "ingestionReview": {
+    "kicker": "OPERATIONS · DATA INTAKE",
+    "title": "Ingestion review",
+    "subtitle": "Review externally collected events and venues before merging them into PlaceLink's trusted data.",
+    "viewCuration": "View home curation",
+    "viewAnalytics": "View analytics",
+    "filterLabel": "Ingestion filters",
+    "nextPage": "View next items",
+    "empty": "No collected records match these filters.",
+    "officialLink": "Official information",
+    "bookingLink": "Booking",
+    "approve": "Review and merge",
+    "reject": "Reject",
+    "reviewing": "Processing",
+    "reviewError": "The review failed. For rejections, enter a reason of at least three characters.",
+    "rejectPlaceholder": "Duplicate, invalid schedule, or another reason",
+    "fields": { "placeKind": "Place type", "happeningKind": "Event type", "operatorType": "Operator", "rejectReason": "Rejection reason" },
+    "all": { "provider": "All sources", "happeningKind": "All events", "operatorType": "All operators" },
+    "status": { "normalized": "Awaiting review", "merged": "Merged", "rejected": "Rejected", "failed": "Failed" },
+    "provider": { "seoul_open_data": "Seoul Open Data", "culture_portal": "Culture Portal", "kopis": "KOPIS", "kobis": "KOBIS", "official_site": "Official site" },
+    "placeKind": { "cafe": "Cafe", "restaurant": "Restaurant", "bar": "Bar", "shop": "Shop", "cinema": "Cinema", "museum": "Museum", "gallery": "Gallery", "park": "Park", "activity": "Activity venue", "cultural_venue": "Cultural venue", "other": "Other" },
+    "happeningKind": { "exhibition": "Exhibition", "popup": "Pop-up", "festival": "Festival", "performance": "Performance", "screening": "Screening", "workshop": "Workshop", "event": "Event", "other": "Other" },
+    "operatorType": { "public": "Public", "private": "Private", "nonprofit": "Nonprofit", "unknown": "Unknown" }
   },
   "analytics": {
     "kicker": "INTERNAL OPERATIONS",

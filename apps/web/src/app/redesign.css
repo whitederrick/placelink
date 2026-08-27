@@ -1226,6 +1226,84 @@ textarea:focus-visible {
   color: #b42318;
 }
 
+.ingestion-dashboard {
+  display: grid;
+  gap: 24px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.ingestion-nav,
+.ingestion-links,
+.ingestion-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.ingestion-filters,
+.ingestion-list {
+  display: grid;
+  gap: 12px;
+}
+
+.ingestion-list article {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
+  gap: 24px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.ingestion-card-copy,
+.ingestion-review-controls,
+.ingestion-review-controls label {
+  display: grid;
+  gap: 8px;
+}
+
+.ingestion-card-copy h2,
+.ingestion-card-copy p {
+  margin: 0;
+}
+
+.ingestion-card-copy p,
+.ingestion-links a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.ingestion-review-controls label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ingestion-review-controls select,
+.ingestion-review-controls input {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+
+.ingestion-review-controls small[role="alert"] {
+  color: #b42318;
+}
+
+.ingestion-more {
+  justify-self: center;
+}
+
 @media (max-width: 759px) {
   .hall-grid {
     grid-template-columns: 1fr;
@@ -1242,6 +1320,10 @@ textarea:focus-visible {
   .curation-list article {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .ingestion-list article {
+    grid-template-columns: 1fr;
   }
 }
 

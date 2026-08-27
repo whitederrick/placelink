@@ -4,4 +4,6 @@ export * from "../generated/client/enums";
 export {
   fetchSeoulCulturalEvents,
   normalizeSeoulCulturalEvent,
+  normalizedCulturalEventSchema,
 } from "./cultural-events";
+export type { NormalizedCulturalEvent } from "./cultural-events";

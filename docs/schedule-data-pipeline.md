@@ -37,7 +37,7 @@
 1. 외부 응답 원문을 `IngestionRecord.rawPayload`에 보존한다.
 2. 검증·정규화 결과를 `normalizedPayload`에 저장한다.
 3. 동일 공급자·외부 ID·내용 checksum 조합은 한 번만 저장한다.
-4. canonical Place/Happening 병합은 다음 슬라이스의 관리자 검수 큐에서 처리한다.
+4. canonical Place/Happening 병합은 관리자 검수 큐에서 승인한 항목만 처리한다.
 5. 서로 다른 공급자의 장소 중복은 자동 병합하지 않는다.
 
 현재 구현된 첫 공급자는 서울 열린데이터광장의 `culturalEventInfo`다. 전시·공연·축제
@@ -52,6 +52,18 @@ pnpm db:sync:cultural -- --stage --end=100 --from=2026-08-27
 ```
 
 `SEOUL_OPEN_DATA_API_KEY`가 필요하다. 비밀값은 로컬/배포 환경 변수로만 관리한다.
+
+## 운영자 검수
+
+- `/ko/ops/ingestions`에서 공급자, 행사 유형, 운영 주체, 처리 상태별로 확인한다.
+- 검수 대기 항목은 장소 유형·행사 유형·운영 주체를 보정한 뒤 병합하거나 사유와
+  함께 반려한다.
+- 병합은 `Place`, `Happening`, 공급자 참조를 한 트랜잭션에서 생성·갱신하며,
+  승인과 반려 모두 `AuditLog`에 기록한다.
+- 원본의 공식 정보 및 예약 링크를 운영자와 사용자에게 제공한다. 구조화가 불확실한
+  운영시간은 `scheduleText` 원문과 공식 링크를 유지한다.
+- 운영 API는 `GET /api/v1/admin/ingestions`와
+  `PATCH /api/v1/admin/ingestions/{id}/review`이며 관리자 인증이 필요하다.
 
 ## 공급자 도입 순서
 
@@ -70,4 +82,5 @@ pnpm db:sync:cultural -- --stage --end=100 --from=2026-08-27
 - 신규 사용자 코스: 생성 시 즉시 `sourceType=UGC`를 기록한다.
 - 인덱스: 장소 종류·운영 주체, 행사 종류·시작일, 코스 출처·발행일, 수집 상태·시각
   조회에 대응하는 복합 인덱스를 추가한다.
-- 화면: 이번 슬라이스에는 변경 없음. 필터 UI는 백필과 canonical 병합 이후 추가한다.
+- 화면: 운영자 수집 검수 화면을 추가했다. 사용자 검색 필터는 공급자 확대와 기존
+  데이터 백필 이후 별도 Contract에서 추가한다.
