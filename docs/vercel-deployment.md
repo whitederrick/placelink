@@ -20,6 +20,8 @@ PostGIS 확장을 지원해야 하며 serverless 환경에서는 풀링 연결 �
 - `NEXT_PUBLIC_KAKAO_MAP_APP_KEY`: Kakao 지도 JavaScript 키
 - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`: Google 지도 키
 - `KAKAO_LOCAL_REST_API_KEY`: 운영 장소 동기화
+- `SEOUL_OPEN_DATA_API_KEY`: 서울시 문화행사 수집
+- `CRON_SECRET`: Vercel Cron 호출 인증용 16자 이상의 임의 문자열
 - `NEXT_PUBLIC_SITE_URL`: 사용자 도메인이 있을 때만 설정. 없으면 Vercel의 안정적인
   Production 도메인을 자동 사용한다.
 - `LOG_LEVEL`: 기본값 `info`
@@ -55,6 +57,9 @@ npx vercel env run -e production -- pnpm db:seed
 6. PR의 `Quality`, `E2E`, `Vercel` 체크가 모두 통과하면 `main`에 병합한다.
 7. Production 배포가 완료되면 동일 경로와 공개 코스 상세의 canonical,
    ko/en hreflang, Open Graph 이미지를 확인한다.
+8. Vercel Settings → Cron Jobs에서 `/api/v1/cron/ingestions/seoul`이 일 1회로
+   등록됐는지 확인하고, 첫 실행 후 `ingestion.synced` 감사 로그와 운영자 검수
+   대기열을 확인한다.
 
 ## 현재 상태
 

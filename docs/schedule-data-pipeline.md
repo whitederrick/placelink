@@ -67,7 +67,13 @@ pnpm db:sync:cultural -- --stage --end=100 --from=2026-08-27
   `PATCH /api/v1/admin/ingestions/{id}/review`이며 관리자 인증이 필요하다.
 - 운영자는 검수 화면의 수동 가져오기 또는 `POST /api/v1/admin/ingestions/sync`로
   서울시 최신 데이터를 멱등 적재한다. 실행 결과도 `ingestion.synced` 감사 로그로
-  남긴다. 실제 데이터를 충분히 검수한 뒤 동일 서비스를 cron으로 승격한다.
+  남긴다.
+- Vercel Cron은 매일 UTC 21:10(한국시간 다음 날 06:10)에
+  `GET /api/v1/cron/ingestions/seoul`을 호출한다. 호출은 `CRON_SECRET` Bearer 인증을
+  통과해야 하며 `schedule-ingestion-cron` AGENT가 실행한 것으로 감사 기록한다.
+- 정기 실행은 현재 날짜에 종료되지 않은 최대 1,000건을 가져오며 checksum이 같은
+  기존 원본은 다시 만들지 않는다. Vercel Hobby 플랜은 실행 시각이 해당 시간대 안에서
+  지연될 수 있으므로 정확한 분 단위 실행을 전제로 하지 않는다.
 
 ## 공급자 도입 순서
 
