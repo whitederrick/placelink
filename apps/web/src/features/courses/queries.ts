@@ -123,6 +123,7 @@ export async function insertCourseDraft(
       ...owner,
       slug,
       status: "DRAFT",
+      sourceType: "UGC",
       title,
       nodes: { create: { placeId: anchor.place.id, orderIndex: 0 } },
     },

@@ -9,14 +9,18 @@ function unavailable() {
   );
 }
 
+function authenticationEnabled() {
+  return webEnv.AUTH_LOGIN_ENABLED || webEnv.STUDIO_OPERATOR_EMAILS.length > 0;
+}
+
 export function GET(request: NextRequest) {
   const pathname = new URL(request.url).pathname;
-  if (!webEnv.AUTH_LOGIN_ENABLED && !pathname.endsWith("/session"))
+  if (!authenticationEnabled() && !pathname.endsWith("/session"))
     return unavailable();
   return handlers.GET(request);
 }
 
 export function POST(request: NextRequest) {
-  if (!webEnv.AUTH_LOGIN_ENABLED) return unavailable();
+  if (!authenticationEnabled()) return unavailable();
   return handlers.POST(request);
 }

@@ -6,11 +6,15 @@
     "AUTH_KAKAO_ID",
     "AUTH_KAKAO_SECRET",
     "AUTH_SECRET",
+    "CULTURE_PORTAL_SERVICE_KEY",
+    "CRON_SECRET",
     "DATABASE_URL",
     "KAKAO_LOCAL_REST_API_KEY",
     "LOG_LEVEL",
     "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY",
-    "NEXT_PUBLIC_KAKAO_MAP_APP_KEY"
+    "NEXT_PUBLIC_KAKAO_MAP_APP_KEY",
+    "SEOUL_OPEN_DATA_API_KEY",
+    "STUDIO_OPERATOR_EMAILS"
   ],
   "tasks": {
     "dev": { "cache": false, "persistent": true },

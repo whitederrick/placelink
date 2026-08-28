@@ -2,7 +2,11 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/client/client";
 import { readDatabaseEnv } from "../src/env";
-import { createSeedHappeningWindow, createSeedPlaces } from "../src/seed-data";
+import {
+  createSeedHappeningWindow,
+  createSeedPlaces,
+  placeKindForCategory,
+} from "../src/seed-data";
 
 const adapter = new PrismaPg({
   connectionString: readDatabaseEnv().DATABASE_URL,
@@ -108,6 +112,7 @@ async function seed() {
       id: place.id,
       sourceType: index < 24 ? "PUBLIC_API" : "EDITOR",
       category: place.category,
+      kind: placeKindForCategory(place.category),
       areaSlug: place.areaSlug,
       lat: place.lat,
       lng: place.lng,

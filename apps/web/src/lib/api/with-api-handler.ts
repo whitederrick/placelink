@@ -1,16 +1,21 @@
+import { createHash, timingSafeEqual } from "node:crypto";
 import { ZodError } from "zod";
+import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
 import { AppError, ErrorCode } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { auth } from "@/auth";
 import { loadHumanActor } from "@/features/auth";
 import type { Actor } from "@/lib/auth/actor";
+import { webEnv } from "@/lib/env";
 
-type AuthMode = "public" | "optional" | "user" | "admin";
+type HumanAuthMode = "public" | "optional" | "user" | "admin";
 
-interface ApiHandlerOptions {
-  auth: AuthMode;
-}
+type ApiHandlerOptions =
+  | { auth: HumanAuthMode }
+  | { auth: "agent"; agentId: string };
+
+const bearerAuthorizationSchema = z.string().regex(/^Bearer [^\s]+$/);
 
 export interface ApiHandlerContext {
   actor: Actor | null;
@@ -21,6 +26,29 @@ type AuthenticatedApiHandler = (
   context: ApiHandlerContext,
 ) => Promise<NextResponse>;
 
+function secureEquals(left: string, right: string) {
+  const leftDigest = createHash("sha256").update(left).digest();
+  const rightDigest = createHash("sha256").update(right).digest();
+  return timingSafeEqual(leftDigest, rightDigest);
+}
+
+function authenticateAgent(request: NextRequest, agentId: string): Actor {
+  const authorization = bearerAuthorizationSchema.safeParse(
+    request.headers.get("authorization"),
+  );
+  const expected = webEnv.CRON_SECRET
+    ? `Bearer ${webEnv.CRON_SECRET}`
+    : null;
+  if (
+    !authorization.success ||
+    !expected ||
+    !secureEquals(authorization.data, expected)
+  ) {
+    throw new AppError(ErrorCode.UNAUTHORIZED, "Authentication required", 401);
+  }
+  return { id: agentId, type: "AGENT", role: "ADMIN" };
+}
+
 export function withApiHandler(
   options: ApiHandlerOptions,
   handler: AuthenticatedApiHandler,
@@ -28,7 +56,9 @@ export function withApiHandler(
   return async (request) => {
     try {
       let actor: Actor | null = null;
-      if (options.auth !== "public") {
+      if (options.auth === "agent") {
+        actor = authenticateAgent(request, options.agentId);
+      } else if (options.auth !== "public") {
         const session = await auth();
         actor = session?.user?.id
           ? await loadHumanActor(session.user.id)
