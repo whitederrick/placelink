@@ -5,6 +5,8 @@ import {
 import type { Actor } from "@/lib/auth/actor";
 import { AppError, ErrorCode } from "@/lib/errors";
 import {
+  auditLogListQuerySchema,
+  auditLogListResponseSchema,
   ingestionRunDetailResponseSchema,
   ingestionRunListQuerySchema,
   ingestionRunListResponseSchema,
@@ -14,12 +16,29 @@ import {
   studioUserListResponseSchema,
 } from "./schema";
 import {
+  selectAuditLogs,
   selectIngestionRun,
   selectIngestionRuns,
   selectStudioDashboard,
   selectStudioUser,
   selectStudioUsers,
 } from "./queries";
+
+export async function listAuditLogs(actor: Actor, rawQuery: unknown = {}) {
+  assertAdmin(actor);
+  const query = auditLogListQuerySchema.parse(rawQuery);
+  const result = await selectAuditLogs(query);
+  return auditLogListResponseSchema.parse({
+    data: result.records.map((record) => ({
+      ...record,
+      createdAt: record.createdAt.toISOString(),
+    })),
+    meta: {
+      nextCursor: result.nextCursor,
+      targetTypes: result.targetTypes,
+    },
+  });
+}
 
 function assertAdmin(actor: Actor) {
   if (actor.role !== "ADMIN")
@@ -50,7 +69,9 @@ function runSummary(run: {
   };
 }
 
-function userSummary(user: Awaited<ReturnType<typeof selectStudioUsers>>["records"][number]) {
+function userSummary(
+  user: Awaited<ReturnType<typeof selectStudioUsers>>["records"][number],
+) {
   const membership = user.coupleMemberships[0];
   const couple = membership?.couple;
   const partner = couple?.members.find((member) => member.user.id !== user.id);
@@ -92,7 +113,10 @@ export async function getStudioUser(actor: Actor, id: string) {
   const membership = user.coupleMemberships[0];
   const couple = membership?.couple;
   const courses = [
-    ...user.soloCourses.map((course) => ({ ...course, ownership: "SOLO" as const })),
+    ...user.soloCourses.map((course) => ({
+      ...course,
+      ownership: "SOLO" as const,
+    })),
     ...(couple?.courses.map((course) => ({
       ...course,
       ownership: "COUPLE" as const,
@@ -119,16 +143,17 @@ export async function getStudioUser(actor: Actor, id: string) {
         provider: identity.provider,
         createdAt: identity.createdAt.toISOString(),
       })),
-      currentCouple: couple && membership
-        ? {
-            id: couple.id,
-            displayName: couple.displayName,
-            status: couple.status,
-            startedAt: couple.startedAt.toISOString(),
-            joinedAt: membership.joinedAt.toISOString(),
-            members: couple.members.map(({ user: member }) => member),
-          }
-        : null,
+      currentCouple:
+        couple && membership
+          ? {
+              id: couple.id,
+              displayName: couple.displayName,
+              status: couple.status,
+              startedAt: couple.startedAt.toISOString(),
+              joinedAt: membership.joinedAt.toISOString(),
+              members: couple.members.map(({ user: member }) => member),
+            }
+          : null,
       courses,
       scraps: user.scraps.map((scrap) => ({
         ...scrap,
@@ -161,10 +186,7 @@ export async function loadStudioDashboard(actor: Actor, now = new Date()) {
   });
 }
 
-export async function listIngestionRuns(
-  actor: Actor,
-  rawQuery: unknown = {},
-) {
+export async function listIngestionRuns(actor: Actor, rawQuery: unknown = {}) {
   assertAdmin(actor);
   const query = ingestionRunListQuerySchema.parse(rawQuery);
   const result = await selectIngestionRuns(query);

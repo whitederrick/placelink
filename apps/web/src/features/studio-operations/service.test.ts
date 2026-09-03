@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const queryMocks = vi.hoisted(() => ({
+  selectAuditLogs: vi.fn(),
   selectStudioDashboard: vi.fn(),
   selectIngestionRuns: vi.fn(),
   selectIngestionRun: vi.fn(),
@@ -13,6 +14,7 @@ import {
   getIngestionRun,
   getStudioUser,
   listIngestionRuns,
+  listAuditLogs,
   listStudioUsers,
   loadStudioDashboard,
 } from "./service";
@@ -177,7 +179,7 @@ describe("studio operations", () => {
             happeningKind: "EXHIBITION",
             placeName: "대한민국역사박물관",
             placeKind: "CULTURAL_VENUE",
-        operatorType: "UNKNOWN",
+            operatorType: "UNKNOWN",
             district: "서울",
             startsAt: "2026-07-15T15:00:00.000Z",
             endsAt: "2026-10-12T15:00:00.000Z",
@@ -249,6 +251,39 @@ describe("studio operations", () => {
     await expect(listStudioUsers(user)).rejects.toMatchObject({
       code: "FORBIDDEN",
       status: 403,
+    });
+  });
+
+  it("returns filtered audit logs with stored snapshots", async () => {
+    queryMocks.selectAuditLogs.mockResolvedValue({
+      records: [
+        {
+          id: "audit-1",
+          actorId: "admin-1",
+          actorType: "HUMAN",
+          action: "support_case.updated",
+          targetType: "SupportCase",
+          targetId: "case-1",
+          before: { status: "OPEN" },
+          after: { status: "IN_PROGRESS" },
+          createdAt: new Date("2026-09-03T10:00:00.000Z"),
+        },
+      ],
+      nextCursor: "audit-next",
+      targetTypes: ["SupportCase"],
+    });
+
+    await expect(
+      listAuditLogs(admin, { actorType: "HUMAN", targetType: "SupportCase" }),
+    ).resolves.toEqual({
+      data: [
+        expect.objectContaining({
+          id: "audit-1",
+          before: { status: "OPEN" },
+          createdAt: "2026-09-03T10:00:00.000Z",
+        }),
+      ],
+      meta: { nextCursor: "audit-next", targetTypes: ["SupportCase"] },
     });
   });
 });

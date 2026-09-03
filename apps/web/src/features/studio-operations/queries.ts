@@ -1,8 +1,45 @@
 import { getDatabase } from "@placelink/database";
 import type {
+  AuditLogListQuery,
   IngestionRunListQuery,
   StudioUserListQuery,
 } from "./schema";
+
+export async function selectAuditLogs(query: AuditLogListQuery) {
+  const search = query.search || undefined;
+  const database = getDatabase();
+  const [records, targetTypes] = await Promise.all([
+    database.auditLog.findMany({
+      where: {
+        actorType: query.actorType,
+        targetType: query.targetType,
+        OR: search
+          ? [
+              { action: { contains: search, mode: "insensitive" } },
+              { actorId: { contains: search, mode: "insensitive" } },
+              { targetId: { contains: search, mode: "insensitive" } },
+            ]
+          : undefined,
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      cursor: query.cursor ? { id: query.cursor } : undefined,
+      skip: query.cursor ? 1 : 0,
+      take: query.take + 1,
+    }),
+    database.auditLog.findMany({
+      distinct: ["targetType"],
+      orderBy: { targetType: "asc" },
+      select: { targetType: true },
+    }),
+  ]);
+  const hasNext = records.length > query.take;
+  const page = hasNext ? records.slice(0, query.take) : records;
+  return {
+    records: page,
+    nextCursor: hasNext ? page.at(-1)?.id : undefined,
+    targetTypes: targetTypes.map((record) => record.targetType),
+  };
+}
 
 const userCoupleSelect = {
   id: true,

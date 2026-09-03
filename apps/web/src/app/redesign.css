@@ -1693,12 +1693,78 @@ textarea:focus-visible {
   display: grid;
 }
 
+.audit-log-list {
+  display: grid;
+  gap: 14px;
+}
+
+.audit-log-list > article {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.audit-log-list header,
+.audit-log-list header > span {
+  display: flex;
+  gap: 6px;
+}
+
+.audit-log-list header {
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.audit-log-list header > span {
+  flex-direction: column;
+}
+
+.audit-log-list small,
+.audit-log-list time,
+.audit-log-list p {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.audit-log-list details {
+  margin-top: 14px;
+}
+
+.audit-log-list summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.audit-change-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.audit-change-grid pre {
+  max-height: 280px;
+  overflow: auto;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--surface-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.76rem;
+}
+
+@media (max-width: 720px) {
+  .audit-change-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .studio-user-list > a {
   display: grid;
-  grid-template-columns: minmax(170px, 1.2fr) minmax(150px, 1fr) minmax(
-      180px,
-      1fr
-    ) auto;
+  grid-template-columns:
+    minmax(170px, 1.2fr) minmax(150px, 1fr) minmax(180px, 1fr)
+    auto;
   align-items: center;
   gap: 18px;
   padding: 16px 0;
@@ -1757,10 +1823,9 @@ textarea:focus-visible {
 
 .support-case-list > a {
   display: grid;
-  grid-template-columns: minmax(220px, 1.5fr) minmax(120px, 0.7fr) minmax(
-      160px,
-      0.8fr
-    ) auto auto;
+  grid-template-columns:
+    minmax(220px, 1.5fr) minmax(120px, 0.7fr) minmax(160px, 0.8fr)
+    auto auto;
   align-items: center;
   gap: 16px;
   padding: 16px 0;

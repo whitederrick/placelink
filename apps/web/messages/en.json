@@ -37,6 +37,7 @@
     "happenings": "Events & placement",
     "analytics": "Usage analytics",
     "support": "Requests & reports",
+    "auditLogs": "Audit log",
     "partners": "Partners",
     "campaigns": "Campaigns & coupons",
     "revenue": "Payments & settlement",
@@ -297,6 +298,25 @@
       "entryAdded": "Added the entry and audit log.",
       "entryError": "The entry could not be added."
     }
+  },
+  "studioAuditLogs": {
+    "kicker": "SYSTEM OPERATIONS",
+    "title": "Audit log",
+    "subtitle": "Review important changes made by operators and automated jobs.",
+    "searchLabel": "Search changes",
+    "searchPlaceholder": "Action, actor, or target ID",
+    "search": "Search",
+    "filterLabel": "Audit log filters",
+    "allActors": "All actors",
+    "allTargets": "All targets",
+    "actorType": { "human": "Operator", "agent": "Automation" },
+    "actor": "{type} · {id}",
+    "changes": "View before and after",
+    "before": "Before",
+    "after": "After",
+    "none": "No record",
+    "empty": "No audit logs match these filters.",
+    "nextPage": "View more records"
   },
   "home": {
     "hero": {

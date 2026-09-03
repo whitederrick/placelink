@@ -27,6 +27,7 @@ export default async function StudioLayout({
     { href: `/${locale}/studio`, label: t("dashboard") },
     { href: `/${locale}/studio/users`, label: t("users") },
     { href: `/${locale}/studio/support`, label: t("support") },
+    { href: `/${locale}/studio/audit-logs`, label: t("auditLogs") },
     { href: `/${locale}/studio/runs`, label: t("runs") },
     { href: `/${locale}/studio/ingestions`, label: t("ingestions") },
     { href: `/${locale}/studio/happenings`, label: t("happenings") },

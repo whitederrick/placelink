@@ -26,6 +26,36 @@ export const STUDIO_USER_STATUSES = [
 
 export const STUDIO_AUTH_PROVIDERS = ["KAKAO", "GOOGLE"] as const;
 
+export const AUDIT_ACTOR_TYPES = ["HUMAN", "AGENT"] as const;
+
+export const auditLogListQuerySchema = z.object({
+  search: z.string().trim().max(100).optional(),
+  actorType: z.enum(AUDIT_ACTOR_TYPES).optional(),
+  targetType: z.string().trim().max(80).optional(),
+  cursor: z.string().min(1).optional(),
+  take: z.coerce.number().int().min(1).max(50).default(20),
+});
+
+export const auditLogListResponseSchema = z.object({
+  data: z.array(
+    z.object({
+      id: z.string().min(1),
+      actorId: z.string().min(1),
+      actorType: z.enum(AUDIT_ACTOR_TYPES),
+      action: z.string().min(1),
+      targetType: z.string().min(1),
+      targetId: z.string().min(1),
+      before: z.unknown().nullable(),
+      after: z.unknown().nullable(),
+      createdAt: z.string().datetime(),
+    }),
+  ),
+  meta: z.object({
+    nextCursor: z.string().optional(),
+    targetTypes: z.array(z.string()),
+  }),
+});
+
 export const studioUserListQuerySchema = z.object({
   search: z.string().trim().max(80).optional(),
   status: z.enum(STUDIO_USER_STATUSES).optional(),
@@ -189,7 +219,6 @@ export const studioDashboardResponseSchema = z.object({
   }),
 });
 
-export type IngestionRunListQuery = z.infer<
-  typeof ingestionRunListQuerySchema
->;
+export type IngestionRunListQuery = z.infer<typeof ingestionRunListQuerySchema>;
 export type StudioUserListQuery = z.infer<typeof studioUserListQuerySchema>;
+export type AuditLogListQuery = z.infer<typeof auditLogListQuerySchema>;
