@@ -32,6 +32,7 @@
     "business": "Business operations",
     "dashboard": "Dashboard",
     "users": "Users",
+    "operators": "Operator access",
     "runs": "Ingestion runs",
     "ingestions": "Ingestion review",
     "happenings": "Events & placement",
@@ -229,6 +230,29 @@
       "published": "Published",
       "private": "Private",
       "deleted": "Deleted"
+    }
+  },
+  "studioOperators": {
+    "kicker": "ACCESS CONTROL",
+    "title": "Operator access",
+    "subtitle": "Assign or remove operational roles with an audited reason for every change.",
+    "searchLabel": "Search users",
+    "searchPlaceholder": "Nickname, email, or user ID",
+    "search": "Search",
+    "empty": "No operators are registered. Search for a user to assign a role.",
+    "role": "Operator role",
+    "reason": "Reason",
+    "none": "No operator access",
+    "save": "Save role",
+    "saving": "Saving",
+    "saved": "The role and audit log were saved.",
+    "error": "The change failed. Check the latest state and super administrator count.",
+    "selfProtected": "Another super administrator must change your role.",
+    "roles": {
+      "superAdmin": "Super administrator",
+      "support": "Support",
+      "content": "Content operations",
+      "analyst": "Analytics and read-only"
     }
   },
   "studioSupport": {

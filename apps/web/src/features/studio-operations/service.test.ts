@@ -8,6 +8,8 @@ const queryMocks = vi.hoisted(() => ({
   selectStudioUsers: vi.fn(),
   selectStudioUser: vi.fn(),
   updateStudioUserStatusTransaction: vi.fn(),
+  selectStudioOperators: vi.fn(),
+  updateStudioOperatorTransaction: vi.fn(),
 }));
 vi.mock("./queries", () => queryMocks);
 
@@ -19,6 +21,8 @@ import {
   listStudioUsers,
   loadStudioDashboard,
   updateStudioUserStatus,
+  listStudioOperators,
+  updateStudioOperator,
 } from "./service";
 
 const admin = { id: "admin-1", type: "HUMAN" as const, role: "ADMIN" as const };
@@ -318,6 +322,61 @@ describe("studio operations", () => {
         expectedUpdatedAt: "2026-08-27T00:00:00.000Z",
       }),
     ).rejects.toMatchObject({ code: "FORBIDDEN", status: 403 });
+  });
+
+  it("lists operator candidates only for super administrators", async () => {
+    queryMocks.selectStudioOperators.mockResolvedValue({
+      records: [
+        {
+          id: "support-1",
+          nickname: "지원",
+          email: "support@example.test",
+          status: "ACTIVE",
+          studioRole: "SUPPORT",
+          updatedAt: new Date("2026-09-03T12:00:00.000Z"),
+        },
+      ],
+      nextCursor: undefined,
+    });
+    await expect(listStudioOperators(admin)).resolves.toMatchObject({
+      data: [{ id: "support-1", studioRole: "SUPPORT" }],
+    });
+    await expect(
+      listStudioOperators({
+        id: "support-1",
+        type: "HUMAN",
+        role: "ADMIN",
+        studioRole: "SUPPORT",
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("updates another operator role with concurrency protection", async () => {
+    queryMocks.updateStudioOperatorTransaction.mockResolvedValue({
+      outcome: "updated",
+      record: {
+        id: "user-1",
+        studioRole: "CONTENT",
+        updatedAt: new Date("2026-09-03T13:00:00.000Z"),
+      },
+    });
+    await expect(
+      updateStudioOperator(admin, "user-1", {
+        studioRole: "CONTENT",
+        reason: "콘텐츠 운영 담당 지정",
+        expectedUpdatedAt: "2026-09-03T12:00:00.000Z",
+      }),
+    ).resolves.toMatchObject({ data: { studioRole: "CONTENT" } });
+  });
+
+  it("prevents self role changes", async () => {
+    await expect(
+      updateStudioOperator(admin, "admin-1", {
+        studioRole: null,
+        reason: "remove self",
+        expectedUpdatedAt: "2026-09-03T12:00:00.000Z",
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
   it("returns filtered audit logs with stored snapshots", async () => {

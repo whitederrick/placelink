@@ -4,6 +4,8 @@ import type {
   IngestionRunListQuery,
   StudioUserListQuery,
   StudioUserStatusUpdateRequest,
+  StudioOperatorListQuery,
+  StudioOperatorUpdateRequest,
 } from "./schema";
 import type { Actor } from "@/lib/auth/actor";
 
@@ -103,6 +105,82 @@ export async function selectStudioUsers(query: StudioUserListQuery) {
     records: page,
     nextCursor: hasNext ? page.at(-1)?.id : undefined,
   };
+}
+
+export async function selectStudioOperators(query: StudioOperatorListQuery) {
+  const search = query.search || undefined;
+  const records = await getDatabase().user.findMany({
+    where: {
+      status: { not: "WITHDRAWN" },
+      OR: search
+        ? [
+            { id: { contains: search, mode: "insensitive" } },
+            { nickname: { contains: search, mode: "insensitive" } },
+            { email: { contains: search, mode: "insensitive" } },
+          ]
+        : [{ studioRole: { not: null } }],
+    },
+    orderBy: [{ studioRole: "asc" }, { createdAt: "desc" }, { id: "desc" }],
+    cursor: query.cursor ? { id: query.cursor } : undefined,
+    skip: query.cursor ? 1 : 0,
+    take: query.take + 1,
+    select: {
+      id: true,
+      nickname: true,
+      email: true,
+      status: true,
+      studioRole: true,
+      updatedAt: true,
+    },
+  });
+  const hasNext = records.length > query.take;
+  const page = hasNext ? records.slice(0, query.take) : records;
+  return { records: page, nextCursor: hasNext ? page.at(-1)?.id : undefined };
+}
+
+export async function updateStudioOperatorTransaction(
+  actor: Actor,
+  id: string,
+  input: StudioOperatorUpdateRequest,
+) {
+  return getDatabase().$transaction(async (transaction) => {
+    const before = await transaction.user.findUnique({
+      where: { id },
+      select: { id: true, status: true, studioRole: true, updatedAt: true },
+    });
+    if (!before) return { outcome: "not-found" as const };
+    if (before.status !== "ACTIVE") return { outcome: "inactive" as const };
+    if (
+      before.studioRole === "SUPER_ADMIN" &&
+      input.studioRole !== "SUPER_ADMIN"
+    ) {
+      const superAdmins = await transaction.user.count({
+        where: { studioRole: "SUPER_ADMIN", status: "ACTIVE" },
+      });
+      if (superAdmins <= 1) return { outcome: "last-super-admin" as const };
+    }
+    const result = await transaction.user.updateMany({
+      where: { id, updatedAt: new Date(input.expectedUpdatedAt) },
+      data: { studioRole: input.studioRole },
+    });
+    if (result.count !== 1) return { outcome: "conflict" as const };
+    const after = await transaction.user.findUniqueOrThrow({
+      where: { id },
+      select: { id: true, studioRole: true, updatedAt: true },
+    });
+    await transaction.auditLog.create({
+      data: {
+        actorId: actor.id,
+        actorType: actor.type,
+        action: "studio_operator.role_updated",
+        targetType: "User",
+        targetId: id,
+        before: { studioRole: before.studioRole },
+        after: { studioRole: after.studioRole, reason: input.reason },
+      },
+    });
+    return { outcome: "updated" as const, record: after };
+  });
 }
 
 export async function selectStudioUser(id: string) {

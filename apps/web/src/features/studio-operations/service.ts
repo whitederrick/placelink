@@ -17,6 +17,10 @@ import {
   studioUserListResponseSchema,
   studioUserStatusUpdateRequestSchema,
   studioUserStatusUpdateResponseSchema,
+  studioOperatorListQuerySchema,
+  studioOperatorListResponseSchema,
+  studioOperatorUpdateRequestSchema,
+  studioOperatorUpdateResponseSchema,
 } from "./schema";
 import {
   selectAuditLogs,
@@ -26,6 +30,8 @@ import {
   selectStudioUser,
   selectStudioUsers,
   updateStudioUserStatusTransaction,
+  selectStudioOperators,
+  updateStudioOperatorTransaction,
 } from "./queries";
 
 export async function listAuditLogs(actor: Actor, rawQuery: unknown = {}) {
@@ -224,6 +230,64 @@ export async function updateStudioUserStatus(
       suspendedUntil: record.suspendedUntil?.toISOString() ?? null,
       statusChangedAt: record.statusChangedAt?.toISOString(),
       updatedAt: record.updatedAt.toISOString(),
+    },
+  });
+}
+
+export async function listStudioOperators(
+  actor: Actor,
+  rawQuery: unknown = {},
+) {
+  requireStudioPermission(actor, "studio.roles.manage");
+  const query = studioOperatorListQuerySchema.parse(rawQuery);
+  const result = await selectStudioOperators(query);
+  return studioOperatorListResponseSchema.parse({
+    data: result.records.map((record) => ({
+      ...record,
+      updatedAt: record.updatedAt.toISOString(),
+    })),
+    meta: { nextCursor: result.nextCursor },
+  });
+}
+
+export async function updateStudioOperator(
+  actor: Actor,
+  id: string,
+  rawInput: unknown,
+) {
+  requireStudioPermission(actor, "studio.roles.manage");
+  if (actor.id === id)
+    throw new AppError(
+      ErrorCode.FORBIDDEN,
+      "Operators cannot change their own role",
+      403,
+    );
+  const input = studioOperatorUpdateRequestSchema.parse(rawInput);
+  const result = await updateStudioOperatorTransaction(actor, id, input);
+  if (result.outcome === "not-found")
+    throw new AppError(ErrorCode.USER_NOT_FOUND, "User not found", 404);
+  if (result.outcome === "conflict")
+    throw new AppError(
+      ErrorCode.USER_CONFLICT,
+      "User was changed by another operator",
+      409,
+    );
+  if (result.outcome === "inactive")
+    throw new AppError(
+      ErrorCode.USER_CONFLICT,
+      "Only active users can be operators",
+      409,
+    );
+  if (result.outcome === "last-super-admin")
+    throw new AppError(
+      ErrorCode.USER_CONFLICT,
+      "The last super administrator cannot be removed",
+      409,
+    );
+  return studioOperatorUpdateResponseSchema.parse({
+    data: {
+      ...result.record,
+      updatedAt: result.record.updatedAt.toISOString(),
     },
   });
 }

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { loadHumanActor } from "@/features/auth";
 import { isLocale } from "@/i18n/config";
+import { hasStudioPermission } from "@/lib/auth/permissions";
 
 export default async function StudioLayout({
   children,
@@ -33,6 +34,11 @@ export default async function StudioLayout({
     { href: `/${locale}/studio/happenings`, label: t("happenings") },
     { href: `/${locale}/studio/analytics`, label: t("analytics") },
   ];
+  if (hasStudioPermission(actor, "studio.roles.manage"))
+    links.splice(2, 0, {
+      href: `/${locale}/studio/operators`,
+      label: t("operators"),
+    });
   const future = [t("partners"), t("campaigns"), t("revenue")];
 
   return (

@@ -25,6 +25,12 @@ export const STUDIO_USER_STATUSES = [
 ] as const;
 
 export const STUDIO_AUTH_PROVIDERS = ["KAKAO", "GOOGLE"] as const;
+export const STUDIO_ROLES = [
+  "SUPER_ADMIN",
+  "SUPPORT",
+  "CONTENT",
+  "ANALYST",
+] as const;
 
 export const AUDIT_ACTOR_TYPES = ["HUMAN", "AGENT"] as const;
 
@@ -181,6 +187,40 @@ export const studioUserStatusUpdateResponseSchema = z.object({
   }),
 });
 
+export const studioOperatorListQuerySchema = z.object({
+  search: z.string().trim().max(80).optional(),
+  cursor: z.string().min(1).optional(),
+  take: z.coerce.number().int().min(1).max(50).default(20),
+});
+
+export const studioOperatorListResponseSchema = z.object({
+  data: z.array(
+    z.object({
+      id: z.string().min(1),
+      nickname: z.string(),
+      email: z.string().nullable(),
+      status: z.enum(STUDIO_USER_STATUSES),
+      studioRole: z.enum(STUDIO_ROLES).nullable(),
+      updatedAt: z.string().datetime(),
+    }),
+  ),
+  meta: z.object({ nextCursor: z.string().optional() }),
+});
+
+export const studioOperatorUpdateRequestSchema = z.object({
+  studioRole: z.enum(STUDIO_ROLES).nullable(),
+  reason: z.string().trim().min(3).max(500),
+  expectedUpdatedAt: z.string().datetime(),
+});
+
+export const studioOperatorUpdateResponseSchema = z.object({
+  data: z.object({
+    id: z.string().min(1),
+    studioRole: z.enum(STUDIO_ROLES).nullable(),
+    updatedAt: z.string().datetime(),
+  }),
+});
+
 export const ingestionRunListQuerySchema = z.object({
   provider: z.enum(STUDIO_INGESTION_PROVIDERS).optional(),
   status: z.enum(INGESTION_RUN_STATUSES).optional(),
@@ -262,4 +302,10 @@ export type StudioUserListQuery = z.infer<typeof studioUserListQuerySchema>;
 export type AuditLogListQuery = z.infer<typeof auditLogListQuerySchema>;
 export type StudioUserStatusUpdateRequest = z.infer<
   typeof studioUserStatusUpdateRequestSchema
+>;
+export type StudioOperatorListQuery = z.infer<
+  typeof studioOperatorListQuerySchema
+>;
+export type StudioOperatorUpdateRequest = z.infer<
+  typeof studioOperatorUpdateRequestSchema
 >;
