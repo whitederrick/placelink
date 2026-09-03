@@ -1632,7 +1632,8 @@ textarea:focus-visible {
   gap: 12px;
 }
 
-.studio-area-grid article {
+.studio-area-grid article,
+.studio-area-card {
   display: grid;
   align-content: start;
   gap: 8px;
@@ -1640,6 +1641,11 @@ textarea:focus-visible {
   padding: 16px;
   border-radius: 14px;
   background: var(--surface-muted);
+}
+
+.studio-area-card:hover {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
 }
 
 .studio-area-grid p,
@@ -1656,6 +1662,90 @@ textarea:focus-visible {
 .studio-run-filters {
   display: grid;
   gap: 10px;
+}
+
+.studio-search {
+  display: grid;
+  gap: 8px;
+}
+
+.studio-search label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.studio-search > div {
+  display: flex;
+  gap: 10px;
+}
+
+.studio-search input[type="search"] {
+  min-width: 0;
+  flex: 1;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.studio-user-list {
+  display: grid;
+}
+
+.studio-user-list > a {
+  display: grid;
+  grid-template-columns: minmax(170px, 1.2fr) minmax(150px, 1fr) minmax(180px, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+}
+
+.studio-user-list > a > span:not(.studio-status) {
+  display: grid;
+  gap: 4px;
+}
+
+.studio-user-list small,
+.studio-activity-list time {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.studio-status.is-active,
+.studio-status.is-published {
+  background: #dff5e5;
+  color: #12652b;
+}
+
+.studio-status.is-suspended,
+.studio-status.is-private,
+.studio-status.is-draft {
+  background: #fff1c2;
+  color: #755300;
+}
+
+.studio-status.is-withdrawn,
+.studio-status.is-deleted {
+  background: #ece9e2;
+  color: #5c5850;
+}
+
+.studio-activity-list {
+  display: grid;
+}
+
+.studio-activity-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.studio-record-table.compact a {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .studio-next {
@@ -1787,6 +1877,16 @@ textarea:focus-visible {
 
   .studio-run-list > a {
     grid-template-columns: 1fr;
+  }
+
+  .studio-user-list > a,
+  .studio-user-records a {
+    grid-template-columns: 1fr;
+  }
+
+  .studio-search > div {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 

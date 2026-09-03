@@ -126,7 +126,13 @@ export default async function StudioPage({
           </div>
           <div className="studio-area-grid">
             {(["customers", "content", "partners", "campaigns", "revenue"] as const).map(
-              (area) => (
+              (area) => area === "customers" ? (
+                <Link className="studio-area-card" href={`/${locale}/studio/users`} key={area}>
+                  <strong>{dashboardT(`areas.${area}.title`)}</strong>
+                  <p>{dashboardT(`areas.${area}.body`)}</p>
+                  <small>{dashboardT(`areas.${area}.status`)}</small>
+                </Link>
+              ) : (
                 <article key={area}>
                   <strong>{dashboardT(`areas.${area}.title`)}</strong>
                   <p>{dashboardT(`areas.${area}.body`)}</p>

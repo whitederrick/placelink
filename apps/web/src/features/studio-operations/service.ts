@@ -9,11 +9,16 @@ import {
   ingestionRunListQuerySchema,
   ingestionRunListResponseSchema,
   studioDashboardResponseSchema,
+  studioUserDetailResponseSchema,
+  studioUserListQuerySchema,
+  studioUserListResponseSchema,
 } from "./schema";
 import {
   selectIngestionRun,
   selectIngestionRuns,
   selectStudioDashboard,
+  selectStudioUser,
+  selectStudioUsers,
 } from "./queries";
 
 function assertAdmin(actor: Actor) {
@@ -43,6 +48,98 @@ function runSummary(run: {
       ? Math.max(0, run.finishedAt.getTime() - run.startedAt.getTime())
       : null,
   };
+}
+
+function userSummary(user: Awaited<ReturnType<typeof selectStudioUsers>>["records"][number]) {
+  const membership = user.coupleMemberships[0];
+  const couple = membership?.couple;
+  const partner = couple?.members.find((member) => member.user.id !== user.id);
+  return {
+    id: user.id,
+    nickname: user.nickname,
+    email: user.email,
+    status: user.status,
+    providers: user.authIdentities.map((identity) => identity.provider),
+    createdAt: user.createdAt.toISOString(),
+    lastActiveAt: user.events[0]?.createdAt.toISOString() ?? null,
+    courseCount: user._count.soloCourses + (couple?._count.courses ?? 0),
+    scrapCount: user._count.scraps,
+    couple: couple
+      ? {
+          id: couple.id,
+          displayName: couple.displayName,
+          partnerNickname: partner?.user.nickname ?? null,
+        }
+      : null,
+  };
+}
+
+export async function listStudioUsers(actor: Actor, rawQuery: unknown = {}) {
+  assertAdmin(actor);
+  const query = studioUserListQuerySchema.parse(rawQuery);
+  const result = await selectStudioUsers(query);
+  return studioUserListResponseSchema.parse({
+    data: result.records.map(userSummary),
+    meta: { nextCursor: result.nextCursor },
+  });
+}
+
+export async function getStudioUser(actor: Actor, id: string) {
+  assertAdmin(actor);
+  const user = await selectStudioUser(id);
+  if (!user)
+    throw new AppError(ErrorCode.USER_NOT_FOUND, "User not found", 404);
+  const membership = user.coupleMemberships[0];
+  const couple = membership?.couple;
+  const courses = [
+    ...user.soloCourses.map((course) => ({ ...course, ownership: "SOLO" as const })),
+    ...(couple?.courses.map((course) => ({
+      ...course,
+      ownership: "COUPLE" as const,
+    })) ?? []),
+  ]
+    .sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime())
+    .slice(0, 20)
+    .map((course) => ({
+      ...course,
+      createdAt: course.createdAt.toISOString(),
+      publishedAt: course.publishedAt?.toISOString() ?? null,
+    }));
+  return studioUserDetailResponseSchema.parse({
+    data: {
+      ...userSummary({
+        ...user,
+        events: user.events.slice(0, 1),
+        authIdentities: user.authIdentities,
+      }),
+      profileImageUrl: user.profileImageUrl,
+      updatedAt: user.updatedAt.toISOString(),
+      deletedAt: user.deletedAt?.toISOString() ?? null,
+      identities: user.authIdentities.map((identity) => ({
+        provider: identity.provider,
+        createdAt: identity.createdAt.toISOString(),
+      })),
+      currentCouple: couple && membership
+        ? {
+            id: couple.id,
+            displayName: couple.displayName,
+            status: couple.status,
+            startedAt: couple.startedAt.toISOString(),
+            joinedAt: membership.joinedAt.toISOString(),
+            members: couple.members.map(({ user: member }) => member),
+          }
+        : null,
+      courses,
+      scraps: user.scraps.map((scrap) => ({
+        ...scrap,
+        createdAt: scrap.createdAt.toISOString(),
+      })),
+      recentActivity: user.events.map((event) => ({
+        ...event,
+        createdAt: event.createdAt.toISOString(),
+      })),
+    },
+  });
 }
 
 export async function loadStudioDashboard(actor: Actor, now = new Date()) {

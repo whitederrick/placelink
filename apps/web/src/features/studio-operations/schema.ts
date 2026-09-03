@@ -18,6 +18,101 @@ export const INGESTION_RUN_STATUSES = [
   "FAILED",
 ] as const;
 
+export const STUDIO_USER_STATUSES = [
+  "ACTIVE",
+  "SUSPENDED",
+  "WITHDRAWN",
+] as const;
+
+export const STUDIO_AUTH_PROVIDERS = ["KAKAO", "GOOGLE"] as const;
+
+export const studioUserListQuerySchema = z.object({
+  search: z.string().trim().max(80).optional(),
+  status: z.enum(STUDIO_USER_STATUSES).optional(),
+  provider: z.enum(STUDIO_AUTH_PROVIDERS).optional(),
+  cursor: z.string().min(1).optional(),
+  take: z.coerce.number().int().min(1).max(50).default(20),
+});
+
+const studioUserCourseSchema = z.object({
+  id: z.string().min(1),
+  slug: z.string().min(1),
+  title: z.string(),
+  status: z.enum(["DRAFT", "PUBLISHED", "PRIVATE", "DELETED"]),
+  ownership: z.enum(["SOLO", "COUPLE"]),
+  createdAt: z.string().datetime(),
+  publishedAt: z.string().datetime().nullable(),
+});
+
+export const studioUserSummarySchema = z.object({
+  id: z.string().min(1),
+  nickname: z.string(),
+  email: z.string().nullable(),
+  status: z.enum(STUDIO_USER_STATUSES),
+  providers: z.array(z.enum(STUDIO_AUTH_PROVIDERS)),
+  createdAt: z.string().datetime(),
+  lastActiveAt: z.string().datetime().nullable(),
+  courseCount: z.number().int().nonnegative(),
+  scrapCount: z.number().int().nonnegative(),
+  couple: z
+    .object({
+      id: z.string().min(1),
+      displayName: z.string(),
+      partnerNickname: z.string().nullable(),
+    })
+    .nullable(),
+});
+
+export const studioUserListResponseSchema = z.object({
+  data: z.array(studioUserSummarySchema),
+  meta: z.object({ nextCursor: z.string().optional() }),
+});
+
+export const studioUserDetailResponseSchema = z.object({
+  data: studioUserSummarySchema.extend({
+    profileImageUrl: z.string().nullable(),
+    updatedAt: z.string().datetime(),
+    deletedAt: z.string().datetime().nullable(),
+    identities: z.array(
+      z.object({
+        provider: z.enum(STUDIO_AUTH_PROVIDERS),
+        createdAt: z.string().datetime(),
+      }),
+    ),
+    currentCouple: z
+      .object({
+        id: z.string().min(1),
+        displayName: z.string(),
+        status: z.enum(["ACTIVE", "DISSOLVED"]),
+        startedAt: z.string().datetime(),
+        joinedAt: z.string().datetime(),
+        members: z.array(
+          z.object({ id: z.string().min(1), nickname: z.string() }),
+        ),
+      })
+      .nullable(),
+    courses: z.array(studioUserCourseSchema),
+    scraps: z.array(
+      z.object({
+        id: z.string().min(1),
+        createdAt: z.string().datetime(),
+        course: z.object({
+          slug: z.string().min(1),
+          title: z.string(),
+          status: z.enum(["DRAFT", "PUBLISHED", "PRIVATE", "DELETED"]),
+        }),
+      }),
+    ),
+    recentActivity: z.array(
+      z.object({
+        id: z.string().min(1),
+        name: z.string().min(1),
+        createdAt: z.string().datetime(),
+      }),
+    ),
+  }),
+});
+
 export const ingestionRunListQuerySchema = z.object({
   provider: z.enum(STUDIO_INGESTION_PROVIDERS).optional(),
   status: z.enum(INGESTION_RUN_STATUSES).optional(),
@@ -97,3 +192,4 @@ export const studioDashboardResponseSchema = z.object({
 export type IngestionRunListQuery = z.infer<
   typeof ingestionRunListQuerySchema
 >;
+export type StudioUserListQuery = z.infer<typeof studioUserListQuerySchema>;

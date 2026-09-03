@@ -1,5 +1,136 @@
 import { getDatabase } from "@placelink/database";
-import type { IngestionRunListQuery } from "./schema";
+import type {
+  IngestionRunListQuery,
+  StudioUserListQuery,
+} from "./schema";
+
+const userCoupleSelect = {
+  id: true,
+  displayName: true,
+  status: true,
+  startedAt: true,
+  members: {
+    where: { leftAt: null },
+    select: { user: { select: { id: true, nickname: true } } },
+  },
+  _count: { select: { courses: true } },
+} as const;
+
+const studioUserSummarySelect = {
+  id: true,
+  nickname: true,
+  email: true,
+  status: true,
+  createdAt: true,
+  authIdentities: { select: { provider: true } },
+  events: {
+    orderBy: { createdAt: "desc" as const },
+    take: 1,
+    select: { createdAt: true },
+  },
+  coupleMemberships: {
+    where: { leftAt: null, couple: { status: "ACTIVE" as const } },
+    take: 1,
+    select: { couple: { select: userCoupleSelect } },
+  },
+  _count: { select: { soloCourses: true, scraps: true } },
+} as const;
+
+export async function selectStudioUsers(query: StudioUserListQuery) {
+  const search = query.search || undefined;
+  const records = await getDatabase().user.findMany({
+    where: {
+      status: query.status,
+      authIdentities: query.provider
+        ? { some: { provider: query.provider } }
+        : undefined,
+      OR: search
+        ? [
+            { id: { contains: search, mode: "insensitive" } },
+            { nickname: { contains: search, mode: "insensitive" } },
+            { email: { contains: search, mode: "insensitive" } },
+          ]
+        : undefined,
+    },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    cursor: query.cursor ? { id: query.cursor } : undefined,
+    skip: query.cursor ? 1 : 0,
+    take: query.take + 1,
+    select: studioUserSummarySelect,
+  });
+  const hasNext = records.length > query.take;
+  const page = hasNext ? records.slice(0, query.take) : records;
+  return {
+    records: page,
+    nextCursor: hasNext ? page.at(-1)?.id : undefined,
+  };
+}
+
+export async function selectStudioUser(id: string) {
+  return getDatabase().user.findUnique({
+    where: { id },
+    select: {
+      ...studioUserSummarySelect,
+      profileImageUrl: true,
+      updatedAt: true,
+      deletedAt: true,
+      authIdentities: {
+        orderBy: { createdAt: "asc" },
+        select: { provider: true, createdAt: true },
+      },
+      events: {
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: 20,
+        select: { id: true, name: true, createdAt: true },
+      },
+      coupleMemberships: {
+        where: { leftAt: null, couple: { status: "ACTIVE" } },
+        take: 1,
+        select: {
+          joinedAt: true,
+          couple: {
+            select: {
+              ...userCoupleSelect,
+              courses: {
+                orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+                take: 20,
+                select: {
+                  id: true,
+                  slug: true,
+                  title: true,
+                  status: true,
+                  createdAt: true,
+                  publishedAt: true,
+                },
+              },
+            },
+          },
+        },
+      },
+      soloCourses: {
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: 20,
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          status: true,
+          createdAt: true,
+          publishedAt: true,
+        },
+      },
+      scraps: {
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: 20,
+        select: {
+          id: true,
+          createdAt: true,
+          course: { select: { slug: true, title: true, status: true } },
+        },
+      },
+    },
+  });
+}
 
 const runSelect = {
   id: true,

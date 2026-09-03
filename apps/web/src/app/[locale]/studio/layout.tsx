@@ -23,12 +23,13 @@ export default async function StudioLayout({
 
   const links = [
     { href: `/${locale}/studio`, label: t("dashboard") },
+    { href: `/${locale}/studio/users`, label: t("users") },
     { href: `/${locale}/studio/runs`, label: t("runs") },
     { href: `/${locale}/studio/ingestions`, label: t("ingestions") },
     { href: `/${locale}/studio/happenings`, label: t("happenings") },
     { href: `/${locale}/studio/analytics`, label: t("analytics") },
   ];
-  const future = [t("customers"), t("partners"), t("campaigns"), t("revenue")];
+  const future = [t("support"), t("partners"), t("campaigns"), t("revenue")];
 
   return (
     <div className="studio-shell">

@@ -4,12 +4,16 @@ const queryMocks = vi.hoisted(() => ({
   selectStudioDashboard: vi.fn(),
   selectIngestionRuns: vi.fn(),
   selectIngestionRun: vi.fn(),
+  selectStudioUsers: vi.fn(),
+  selectStudioUser: vi.fn(),
 }));
 vi.mock("./queries", () => queryMocks);
 
 import {
   getIngestionRun,
+  getStudioUser,
   listIngestionRuns,
+  listStudioUsers,
   loadStudioDashboard,
 } from "./service";
 
@@ -28,6 +32,77 @@ const run = {
   errorMessage: null,
   startedAt: new Date("2026-08-27T10:00:00.000Z"),
   finishedAt: new Date("2026-08-27T10:00:05.000Z"),
+};
+const studioUser = {
+  id: "user-1",
+  nickname: "민지",
+  email: "minji@example.test",
+  status: "ACTIVE" as const,
+  profileImageUrl: null,
+  createdAt: new Date("2026-08-01T00:00:00.000Z"),
+  updatedAt: new Date("2026-08-27T00:00:00.000Z"),
+  deletedAt: null,
+  authIdentities: [
+    {
+      provider: "KAKAO" as const,
+      createdAt: new Date("2026-08-01T00:00:00.000Z"),
+    },
+  ],
+  events: [
+    {
+      id: "event-1",
+      name: "course_scrapped",
+      createdAt: new Date("2026-08-27T10:00:00.000Z"),
+    },
+  ],
+  coupleMemberships: [
+    {
+      joinedAt: new Date("2026-08-02T00:00:00.000Z"),
+      couple: {
+        id: "couple-1",
+        displayName: "지훈♥민지",
+        status: "ACTIVE" as const,
+        startedAt: new Date("2025-03-23T00:00:00.000Z"),
+        members: [
+          { user: { id: "user-1", nickname: "민지" } },
+          { user: { id: "user-2", nickname: "지훈" } },
+        ],
+        _count: { courses: 1 },
+        courses: [
+          {
+            id: "course-1",
+            slug: "couple-course",
+            title: "성수 데이트",
+            status: "PUBLISHED" as const,
+            createdAt: new Date("2026-08-20T00:00:00.000Z"),
+            publishedAt: new Date("2026-08-20T01:00:00.000Z"),
+          },
+        ],
+      },
+    },
+  ],
+  _count: { soloCourses: 1, scraps: 1 },
+  soloCourses: [
+    {
+      id: "course-2",
+      slug: "solo-course",
+      title: "혼자 만든 코스",
+      status: "DRAFT" as const,
+      createdAt: new Date("2026-08-21T00:00:00.000Z"),
+      publishedAt: null,
+    },
+  ],
+  scraps: [
+    {
+      id: "scrap-1",
+      createdAt: new Date("2026-08-22T00:00:00.000Z"),
+      course: {
+        slug: "saved-course",
+        title: "저장한 코스",
+        status: "PUBLISHED" as const,
+      },
+    },
+  ],
 };
 
 describe("studio operations", () => {
@@ -129,6 +204,51 @@ describe("studio operations", () => {
         actorType: "AGENT",
         records: [{ title: "다시 보는 제헌절" }],
       },
+    });
+  });
+
+  it("returns filtered user summaries without raw activity properties", async () => {
+    queryMocks.selectStudioUsers.mockResolvedValue({
+      records: [studioUser],
+      nextCursor: "user-next",
+    });
+
+    await expect(
+      listStudioUsers(admin, { search: "민지", provider: "KAKAO" }),
+    ).resolves.toMatchObject({
+      data: [
+        {
+          id: "user-1",
+          providers: ["KAKAO"],
+          lastActiveAt: "2026-08-27T10:00:00.000Z",
+          couple: { partnerNickname: "지훈" },
+        },
+      ],
+      meta: { nextCursor: "user-next" },
+    });
+  });
+
+  it("returns user detail with solo and couple histories", async () => {
+    queryMocks.selectStudioUser.mockResolvedValue(studioUser);
+
+    await expect(getStudioUser(admin, "user-1")).resolves.toMatchObject({
+      data: {
+        id: "user-1",
+        currentCouple: { displayName: "지훈♥민지" },
+        courses: [
+          { id: "course-2", ownership: "SOLO" },
+          { id: "course-1", ownership: "COUPLE" },
+        ],
+        scraps: [{ id: "scrap-1" }],
+        recentActivity: [{ name: "course_scrapped" }],
+      },
+    });
+  });
+
+  it("rejects non-admin user lookup", async () => {
+    await expect(listStudioUsers(user)).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      status: 403,
     });
   });
 });
