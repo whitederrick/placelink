@@ -7,7 +7,7 @@ test("lets an administrator remove a happening from home", async ({ page }) => {
     .getByRole("button", { name: /Development User.*지훈/ })
     .click();
 
-  await page.goto("/ko/ops/happenings");
+  await page.goto("/ko/studio/happenings");
   await expect(page.getByRole("heading", { name: "홈 앵커 큐레이션" })).toBeVisible();
   await expect(page.locator(".curation-list article")).toHaveCount(3);
 
