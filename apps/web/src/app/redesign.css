@@ -21,10 +21,14 @@
 
 html {
   background: var(--paper);
+  min-height: 100%;
+  scroll-padding-top: calc(64px + env(safe-area-inset-top));
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   min-width: 320px;
+  min-height: 100dvh;
   background: var(--paper);
   color: var(--ink);
   font-family:
@@ -53,17 +57,18 @@ textarea:focus-visible {
 
 .site-canvas {
   width: 100%;
-  min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
   overflow: visible;
   background: var(--paper);
   box-shadow: none;
-  padding-bottom: 92px;
+  padding-bottom: calc(92px + env(safe-area-inset-bottom));
 }
 
 .topbar {
-  height: 64px;
+  height: calc(64px + env(safe-area-inset-top));
   padding: 0 20px;
+  padding-top: env(safe-area-inset-top);
   position: sticky;
   top: 0;
   z-index: 40;
@@ -96,13 +101,13 @@ textarea:focus-visible {
 }
 
 .main-content {
-  min-height: calc(100vh - 64px);
+  min-height: calc(100dvh - 64px - env(safe-area-inset-top));
 }
 
 .tabbar {
   width: min(calc(100% - 24px), 480px);
   height: 66px;
-  bottom: 10px;
+  bottom: max(10px, env(safe-area-inset-bottom));
   padding: 7px 10px;
   border: 0;
   border-radius: 20px;
@@ -333,7 +338,7 @@ textarea:focus-visible {
 }
 
 .search-shell input {
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .search-shell button,
@@ -349,7 +354,7 @@ textarea:focus-visible {
 
 .chip-row a,
 .chip-row button {
-  min-height: 38px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   border-color: var(--line);
@@ -605,12 +610,15 @@ textarea:focus-visible {
 }
 
 .editable-route-copy input {
-  height: 38px;
+  height: 44px;
+  font-size: 16px;
   border-radius: 9px;
   background: #fff;
 }
 
 .route-node-actions button {
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 8px;
   background: #fff;
 }
@@ -642,7 +650,7 @@ textarea:focus-visible {
 }
 
 .suggestion-row button {
-  min-height: 38px;
+  min-height: 44px;
   border: 0;
   border-radius: 10px;
   background: var(--ink);
@@ -744,7 +752,7 @@ textarea:focus-visible {
 .publish-field input,
 .publish-field textarea {
   border-radius: 10px;
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .publish-checklist {
@@ -753,12 +761,17 @@ textarea:focus-visible {
 }
 
 @media (min-width: 760px) {
+  html {
+    scroll-padding-top: 74px;
+  }
+
   .site-canvas {
     padding-bottom: 0;
   }
 
   .topbar {
     height: 74px;
+    padding-top: 0;
     padding-right: max(28px, calc((100vw - 1200px) / 2));
     padding-left: max(28px, calc((100vw - 1200px) / 2));
   }
