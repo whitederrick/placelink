@@ -78,13 +78,38 @@
       "KOBIS": "KOBIS",
       "OFFICIAL_SITE": "Official site"
     },
-    "status": { "running": "Running", "succeeded": "Healthy", "failed": "Failed", "idle": "No history" },
+    "status": {
+      "running": "Running",
+      "succeeded": "Healthy",
+      "failed": "Failed",
+      "idle": "No history"
+    },
     "areas": {
-      "customers": { "title": "User operations", "body": "Signup, activity, couples, courses, and saves", "status": "Active" },
-      "content": { "title": "Content operations", "body": "Places, events, courses, placement, and data quality", "status": "Partially active" },
-      "partners": { "title": "Partners", "body": "Businesses, venue ownership, contracts, and performance", "status": "Phase 3" },
-      "campaigns": { "title": "Campaigns & coupons", "body": "Coupons, events, targeting, and redemption", "status": "Phase 3" },
-      "revenue": { "title": "Payments & settlement", "body": "Bookings, payments, refunds, fees, and partner settlement", "status": "Phase 4" }
+      "customers": {
+        "title": "User operations",
+        "body": "Signup, activity, couples, courses, and saves",
+        "status": "Active"
+      },
+      "content": {
+        "title": "Content operations",
+        "body": "Places, events, courses, placement, and data quality",
+        "status": "Partially active"
+      },
+      "partners": {
+        "title": "Partners",
+        "body": "Businesses, venue ownership, contracts, and performance",
+        "status": "Phase 3"
+      },
+      "campaigns": {
+        "title": "Campaigns & coupons",
+        "body": "Coupons, events, targeting, and redemption",
+        "status": "Phase 3"
+      },
+      "revenue": {
+        "title": "Payments & settlement",
+        "body": "Bookings, payments, refunds, fees, and partner settlement",
+        "status": "Phase 4"
+      }
     }
   },
   "ingestionRuns": {
@@ -128,9 +153,19 @@
       "KOBIS": "KOBIS",
       "OFFICIAL_SITE": "Official site"
     },
-    "status": { "running": "Running", "succeeded": "Succeeded", "failed": "Failed" },
+    "status": {
+      "running": "Running",
+      "succeeded": "Succeeded",
+      "failed": "Failed"
+    },
     "trigger": { "manual": "Manual", "scheduled": "Scheduled" },
-    "recordStatus": { "staged": "Staged", "normalized": "Awaiting review", "merged": "Merged", "rejected": "Rejected", "failed": "Failed" }
+    "recordStatus": {
+      "staged": "Staged",
+      "normalized": "Awaiting review",
+      "merged": "Merged",
+      "rejected": "Rejected",
+      "failed": "Failed"
+    }
   },
   "studioUsers": {
     "kicker": "CUSTOMER OPERATIONS",
@@ -170,10 +205,98 @@
     "activity": "Recent activity",
     "activityBody": "Shows event names and timestamps without raw personal properties.",
     "noActivity": "No activity recorded",
-    "status": { "active": "Active", "suspended": "Suspended", "withdrawn": "Withdrawn" },
+    "status": {
+      "active": "Active",
+      "suspended": "Suspended",
+      "withdrawn": "Withdrawn"
+    },
     "provider": { "kakao": "Kakao", "google": "Google" },
     "ownership": { "solo": "Solo", "couple": "Couple" },
-    "courseStatus": { "draft": "Draft", "published": "Published", "private": "Private", "deleted": "Deleted" }
+    "courseStatus": {
+      "draft": "Draft",
+      "published": "Published",
+      "private": "Private",
+      "deleted": "Deleted"
+    }
+  },
+  "studioSupport": {
+    "kicker": "CUSTOMER SUPPORT",
+    "title": "Requests & reports",
+    "subtitle": "Manage ownership, deadlines, and resolution history for inquiries, complaints, reports, and privacy requests.",
+    "searchLabel": "Search cases",
+    "searchPlaceholder": "Subject, content, user, or case ID",
+    "search": "Search",
+    "filterLabel": "Case filters",
+    "allStatuses": "All statuses",
+    "allTypes": "All types",
+    "allPriorities": "All priorities",
+    "empty": "No cases match these filters.",
+    "nextPage": "View next cases",
+    "anonymous": "No user information",
+    "unassigned": "Unassigned",
+    "entries": "{count} messages",
+    "due": "Due {date}",
+    "backToCases": "Requests & reports",
+    "detailKicker": "SUPPORT CASE DETAIL",
+    "caseInfo": "Case information",
+    "typeLabel": "Type",
+    "priorityLabel": "Priority",
+    "reporter": "Reporter",
+    "assignee": "Assignee",
+    "createdAt": "Created",
+    "dueAt": "Due",
+    "request": "Request",
+    "target": "Reported target",
+    "timeline": "Resolution timeline",
+    "timelineBody": "Customer messages, staff replies, and internal notes in chronological order.",
+    "type": {
+      "inquiry": "Inquiry",
+      "complaint": "Complaint",
+      "report": "Report",
+      "privacy": "Privacy request"
+    },
+    "priority": {
+      "low": "Low",
+      "normal": "Normal",
+      "high": "High",
+      "urgent": "Urgent"
+    },
+    "status": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "waiting_user": "Waiting for user",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "entryKind": {
+      "customer_message": "Customer message",
+      "staff_reply": "Staff reply",
+      "internal_note": "Internal note"
+    },
+    "actions": {
+      "save": "Update case",
+      "saving": "Saving",
+      "saved": "Saved the update and audit log.",
+      "updateError": "The case could not be updated. Reload and try again.",
+      "status": "Status",
+      "priority": "Priority",
+      "assignment": "Assignee",
+      "keepAssignment": "Keep current assignee",
+      "assignSelf": "Assign to me",
+      "unassign": "Unassign",
+      "dueAt": "Due",
+      "reason": "Change reason",
+      "reasonPlaceholder": "Why this status or priority is changing",
+      "entryKind": "Entry type",
+      "staffReply": "Staff reply",
+      "internalNote": "Internal note",
+      "entryBody": "Content",
+      "entryPlaceholder": "Reply or an internal note visible only to operators",
+      "addEntry": "Add resolution entry",
+      "addingEntry": "Adding",
+      "entryAdded": "Added the entry and audit log.",
+      "entryError": "The entry could not be added."
+    }
   },
   "home": {
     "hero": {
@@ -468,13 +591,59 @@
       "result": "{fetched} fetched · {selected} selected · {inserted} added · {unchanged} unchanged",
       "error": "The import failed. Check the selected provider key and external service status."
     },
-    "fields": { "placeKind": "Place type", "happeningKind": "Event type", "operatorType": "Operator", "rejectReason": "Rejection reason" },
-    "all": { "provider": "All sources", "happeningKind": "All events", "operatorType": "All operators" },
-    "status": { "normalized": "Awaiting review", "merged": "Merged", "rejected": "Rejected", "failed": "Failed" },
-    "provider": { "seoul_open_data": "Seoul Open Data", "culture_portal": "Culture Portal", "kopis": "KOPIS", "kobis": "KOBIS", "official_site": "Official site" },
-    "placeKind": { "cafe": "Cafe", "restaurant": "Restaurant", "bar": "Bar", "shop": "Shop", "cinema": "Cinema", "museum": "Museum", "gallery": "Gallery", "park": "Park", "activity": "Activity venue", "cultural_venue": "Cultural venue", "other": "Other" },
-    "happeningKind": { "exhibition": "Exhibition", "popup": "Pop-up", "festival": "Festival", "performance": "Performance", "screening": "Screening", "workshop": "Workshop", "event": "Event", "other": "Other" },
-    "operatorType": { "public": "Public", "private": "Private", "nonprofit": "Nonprofit", "unknown": "Unknown" }
+    "fields": {
+      "placeKind": "Place type",
+      "happeningKind": "Event type",
+      "operatorType": "Operator",
+      "rejectReason": "Rejection reason"
+    },
+    "all": {
+      "provider": "All sources",
+      "happeningKind": "All events",
+      "operatorType": "All operators"
+    },
+    "status": {
+      "normalized": "Awaiting review",
+      "merged": "Merged",
+      "rejected": "Rejected",
+      "failed": "Failed"
+    },
+    "provider": {
+      "seoul_open_data": "Seoul Open Data",
+      "culture_portal": "Culture Portal",
+      "kopis": "KOPIS",
+      "kobis": "KOBIS",
+      "official_site": "Official site"
+    },
+    "placeKind": {
+      "cafe": "Cafe",
+      "restaurant": "Restaurant",
+      "bar": "Bar",
+      "shop": "Shop",
+      "cinema": "Cinema",
+      "museum": "Museum",
+      "gallery": "Gallery",
+      "park": "Park",
+      "activity": "Activity venue",
+      "cultural_venue": "Cultural venue",
+      "other": "Other"
+    },
+    "happeningKind": {
+      "exhibition": "Exhibition",
+      "popup": "Pop-up",
+      "festival": "Festival",
+      "performance": "Performance",
+      "screening": "Screening",
+      "workshop": "Workshop",
+      "event": "Event",
+      "other": "Other"
+    },
+    "operatorType": {
+      "public": "Public",
+      "private": "Private",
+      "nonprofit": "Nonprofit",
+      "unknown": "Unknown"
+    }
   },
   "analytics": {
     "kicker": "INTERNAL OPERATIONS",

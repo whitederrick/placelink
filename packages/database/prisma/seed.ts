@@ -60,6 +60,8 @@ async function resetDatabase() {
   await prisma.$transaction([
     prisma.analyticsEvent.deleteMany(),
     prisma.auditLog.deleteMany(),
+    prisma.supportCaseEntry.deleteMany(),
+    prisma.supportCase.deleteMany(),
     prisma.scrap.deleteMany(),
     prisma.courseTag.deleteMany(),
     prisma.placeTag.deleteMany(),
@@ -102,6 +104,55 @@ async function seed() {
           id: `seed-member-${index + 1}`,
           userId: user.id,
         })),
+      },
+    },
+  });
+
+  await prisma.supportCase.create({
+    data: {
+      id: "seed-support-inquiry",
+      reporterUserId: "seed-user-minji",
+      assigneeUserId: "seed-user-jihoon",
+      type: "INQUIRY",
+      priority: "NORMAL",
+      status: "IN_PROGRESS",
+      subject: "공유 링크에서 코스가 보이지 않아요",
+      description:
+        "친구에게 보낸 공유 링크에서 코스를 찾을 수 없다는 안내가 나옵니다.",
+      dueAt: new Date(Date.now() + 24 * 60 * 60 * 1_000),
+      entries: {
+        create: {
+          id: "seed-support-inquiry-entry",
+          kind: "CUSTOMER_MESSAGE",
+          authorId: "seed-user-minji",
+          authorType: "HUMAN",
+          body: "공유한 코스가 공개 상태인지 확인해 주세요.",
+        },
+      },
+    },
+  });
+
+  await prisma.supportCase.create({
+    data: {
+      id: "seed-support-report",
+      reporterUserId: "seed-user-jihoon",
+      type: "REPORT",
+      priority: "HIGH",
+      status: "OPEN",
+      subject: "코스 설명에 광고성 문구가 있습니다",
+      description:
+        "탐색 화면에서 확인한 코스 설명에 반복적인 광고 문구가 포함되어 있습니다.",
+      targetType: "Course",
+      targetId: "seed-date-course-2",
+      dueAt: new Date(Date.now() + 4 * 60 * 60 * 1_000),
+      entries: {
+        create: {
+          id: "seed-support-report-entry",
+          kind: "CUSTOMER_MESSAGE",
+          authorId: "seed-user-jihoon",
+          authorType: "HUMAN",
+          body: "광고성 코스인지 검토 부탁드립니다.",
+        },
       },
     },
   });

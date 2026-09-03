@@ -18,18 +18,21 @@ export default async function StudioLayout({
     getTranslations("studioNav"),
   ]);
   if (!isLocale(locale)) notFound();
-  const actor = session?.user?.id ? await loadHumanActor(session.user.id) : null;
+  const actor = session?.user?.id
+    ? await loadHumanActor(session.user.id)
+    : null;
   if (actor?.role !== "ADMIN") return children;
 
   const links = [
     { href: `/${locale}/studio`, label: t("dashboard") },
     { href: `/${locale}/studio/users`, label: t("users") },
+    { href: `/${locale}/studio/support`, label: t("support") },
     { href: `/${locale}/studio/runs`, label: t("runs") },
     { href: `/${locale}/studio/ingestions`, label: t("ingestions") },
     { href: `/${locale}/studio/happenings`, label: t("happenings") },
     { href: `/${locale}/studio/analytics`, label: t("analytics") },
   ];
-  const future = [t("support"), t("partners"), t("campaigns"), t("revenue")];
+  const future = [t("partners"), t("campaigns"), t("revenue")];
 
   return (
     <div className="studio-shell">
