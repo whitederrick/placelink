@@ -12,7 +12,7 @@ import {
   selectUserForActor,
   updateAuthenticatedUserEmail,
 } from "./queries";
-import { resolveActorRole } from "./role";
+import { resolveActorRole, resolveStudioRole } from "./role";
 
 export async function ensureAuthenticatedUser(input: AuthenticationProfile) {
   const profile = authenticationProfileSchema.parse(input);
@@ -39,6 +39,14 @@ export async function loadHumanActor(userId: string): Promise<Actor | null> {
       user.email,
       webEnv.ADMIN_USER_IDS,
       webEnv.STUDIO_OPERATOR_EMAILS,
+      user.studioRole,
+    ),
+    studioRole: resolveStudioRole(
+      user.id,
+      user.email,
+      webEnv.ADMIN_USER_IDS,
+      webEnv.STUDIO_OPERATOR_EMAILS,
+      user.studioRole,
     ),
   };
 }

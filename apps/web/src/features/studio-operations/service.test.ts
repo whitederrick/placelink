@@ -7,6 +7,7 @@ const queryMocks = vi.hoisted(() => ({
   selectIngestionRun: vi.fn(),
   selectStudioUsers: vi.fn(),
   selectStudioUser: vi.fn(),
+  updateStudioUserStatusTransaction: vi.fn(),
 }));
 vi.mock("./queries", () => queryMocks);
 
@@ -17,6 +18,7 @@ import {
   listAuditLogs,
   listStudioUsers,
   loadStudioDashboard,
+  updateStudioUserStatus,
 } from "./service";
 
 const admin = { id: "admin-1", type: "HUMAN" as const, role: "ADMIN" as const };
@@ -44,6 +46,9 @@ const studioUser = {
   createdAt: new Date("2026-08-01T00:00:00.000Z"),
   updatedAt: new Date("2026-08-27T00:00:00.000Z"),
   deletedAt: null,
+  statusReason: null,
+  suspendedUntil: null,
+  statusChangedAt: null,
   authIdentities: [
     {
       provider: "KAKAO" as const,
@@ -252,6 +257,67 @@ describe("studio operations", () => {
       code: "FORBIDDEN",
       status: 403,
     });
+  });
+
+  it("updates a user status with optimistic concurrency metadata", async () => {
+    queryMocks.updateStudioUserStatusTransaction.mockResolvedValue({
+      outcome: "updated",
+      record: {
+        id: "user-1",
+        status: "SUSPENDED",
+        statusReason: "반복적인 서비스 악용",
+        suspendedUntil: new Date("2026-09-10T00:00:00.000Z"),
+        statusChangedAt: new Date("2026-09-03T12:00:00.000Z"),
+        updatedAt: new Date("2026-09-03T12:00:00.000Z"),
+        deletedAt: null,
+      },
+    });
+
+    await expect(
+      updateStudioUserStatus(
+        admin,
+        "user-1",
+        {
+          status: "SUSPENDED",
+          reason: "반복적인 서비스 악용",
+          suspendedUntil: "2026-09-10T00:00:00.000Z",
+          expectedUpdatedAt: "2026-08-27T00:00:00.000Z",
+        },
+        new Date("2026-09-03T12:00:00.000Z"),
+      ),
+    ).resolves.toMatchObject({
+      data: {
+        status: "SUSPENDED",
+        suspendedUntil: "2026-09-10T00:00:00.000Z",
+      },
+    });
+  });
+
+  it("prevents operators from changing their own status", async () => {
+    await expect(
+      updateStudioUserStatus(admin, "admin-1", {
+        status: "SUSPENDED",
+        reason: "self change",
+        suspendedUntil: null,
+        expectedUpdatedAt: "2026-08-27T00:00:00.000Z",
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN", status: 403 });
+  });
+
+  it("reserves irreversible withdrawal for super administrators", async () => {
+    const support = {
+      id: "support-1",
+      type: "HUMAN" as const,
+      role: "ADMIN" as const,
+      studioRole: "SUPPORT" as const,
+    };
+    await expect(
+      updateStudioUserStatus(support, "user-1", {
+        status: "WITHDRAWN",
+        reason: "verified privacy request",
+        expectedUpdatedAt: "2026-08-27T00:00:00.000Z",
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN", status: 403 });
   });
 
   it("returns filtered audit logs with stored snapshots", async () => {

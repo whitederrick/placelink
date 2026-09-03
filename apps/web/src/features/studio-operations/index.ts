@@ -7,6 +7,7 @@ export {
   ingestionRunListQuerySchema,
   auditLogListQuerySchema,
   studioUserListQuerySchema,
+  studioUserStatusUpdateRequestSchema,
 } from "./schema";
 export {
   getIngestionRun,
@@ -15,4 +16,5 @@ export {
   listAuditLogs,
   listStudioUsers,
   loadStudioDashboard,
+  updateStudioUserStatus,
 } from "./service";

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { resolveActorRole } from "./role";
+import { resolveStudioRole } from "./role";
 
 describe("resolveActorRole", () => {
   it("grants admin access only to an explicitly configured user id", () => {
@@ -20,5 +21,14 @@ describe("resolveActorRole", () => {
         ["operator@example.com"],
       ),
     ).toBe("ADMIN");
+  });
+
+  it("uses a persisted least-privilege studio role", () => {
+    expect(resolveActorRole("user-support", null, [], [], "SUPPORT")).toBe(
+      "ADMIN",
+    );
+    expect(resolveStudioRole("user-support", null, [], [], "SUPPORT")).toBe(
+      "SUPPORT",
+    );
   });
 });

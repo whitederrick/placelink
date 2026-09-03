@@ -5,6 +5,8 @@ import { auth } from "@/auth";
 import { loadHumanActor } from "@/features/auth";
 import { getStudioUser } from "@/features/studio-operations";
 import { isLocale } from "@/i18n/config";
+import { hasStudioPermission } from "@/lib/auth/permissions";
+import { UserStatusActions } from "@/features/studio-operations/components/UserStatusActions";
 
 export default async function StudioUserDetailPage({
   params,
@@ -15,7 +17,9 @@ export default async function StudioUserDetailPage({
     getTranslations("studioUsers"),
   ]);
   if (!isLocale(locale)) notFound();
-  const actor = session?.user?.id ? await loadHumanActor(session.user.id) : null;
+  const actor = session?.user?.id
+    ? await loadHumanActor(session.user.id)
+    : null;
   if (actor?.role !== "ADMIN") notFound();
   let user;
   try {
@@ -23,13 +27,14 @@ export default async function StudioUserDetailPage({
   } catch {
     notFound();
   }
-  const dateTime = (date: string | null) => date
-    ? new Intl.DateTimeFormat(locale, {
-        dateStyle: "medium",
-        timeStyle: "short",
-        timeZone: "Asia/Seoul",
-      }).format(new Date(date))
-    : "-";
+  const dateTime = (date: string | null) =>
+    date
+      ? new Intl.DateTimeFormat(locale, {
+          dateStyle: "medium",
+          timeStyle: "short",
+          timeZone: "Asia/Seoul",
+        }).format(new Date(date))
+      : "-";
 
   return (
     <div className="studio-detail-page">
@@ -50,54 +55,163 @@ export default async function StudioUserDetailPage({
         <article className="studio-panel">
           <h2>{t("account")}</h2>
           <dl className="studio-definition-list">
-            <div><dt>{t("userId")}</dt><dd>{user.id}</dd></div>
-            <div><dt>{t("email")}</dt><dd>{user.email ?? "-"}</dd></div>
-            <div><dt>{t("providers")}</dt><dd>{user.identities.map((item) => t(`provider.${item.provider.toLowerCase()}`)).join(" · ") || "-"}</dd></div>
-            <div><dt>{t("joinedAt")}</dt><dd>{dateTime(user.createdAt)}</dd></div>
-            <div><dt>{t("lastActiveLabel")}</dt><dd>{dateTime(user.lastActiveAt)}</dd></div>
+            <div>
+              <dt>{t("userId")}</dt>
+              <dd>{user.id}</dd>
+            </div>
+            <div>
+              <dt>{t("email")}</dt>
+              <dd>{user.email ?? "-"}</dd>
+            </div>
+            <div>
+              <dt>{t("providers")}</dt>
+              <dd>
+                {user.identities
+                  .map((item) => t(`provider.${item.provider.toLowerCase()}`))
+                  .join(" · ") || "-"}
+              </dd>
+            </div>
+            <div>
+              <dt>{t("joinedAt")}</dt>
+              <dd>{dateTime(user.createdAt)}</dd>
+            </div>
+            <div>
+              <dt>{t("lastActiveLabel")}</dt>
+              <dd>{dateTime(user.lastActiveAt)}</dd>
+            </div>
           </dl>
         </article>
         <article className="studio-panel">
           <h2>{t("relationship")}</h2>
           {user.currentCouple ? (
             <dl className="studio-definition-list">
-              <div><dt>{t("coupleName")}</dt><dd>{user.currentCouple.displayName}</dd></div>
-              <div><dt>{t("members")}</dt><dd>{user.currentCouple.members.map((member) => member.nickname).join(" · ")}</dd></div>
-              <div><dt>{t("startedAt")}</dt><dd>{dateTime(user.currentCouple.startedAt)}</dd></div>
-              <div><dt>{t("connectedAt")}</dt><dd>{dateTime(user.currentCouple.joinedAt)}</dd></div>
+              <div>
+                <dt>{t("coupleName")}</dt>
+                <dd>{user.currentCouple.displayName}</dd>
+              </div>
+              <div>
+                <dt>{t("members")}</dt>
+                <dd>
+                  {user.currentCouple.members
+                    .map((member) => member.nickname)
+                    .join(" · ")}
+                </dd>
+              </div>
+              <div>
+                <dt>{t("startedAt")}</dt>
+                <dd>{dateTime(user.currentCouple.startedAt)}</dd>
+              </div>
+              <div>
+                <dt>{t("connectedAt")}</dt>
+                <dd>{dateTime(user.currentCouple.joinedAt)}</dd>
+              </div>
             </dl>
-          ) : <p className="studio-empty">{t("noCouple")}</p>}
+          ) : (
+            <p className="studio-empty">{t("noCouple")}</p>
+          )}
         </article>
       </section>
+      {hasStudioPermission(actor, "studio.users.manage") &&
+      actor.id !== user.id &&
+      user.status !== "WITHDRAWN" ? (
+        <UserStatusActions
+          userId={user.id}
+          allowWithdrawal={hasStudioPermission(actor, "studio.users.withdraw")}
+          current={{
+            status: user.status,
+            updatedAt: user.updatedAt,
+            suspendedUntil: user.suspendedUntil,
+          }}
+          labels={{
+            title: t("actions.title"),
+            body: t("actions.body"),
+            status: t("actions.status"),
+            suspendedUntil: t("actions.suspendedUntil"),
+            reason: t("actions.reason"),
+            save: t("actions.save"),
+            saving: t("actions.saving"),
+            saved: t("actions.saved"),
+            error: t("actions.error"),
+            statuses: {
+              ACTIVE: t("status.active"),
+              SUSPENDED: t("status.suspended"),
+              WITHDRAWN: t("status.withdrawn"),
+            },
+          }}
+        />
+      ) : null}
       <section className="studio-panel">
-        <div className="studio-panel-heading"><div><h2>{t("courses")}</h2><p>{t("coursesBody")}</p></div></div>
+        <div className="studio-panel-heading">
+          <div>
+            <h2>{t("courses")}</h2>
+            <p>{t("coursesBody")}</p>
+          </div>
+        </div>
         <div className="studio-record-table studio-user-records">
-          {user.courses.length ? user.courses.map((course) => (
-            <Link href={`/${locale}/courses/${course.slug}`} key={course.id}>
-              <span><strong>{course.title}</strong><small>{dateTime(course.createdAt)}</small></span>
-              <span>{t(`ownership.${course.ownership.toLowerCase()}`)}</span>
-              <span className={`studio-status is-${course.status.toLowerCase()}`}>{t(`courseStatus.${course.status.toLowerCase()}`)}</span>
-            </Link>
-          )) : <p className="studio-empty">{t("noCourses")}</p>}
+          {user.courses.length ? (
+            user.courses.map((course) => (
+              <Link href={`/${locale}/courses/${course.slug}`} key={course.id}>
+                <span>
+                  <strong>{course.title}</strong>
+                  <small>{dateTime(course.createdAt)}</small>
+                </span>
+                <span>{t(`ownership.${course.ownership.toLowerCase()}`)}</span>
+                <span
+                  className={`studio-status is-${course.status.toLowerCase()}`}
+                >
+                  {t(`courseStatus.${course.status.toLowerCase()}`)}
+                </span>
+              </Link>
+            ))
+          ) : (
+            <p className="studio-empty">{t("noCourses")}</p>
+          )}
         </div>
       </section>
       <section className="studio-detail-grid">
         <article className="studio-panel">
-          <div className="studio-panel-heading"><div><h2>{t("scraps")}</h2><p>{t("scrapsBody")}</p></div></div>
+          <div className="studio-panel-heading">
+            <div>
+              <h2>{t("scraps")}</h2>
+              <p>{t("scrapsBody")}</p>
+            </div>
+          </div>
           <div className="studio-record-table compact">
-            {user.scraps.length ? user.scraps.map((scrap) => (
-              <Link href={`/${locale}/courses/${scrap.course.slug}`} key={scrap.id}>
-                <span><strong>{scrap.course.title}</strong><small>{dateTime(scrap.createdAt)}</small></span>
-              </Link>
-            )) : <p className="studio-empty">{t("noScraps")}</p>}
+            {user.scraps.length ? (
+              user.scraps.map((scrap) => (
+                <Link
+                  href={`/${locale}/courses/${scrap.course.slug}`}
+                  key={scrap.id}
+                >
+                  <span>
+                    <strong>{scrap.course.title}</strong>
+                    <small>{dateTime(scrap.createdAt)}</small>
+                  </span>
+                </Link>
+              ))
+            ) : (
+              <p className="studio-empty">{t("noScraps")}</p>
+            )}
           </div>
         </article>
         <article className="studio-panel">
-          <div className="studio-panel-heading"><div><h2>{t("activity")}</h2><p>{t("activityBody")}</p></div></div>
+          <div className="studio-panel-heading">
+            <div>
+              <h2>{t("activity")}</h2>
+              <p>{t("activityBody")}</p>
+            </div>
+          </div>
           <div className="studio-activity-list">
-            {user.recentActivity.length ? user.recentActivity.map((event) => (
-              <div key={event.id}><strong>{event.name}</strong><time>{dateTime(event.createdAt)}</time></div>
-            )) : <p className="studio-empty">{t("noActivity")}</p>}
+            {user.recentActivity.length ? (
+              user.recentActivity.map((event) => (
+                <div key={event.id}>
+                  <strong>{event.name}</strong>
+                  <time>{dateTime(event.createdAt)}</time>
+                </div>
+              ))
+            ) : (
+              <p className="studio-empty">{t("noActivity")}</p>
+            )}
           </div>
         </article>
       </section>

@@ -3,6 +3,7 @@ import {
   type ExternalProvider,
 } from "@placelink/database";
 import type { Actor } from "@/lib/auth/actor";
+import { requireStudioPermission } from "@/lib/auth/permissions";
 import { AppError, ErrorCode } from "@/lib/errors";
 import {
   auditLogListQuerySchema,
@@ -14,6 +15,8 @@ import {
   studioUserDetailResponseSchema,
   studioUserListQuerySchema,
   studioUserListResponseSchema,
+  studioUserStatusUpdateRequestSchema,
+  studioUserStatusUpdateResponseSchema,
 } from "./schema";
 import {
   selectAuditLogs,
@@ -22,10 +25,11 @@ import {
   selectStudioDashboard,
   selectStudioUser,
   selectStudioUsers,
+  updateStudioUserStatusTransaction,
 } from "./queries";
 
 export async function listAuditLogs(actor: Actor, rawQuery: unknown = {}) {
-  assertAdmin(actor);
+  requireStudioPermission(actor, "studio.audit.read");
   const query = auditLogListQuerySchema.parse(rawQuery);
   const result = await selectAuditLogs(query);
   return auditLogListResponseSchema.parse({
@@ -38,11 +42,6 @@ export async function listAuditLogs(actor: Actor, rawQuery: unknown = {}) {
       targetTypes: result.targetTypes,
     },
   });
-}
-
-function assertAdmin(actor: Actor) {
-  if (actor.role !== "ADMIN")
-    throw new AppError(ErrorCode.FORBIDDEN, "Admin permission required", 403);
 }
 
 function runSummary(run: {
@@ -96,7 +95,7 @@ function userSummary(
 }
 
 export async function listStudioUsers(actor: Actor, rawQuery: unknown = {}) {
-  assertAdmin(actor);
+  requireStudioPermission(actor, "studio.users.read");
   const query = studioUserListQuerySchema.parse(rawQuery);
   const result = await selectStudioUsers(query);
   return studioUserListResponseSchema.parse({
@@ -106,7 +105,7 @@ export async function listStudioUsers(actor: Actor, rawQuery: unknown = {}) {
 }
 
 export async function getStudioUser(actor: Actor, id: string) {
-  assertAdmin(actor);
+  requireStudioPermission(actor, "studio.users.read");
   const user = await selectStudioUser(id);
   if (!user)
     throw new AppError(ErrorCode.USER_NOT_FOUND, "User not found", 404);
@@ -139,6 +138,9 @@ export async function getStudioUser(actor: Actor, id: string) {
       profileImageUrl: user.profileImageUrl,
       updatedAt: user.updatedAt.toISOString(),
       deletedAt: user.deletedAt?.toISOString() ?? null,
+      statusReason: user.statusReason,
+      suspendedUntil: user.suspendedUntil?.toISOString() ?? null,
+      statusChangedAt: user.statusChangedAt?.toISOString() ?? null,
       identities: user.authIdentities.map((identity) => ({
         provider: identity.provider,
         createdAt: identity.createdAt.toISOString(),
@@ -167,8 +169,67 @@ export async function getStudioUser(actor: Actor, id: string) {
   });
 }
 
+export async function updateStudioUserStatus(
+  actor: Actor,
+  id: string,
+  rawInput: unknown,
+  now = new Date(),
+) {
+  requireStudioPermission(actor, "studio.users.manage");
+  if (actor.id === id)
+    throw new AppError(
+      ErrorCode.FORBIDDEN,
+      "Operators cannot change their own account status",
+      403,
+    );
+  const input = studioUserStatusUpdateRequestSchema.parse(rawInput);
+  if (input.status === "WITHDRAWN")
+    requireStudioPermission(actor, "studio.users.withdraw");
+  if (
+    input.status === "SUSPENDED" &&
+    input.suspendedUntil &&
+    new Date(input.suspendedUntil) <= now
+  )
+    throw new AppError(
+      ErrorCode.INVALID_INPUT,
+      "Suspension end must be in the future",
+      400,
+    );
+  const result = await updateStudioUserStatusTransaction(actor, id, input, now);
+  if (result.outcome === "not-found")
+    throw new AppError(ErrorCode.USER_NOT_FOUND, "User not found", 404);
+  if (result.outcome === "conflict")
+    throw new AppError(
+      ErrorCode.USER_CONFLICT,
+      "User was changed by another operator",
+      409,
+    );
+  if (result.outcome === "withdrawn")
+    throw new AppError(
+      ErrorCode.USER_CONFLICT,
+      "Withdrawn users cannot be restored from Studio",
+      409,
+    );
+  if (result.outcome === "operator")
+    throw new AppError(
+      ErrorCode.FORBIDDEN,
+      "Remove the Studio role before restricting this operator",
+      403,
+    );
+  const record = result.record;
+  return studioUserStatusUpdateResponseSchema.parse({
+    data: {
+      ...record,
+      statusReason: record.statusReason,
+      suspendedUntil: record.suspendedUntil?.toISOString() ?? null,
+      statusChangedAt: record.statusChangedAt?.toISOString(),
+      updatedAt: record.updatedAt.toISOString(),
+    },
+  });
+}
+
 export async function loadStudioDashboard(actor: Actor, now = new Date()) {
-  assertAdmin(actor);
+  requireStudioPermission(actor, "studio.dashboard.read");
   const data = await selectStudioDashboard(now);
   return studioDashboardResponseSchema.parse({
     data: {
@@ -187,7 +248,7 @@ export async function loadStudioDashboard(actor: Actor, now = new Date()) {
 }
 
 export async function listIngestionRuns(actor: Actor, rawQuery: unknown = {}) {
-  assertAdmin(actor);
+  requireStudioPermission(actor, "studio.ingestions.read");
   const query = ingestionRunListQuerySchema.parse(rawQuery);
   const result = await selectIngestionRuns(query);
   return ingestionRunListResponseSchema.parse({
@@ -197,7 +258,7 @@ export async function listIngestionRuns(actor: Actor, rawQuery: unknown = {}) {
 }
 
 export async function getIngestionRun(actor: Actor, id: string) {
-  assertAdmin(actor);
+  requireStudioPermission(actor, "studio.ingestions.read");
   const run = await selectIngestionRun(id);
   if (!run)
     throw new AppError(

@@ -1,4 +1,5 @@
 import type { Actor } from "../../lib/auth/actor";
+import { requireStudioPermission } from "../../lib/auth/permissions";
 import { AppError, ErrorCode } from "../../lib/errors";
 import {
   anchorCurationRequestSchema,
@@ -12,17 +13,11 @@ import {
   updateHappeningAnchorTransaction,
 } from "./queries";
 
-function assertAdmin(actor: Actor) {
-  if (actor.role !== "ADMIN") {
-    throw new AppError(ErrorCode.FORBIDDEN, "Admin permission required", 403);
-  }
-}
-
 export async function listHappeningsForCuration(
   actor: Actor,
   rawQuery: unknown = {},
 ) {
-  assertAdmin(actor);
+  requireStudioPermission(actor, "studio.content.read");
   const query = happeningCurationListQuerySchema.parse(rawQuery);
   const records = await selectHappeningsForCuration(query);
   return happeningCurationListResponseSchema.parse({
@@ -43,7 +38,7 @@ export async function updateHappeningAnchor(
   happeningId: string,
   rawInput: AnchorCurationRequest,
 ) {
-  assertAdmin(actor);
+  requireStudioPermission(actor, "studio.content.manage");
   const input = anchorCurationRequestSchema.parse(rawInput);
   const result = await updateHappeningAnchorTransaction(
     actor,

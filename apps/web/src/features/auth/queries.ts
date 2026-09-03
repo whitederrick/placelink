@@ -40,6 +40,12 @@ export async function insertAuthenticatedUser(profile: AuthenticationProfile) {
 export async function selectUserForActor(userId: string) {
   return getDatabase().user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, nickname: true, status: true },
+    select: {
+      id: true,
+      email: true,
+      nickname: true,
+      status: true,
+      studioRole: true,
+    },
   });
 }

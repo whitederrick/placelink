@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { getStudioUser } from "@/features/studio-operations";
+import {
+  getStudioUser,
+  updateStudioUserStatus,
+} from "@/features/studio-operations";
 import { withApiHandler } from "@/lib/api";
 import { AppError, ErrorCode } from "@/lib/errors";
 
@@ -7,10 +10,32 @@ export const GET = withApiHandler(
   { auth: "admin" },
   async (request, { actor }) => {
     if (!actor)
-      throw new AppError(ErrorCode.UNAUTHORIZED, "Authentication required", 401);
+      throw new AppError(
+        ErrorCode.UNAUTHORIZED,
+        "Authentication required",
+        401,
+      );
     const id = request.nextUrl.pathname.split("/").at(-1);
     if (!id)
       throw new AppError(ErrorCode.INVALID_INPUT, "User id is required", 400);
     return NextResponse.json(await getStudioUser(actor, id));
+  },
+);
+
+export const PATCH = withApiHandler(
+  { auth: "permission", permission: "studio.users.manage" },
+  async (request, { actor }) => {
+    if (!actor)
+      throw new AppError(
+        ErrorCode.UNAUTHORIZED,
+        "Authentication required",
+        401,
+      );
+    const id = request.nextUrl.pathname.split("/").at(-1);
+    if (!id)
+      throw new AppError(ErrorCode.INVALID_INPUT, "User id is required", 400);
+    return NextResponse.json(
+      await updateStudioUserStatus(actor, id, await request.json()),
+    );
   },
 );

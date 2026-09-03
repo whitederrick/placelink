@@ -206,6 +206,17 @@
     "activity": "Recent activity",
     "activityBody": "Shows event names and timestamps without raw personal properties.",
     "noActivity": "No activity recorded",
+    "actions": {
+      "title": "Change account status",
+      "body": "Suspension, restoration, withdrawal, and the reason are recorded in the audit log. Withdrawal cannot be reversed in Studio.",
+      "status": "New status",
+      "suspendedUntil": "Suspension ends (leave blank for indefinite)",
+      "reason": "Reason",
+      "save": "Save account status",
+      "saving": "Saving",
+      "saved": "The account status and audit log were saved.",
+      "error": "The change failed. Check the latest status and your permission."
+    },
     "status": {
       "active": "Active",
       "suspended": "Suspended",

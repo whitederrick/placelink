@@ -1,4 +1,5 @@
 import type { Actor } from "@/lib/auth/actor";
+import { requireStudioPermission } from "@/lib/auth/permissions";
 import { AppError, ErrorCode } from "@/lib/errors";
 import {
   supportCaseDetailResponseSchema,
@@ -16,9 +17,12 @@ import {
   updateSupportCaseTransaction,
 } from "./queries";
 
-function assertAdmin(actor: Actor) {
-  if (actor.role !== "ADMIN")
-    throw new AppError(ErrorCode.FORBIDDEN, "Admin permission required", 403);
+function assertSupportRead(actor: Actor) {
+  requireStudioPermission(actor, "studio.support.read");
+}
+
+function assertSupportManage(actor: Actor) {
+  requireStudioPermission(actor, "studio.support.manage");
 }
 
 function summary(
@@ -40,7 +44,7 @@ function summary(
 }
 
 export async function listSupportCases(actor: Actor, rawQuery: unknown = {}) {
-  assertAdmin(actor);
+  assertSupportRead(actor);
   const query = supportCaseListQuerySchema.parse(rawQuery);
   const result = await selectSupportCases(query);
   return supportCaseListResponseSchema.parse({
@@ -50,7 +54,7 @@ export async function listSupportCases(actor: Actor, rawQuery: unknown = {}) {
 }
 
 export async function getSupportCase(actor: Actor, id: string) {
-  assertAdmin(actor);
+  assertSupportRead(actor);
   const record = await selectSupportCase(id);
   if (!record)
     throw new AppError(
@@ -80,7 +84,7 @@ export async function updateSupportCase(
   rawInput: unknown,
   now = new Date(),
 ) {
-  assertAdmin(actor);
+  assertSupportManage(actor);
   const input = supportCaseUpdateRequestSchema.parse(rawInput);
   const result = await updateSupportCaseTransaction(actor, id, input, now);
   if (result.outcome === "not-found")
@@ -109,7 +113,7 @@ export async function addSupportCaseEntry(
   id: string,
   rawInput: unknown,
 ) {
-  assertAdmin(actor);
+  assertSupportManage(actor);
   const input = supportCaseEntryRequestSchema.parse(rawInput);
   const entry = await createSupportCaseEntryTransaction(actor, id, input);
   if (!entry)

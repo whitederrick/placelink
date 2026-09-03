@@ -3,7 +3,9 @@ import type {
   AuditLogListQuery,
   IngestionRunListQuery,
   StudioUserListQuery,
+  StudioUserStatusUpdateRequest,
 } from "./schema";
+import type { Actor } from "@/lib/auth/actor";
 
 export async function selectAuditLogs(query: AuditLogListQuery) {
   const search = query.search || undefined;
@@ -111,6 +113,9 @@ export async function selectStudioUser(id: string) {
       profileImageUrl: true,
       updatedAt: true,
       deletedAt: true,
+      statusReason: true,
+      suspendedUntil: true,
+      statusChangedAt: true,
       authIdentities: {
         orderBy: { createdAt: "asc" },
         select: { provider: true, createdAt: true },
@@ -166,6 +171,80 @@ export async function selectStudioUser(id: string) {
         },
       },
     },
+  });
+}
+
+export async function updateStudioUserStatusTransaction(
+  actor: Actor,
+  id: string,
+  input: StudioUserStatusUpdateRequest,
+  now: Date,
+) {
+  return getDatabase().$transaction(async (transaction) => {
+    const before = await transaction.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        status: true,
+        statusReason: true,
+        suspendedUntil: true,
+        updatedAt: true,
+        deletedAt: true,
+        studioRole: true,
+      },
+    });
+    if (!before) return { outcome: "not-found" as const };
+    if (before.status === "WITHDRAWN") return { outcome: "withdrawn" as const };
+    if (before.studioRole && input.status !== "ACTIVE")
+      return { outcome: "operator" as const };
+    const result = await transaction.user.updateMany({
+      where: { id, updatedAt: new Date(input.expectedUpdatedAt) },
+      data: {
+        status: input.status,
+        statusReason: input.reason,
+        suspendedUntil:
+          input.status === "SUSPENDED" && input.suspendedUntil
+            ? new Date(input.suspendedUntil)
+            : null,
+        statusChangedAt: now,
+        deletedAt: input.status === "WITHDRAWN" ? now : null,
+      },
+    });
+    if (result.count !== 1) return { outcome: "conflict" as const };
+    const after = await transaction.user.findUniqueOrThrow({
+      where: { id },
+      select: {
+        id: true,
+        status: true,
+        statusReason: true,
+        suspendedUntil: true,
+        statusChangedAt: true,
+        updatedAt: true,
+        deletedAt: true,
+      },
+    });
+    await transaction.auditLog.create({
+      data: {
+        actorId: actor.id,
+        actorType: actor.type,
+        action: `user.status.${input.status.toLowerCase()}`,
+        targetType: "User",
+        targetId: id,
+        before: {
+          status: before.status,
+          statusReason: before.statusReason,
+          suspendedUntil: before.suspendedUntil?.toISOString() ?? null,
+          deletedAt: before.deletedAt?.toISOString() ?? null,
+        },
+        after: {
+          status: after.status,
+          reason: input.reason,
+          suspendedUntil: after.suspendedUntil?.toISOString() ?? null,
+          deletedAt: after.deletedAt?.toISOString() ?? null,
+        },
+      },
+    });
+    return { outcome: "updated" as const, record: after };
   });
 }
 

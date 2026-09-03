@@ -7,12 +7,17 @@ import { logger } from "@/lib/logger";
 import { auth } from "@/auth";
 import { loadHumanActor } from "@/features/auth";
 import type { Actor } from "@/lib/auth/actor";
+import {
+  hasStudioPermission,
+  type StudioPermission,
+} from "@/lib/auth/permissions";
 import { webEnv } from "@/lib/env";
 
 type HumanAuthMode = "public" | "optional" | "user" | "admin";
 
 type ApiHandlerOptions =
   | { auth: HumanAuthMode }
+  | { auth: "permission"; permission: StudioPermission }
   | { auth: "agent"; agentId: string };
 
 const bearerAuthorizationSchema = z.string().regex(/^Bearer [^\s]+$/);
@@ -36,9 +41,7 @@ function authenticateAgent(request: NextRequest, agentId: string): Actor {
   const authorization = bearerAuthorizationSchema.safeParse(
     request.headers.get("authorization"),
   );
-  const expected = webEnv.CRON_SECRET
-    ? `Bearer ${webEnv.CRON_SECRET}`
-    : null;
+  const expected = webEnv.CRON_SECRET ? `Bearer ${webEnv.CRON_SECRET}` : null;
   if (
     !authorization.success ||
     !expected ||
@@ -74,6 +77,16 @@ export function withApiHandler(
           throw new AppError(
             ErrorCode.FORBIDDEN,
             "Admin permission required",
+            403,
+          );
+        }
+        if (
+          options.auth === "permission" &&
+          !hasStudioPermission(actor, options.permission)
+        ) {
+          throw new AppError(
+            ErrorCode.FORBIDDEN,
+            "Studio permission required",
             403,
           );
         }

@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { normalizedCulturalEventSchema } from "@placelink/database";
 import type { Actor } from "../../lib/auth/actor";
+import { requireStudioPermission } from "../../lib/auth/permissions";
 import { AppError, ErrorCode } from "../../lib/errors";
 import {
   createCulturePortalScheduleProvider,
@@ -27,11 +28,6 @@ import {
   type IngestionReviewRequest,
 } from "./schema";
 
-function assertAdmin(actor: Actor) {
-  if (actor.role !== "ADMIN")
-    throw new AppError(ErrorCode.FORBIDDEN, "Admin permission required", 403);
-}
-
 function seoulDate(now: Date) {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Seoul",
@@ -54,7 +50,7 @@ async function syncScheduleIngestions(
   injectedProvider?: ScheduleIngestionProvider,
   now = new Date(),
 ) {
-  assertAdmin(actor);
+  requireStudioPermission(actor, "studio.ingestions.manage");
   const parsedInput = ingestionSyncRequestSchema.parse(rawInput);
   const input = {
     start: parsedInput.start,
@@ -211,7 +207,7 @@ export async function listIngestionsForReview(
   actor: Actor,
   rawQuery: unknown = {},
 ) {
-  assertAdmin(actor);
+  requireStudioPermission(actor, "studio.ingestions.read");
   const query = ingestionListQuerySchema.parse(rawQuery);
   const { records, nextCursor } = await selectIngestionsForReview(query);
   return ingestionListResponseSchema.parse({
@@ -250,7 +246,7 @@ export async function reviewIngestion(
   rawInput: IngestionReviewRequest,
   now = new Date(),
 ) {
-  assertAdmin(actor);
+  requireStudioPermission(actor, "studio.ingestions.manage");
   const input = ingestionReviewRequestSchema.parse(rawInput);
   const record = await selectIngestionForReview(ingestionId);
   if (!record)

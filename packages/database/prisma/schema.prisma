@@ -13,6 +13,13 @@ enum UserStatus {
   WITHDRAWN
 }
 
+enum StudioRole {
+  SUPER_ADMIN
+  SUPPORT
+  CONTENT
+  ANALYST
+}
+
 enum AuthProvider {
   KAKAO
   GOOGLE
@@ -164,6 +171,10 @@ model User {
   nickname              String
   profileImageUrl       String?          @map("profile_image_url")
   status                UserStatus       @default(ACTIVE)
+  studioRole            StudioRole?      @map("studio_role")
+  statusReason          String?          @map("status_reason") @db.VarChar(500)
+  suspendedUntil        DateTime?        @map("suspended_until")
+  statusChangedAt       DateTime?        @map("status_changed_at")
   createdAt             DateTime         @default(now()) @map("created_at")
   updatedAt             DateTime         @updatedAt @map("updated_at")
   deletedAt             DateTime?        @map("deleted_at")
@@ -178,6 +189,8 @@ model User {
   assignedSupportCases  SupportCase[]    @relation("SupportCaseAssignee")
 
   @@index([status, createdAt])
+  @@index([status, suspendedUntil])
+  @@index([studioRole])
   @@map("users")
 }
 

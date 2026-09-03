@@ -103,6 +103,9 @@ export const studioUserDetailResponseSchema = z.object({
     profileImageUrl: z.string().nullable(),
     updatedAt: z.string().datetime(),
     deletedAt: z.string().datetime().nullable(),
+    statusReason: z.string().nullable(),
+    suspendedUntil: z.string().datetime().nullable(),
+    statusChangedAt: z.string().datetime().nullable(),
     identities: z.array(
       z.object({
         provider: z.enum(STUDIO_AUTH_PROVIDERS),
@@ -140,6 +143,41 @@ export const studioUserDetailResponseSchema = z.object({
         createdAt: z.string().datetime(),
       }),
     ),
+  }),
+});
+
+export const studioUserStatusUpdateRequestSchema = z
+  .object({
+    status: z.enum(STUDIO_USER_STATUSES),
+    reason: z.string().trim().min(3).max(500),
+    suspendedUntil: z.string().datetime().nullable().optional(),
+    expectedUpdatedAt: z.string().datetime(),
+  })
+  .superRefine((input, context) => {
+    if (input.status === "SUSPENDED" && input.suspendedUntil === undefined) {
+      context.addIssue({
+        code: "custom",
+        path: ["suspendedUntil"],
+        message: "Suspension end must be provided (null means indefinite)",
+      });
+    }
+    if (input.status !== "SUSPENDED" && input.suspendedUntil) {
+      context.addIssue({
+        code: "custom",
+        path: ["suspendedUntil"],
+        message: "Only suspended users can have a suspension end",
+      });
+    }
+  });
+
+export const studioUserStatusUpdateResponseSchema = z.object({
+  data: z.object({
+    id: z.string().min(1),
+    status: z.enum(STUDIO_USER_STATUSES),
+    statusReason: z.string(),
+    suspendedUntil: z.string().datetime().nullable(),
+    statusChangedAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
   }),
 });
 
@@ -222,3 +260,6 @@ export const studioDashboardResponseSchema = z.object({
 export type IngestionRunListQuery = z.infer<typeof ingestionRunListQuerySchema>;
 export type StudioUserListQuery = z.infer<typeof studioUserListQuerySchema>;
 export type AuditLogListQuery = z.infer<typeof auditLogListQuerySchema>;
+export type StudioUserStatusUpdateRequest = z.infer<
+  typeof studioUserStatusUpdateRequestSchema
+>;
