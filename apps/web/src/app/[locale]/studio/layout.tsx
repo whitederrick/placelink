@@ -32,6 +32,7 @@ export default async function StudioLayout({
     { href: `/${locale}/studio/runs`, label: t("runs") },
     { href: `/${locale}/studio/ingestions`, label: t("ingestions") },
     { href: `/${locale}/studio/happenings`, label: t("happenings") },
+    { href: `/${locale}/studio/duplicates`, label: "중복 후보" },
     { href: `/${locale}/studio/analytics`, label: t("analytics") },
   ];
   if (hasStudioPermission(actor, "studio.roles.manage"))
