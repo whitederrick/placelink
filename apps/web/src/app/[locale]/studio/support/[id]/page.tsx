@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { loadHumanActor } from "@/features/auth";
 import { SupportCaseActions } from "@/features/support-cases/components/SupportCaseActions";
+import { ContentModerationActions } from "@/features/content-moderation/components/ContentModerationActions";
 import { getSupportCase } from "@/features/support-cases";
 import { isLocale } from "@/i18n/config";
 
@@ -161,6 +162,9 @@ export default async function StudioSupportDetailPage({
           ))}
         </div>
       </section>
+      {supportCase.type === "REPORT" && supportCase.targetType && supportCase.targetId && ["Place", "Happening", "Course"].includes(supportCase.targetType) ? (
+        <ContentModerationActions targetType={supportCase.targetType as "Place" | "Happening" | "Course"} targetId={supportCase.targetId} />
+      ) : null}
       <SupportCaseActions
         caseId={supportCase.id}
         current={{

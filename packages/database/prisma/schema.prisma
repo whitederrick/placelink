@@ -39,6 +39,7 @@ enum SourceType {
 
 enum PlaceStatus {
   ACTIVE
+  HIDDEN
   CLOSED
   MERGED
 }
@@ -79,6 +80,7 @@ enum ExternalProvider {
 enum HappeningStatus {
   UPCOMING
   ACTIVE
+  HIDDEN
   ENDED
 }
 
