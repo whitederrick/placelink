@@ -326,6 +326,86 @@ export async function updateStudioUserStatusTransaction(
   });
 }
 
+export async function restoreExpiredUserSuspensionsTransaction(
+  actor: Actor,
+  now: Date,
+  batchSize: number,
+) {
+  return getDatabase().$transaction(
+    async (transaction) => {
+      const candidates = await transaction.user.findMany({
+        where: {
+          status: "SUSPENDED",
+          suspendedUntil: { not: null, lte: now },
+        },
+        orderBy: [{ suspendedUntil: "asc" }, { id: "asc" }],
+        take: batchSize + 1,
+        select: {
+          id: true,
+          statusReason: true,
+          suspendedUntil: true,
+          deletedAt: true,
+        },
+      });
+      const batch = candidates.slice(0, batchSize);
+      if (batch.length === 0) {
+        return { restoredCount: 0, hasMore: false };
+      }
+      const restored = await transaction.user.updateManyAndReturn({
+        where: {
+          id: { in: batch.map((user) => user.id) },
+          status: "SUSPENDED",
+          suspendedUntil: { not: null, lte: now },
+        },
+        data: {
+          status: "ACTIVE",
+          statusReason: "Timed suspension expired automatically",
+          suspendedUntil: null,
+          statusChangedAt: now,
+          deletedAt: null,
+        },
+        select: { id: true },
+      });
+      const beforeById = new Map(batch.map((user) => [user.id, user]));
+      const restoredAt = now.toISOString();
+      const auditLogs = restored.flatMap((restoredUser) => {
+        const user = beforeById.get(restoredUser.id);
+        if (!user) return [];
+        return [
+          {
+            actorId: actor.id,
+            actorType: actor.type,
+            action: "user.status.auto_restored",
+            targetType: "User",
+            targetId: user.id,
+            before: {
+              status: "SUSPENDED",
+              statusReason: user.statusReason,
+              suspendedUntil: user.suspendedUntil?.toISOString() ?? null,
+              deletedAt: user.deletedAt?.toISOString() ?? null,
+            },
+            after: {
+              status: "ACTIVE",
+              reason: "Timed suspension expired automatically",
+              suspendedUntil: null,
+              deletedAt: null,
+              restoredAt,
+            },
+          },
+        ];
+      });
+      if (auditLogs.length > 0) {
+        await transaction.auditLog.createMany({ data: auditLogs });
+      }
+      return {
+        restoredCount: restored.length,
+        hasMore: candidates.length > batchSize,
+      };
+    },
+    { isolationLevel: "Serializable" },
+  );
+}
+
 const runSelect = {
   id: true,
   provider: true,

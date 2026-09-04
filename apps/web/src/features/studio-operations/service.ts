@@ -8,6 +8,7 @@ import { AppError, ErrorCode } from "@/lib/errors";
 import {
   auditLogListQuerySchema,
   auditLogListResponseSchema,
+  expiredSuspensionRecoveryResponseSchema,
   ingestionRunDetailResponseSchema,
   ingestionRunListQuerySchema,
   ingestionRunListResponseSchema,
@@ -29,10 +30,32 @@ import {
   selectStudioDashboard,
   selectStudioUser,
   selectStudioUsers,
+  restoreExpiredUserSuspensionsTransaction,
   updateStudioUserStatusTransaction,
   selectStudioOperators,
   updateStudioOperatorTransaction,
 } from "./queries";
+
+const SUSPENSION_RECOVERY_BATCH_SIZE = 500;
+
+export async function restoreExpiredUserSuspensions(
+  actor: Actor,
+  now = new Date(),
+) {
+  if (actor.type !== "AGENT" || actor.role !== "ADMIN") {
+    throw new AppError(
+      ErrorCode.FORBIDDEN,
+      "Automated suspension recovery requires an agent",
+      403,
+    );
+  }
+  const result = await restoreExpiredUserSuspensionsTransaction(
+    actor,
+    now,
+    SUSPENSION_RECOVERY_BATCH_SIZE,
+  );
+  return expiredSuspensionRecoveryResponseSchema.parse({ data: result });
+}
 
 export async function listAuditLogs(actor: Actor, rawQuery: unknown = {}) {
   requireStudioPermission(actor, "studio.audit.read");

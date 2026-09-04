@@ -187,6 +187,13 @@ export const studioUserStatusUpdateResponseSchema = z.object({
   }),
 });
 
+export const expiredSuspensionRecoveryResponseSchema = z.object({
+  data: z.object({
+    restoredCount: z.number().int().nonnegative(),
+    hasMore: z.boolean(),
+  }),
+});
+
 export const studioOperatorListQuerySchema = z.object({
   search: z.string().trim().max(80).optional(),
   cursor: z.string().min(1).optional(),

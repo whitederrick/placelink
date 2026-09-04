@@ -10,6 +10,7 @@ const queryMocks = vi.hoisted(() => ({
   updateStudioUserStatusTransaction: vi.fn(),
   selectStudioOperators: vi.fn(),
   updateStudioOperatorTransaction: vi.fn(),
+  restoreExpiredUserSuspensionsTransaction: vi.fn(),
 }));
 vi.mock("./queries", () => queryMocks);
 
@@ -20,6 +21,7 @@ import {
   listAuditLogs,
   listStudioUsers,
   loadStudioDashboard,
+  restoreExpiredUserSuspensions,
   updateStudioUserStatus,
   listStudioOperators,
   updateStudioOperator,
@@ -27,6 +29,11 @@ import {
 
 const admin = { id: "admin-1", type: "HUMAN" as const, role: "ADMIN" as const };
 const user = { id: "user-1", type: "HUMAN" as const, role: "USER" as const };
+const suspensionAgent = {
+  id: "user-suspension-expiry-cron",
+  type: "AGENT" as const,
+  role: "ADMIN" as const,
+};
 const run = {
   id: "run-1",
   provider: "CULTURE_PORTAL" as const,
@@ -261,6 +268,31 @@ describe("studio operations", () => {
       code: "FORBIDDEN",
       status: 403,
     });
+  });
+
+  it("restores expired suspensions in a bounded automated batch", async () => {
+    const now = new Date("2026-09-04T00:00:00.000Z");
+    queryMocks.restoreExpiredUserSuspensionsTransaction.mockResolvedValue({
+      restoredCount: 2,
+      hasMore: false,
+    });
+
+    await expect(
+      restoreExpiredUserSuspensions(suspensionAgent, now),
+    ).resolves.toEqual({ data: { restoredCount: 2, hasMore: false } });
+    expect(
+      queryMocks.restoreExpiredUserSuspensionsTransaction,
+    ).toHaveBeenCalledWith(suspensionAgent, now, 500);
+  });
+
+  it("does not allow a human operator to run automatic recovery", async () => {
+    await expect(restoreExpiredUserSuspensions(admin)).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      status: 403,
+    });
+    expect(
+      queryMocks.restoreExpiredUserSuspensionsTransaction,
+    ).not.toHaveBeenCalled();
   });
 
   it("updates a user status with optimistic concurrency metadata", async () => {
