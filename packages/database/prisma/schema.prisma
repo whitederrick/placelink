@@ -167,6 +167,12 @@ enum NotificationDeliveryStatus {
   SKIPPED
 }
 
+enum PlaceMergeCandidateStatus {
+  OPEN
+  DISMISSED
+  MERGED
+}
+
 enum TagKind {
   SITUATION
   BUDGET
@@ -358,6 +364,8 @@ model Place {
   happenings        Happening[]
   courseNodes       CourseNode[]
   tags              PlaceTag[]
+  mergeCandidatesAsPrimary PlaceMergeCandidate[] @relation("PlaceMergePrimary")
+  mergeCandidatesAsDuplicate PlaceMergeCandidate[] @relation("PlaceMergeDuplicate")
 
   @@index([status, category])
   @@index([status, kind, areaSlug])
@@ -366,6 +374,24 @@ model Place {
   @@index([sourceType, createdAt])
   @@index([location], type: Gist, map: "places_location_gist_idx")
   @@map("places")
+}
+
+model PlaceMergeCandidate {
+  id               String                    @id @default(cuid())
+  primaryPlaceId   String                    @map("primary_place_id")
+  duplicatePlaceId String                    @map("duplicate_place_id")
+  candidateKey     String                    @unique @map("candidate_key")
+  status           PlaceMergeCandidateStatus @default(OPEN)
+  reason           String                    @db.VarChar(500)
+  detectedAt       DateTime                  @default(now()) @map("detected_at")
+  reviewedAt       DateTime?                 @map("reviewed_at")
+  reviewerId       String?                   @map("reviewer_id")
+  primaryPlace     Place                     @relation("PlaceMergePrimary", fields: [primaryPlaceId], references: [id], onDelete: Cascade)
+  duplicatePlace   Place                     @relation("PlaceMergeDuplicate", fields: [duplicatePlaceId], references: [id], onDelete: Cascade)
+
+  @@unique([primaryPlaceId, duplicatePlaceId])
+  @@index([status, detectedAt, id])
+  @@map("place_merge_candidates")
 }
 
 model PlaceTranslation {
