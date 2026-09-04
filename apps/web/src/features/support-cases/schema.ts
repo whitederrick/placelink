@@ -114,10 +114,59 @@ export const supportCaseEntryResponseSchema = z.object({
   }),
 });
 
+const safeCustomerText = (maximum: number) =>
+  z
+    .string()
+    .trim()
+    .min(1)
+    .max(maximum)
+    .refine(
+      (value) =>
+        !Array.from(value).some((character) => {
+          const codePoint = character.codePointAt(0) ?? 0;
+          return (
+            codePoint <= 8 ||
+            codePoint === 11 ||
+            codePoint === 12 ||
+            (codePoint >= 14 && codePoint <= 31) ||
+            codePoint === 127 ||
+            (codePoint >= 0x202a && codePoint <= 0x202e) ||
+            (codePoint >= 0x2066 && codePoint <= 0x2069)
+          );
+        }),
+      { message: "Unsupported control characters" },
+    );
+
+export const customerSupportCaseRequestSchema = z
+  .object({
+    type: z.enum(SUPPORT_CASE_TYPES),
+    subject: safeCustomerText(120).refine((value) => value.length >= 3, {
+      message: "Subject must contain at least 3 characters",
+    }),
+    description: safeCustomerText(3000).refine((value) => value.length >= 10, {
+      message: "Description must contain at least 10 characters",
+    }),
+    targetType: z.enum(["Course", "Place", "Happening"]).optional(),
+    targetId: z.string().trim().min(1).max(100).optional(),
+  })
+  .refine((value) => Boolean(value.targetType) === Boolean(value.targetId), {
+    message: "Target type and id must be provided together",
+  });
+
+export const customerSupportCaseResponseSchema = z.object({
+  data: z.object({
+    id: z.string().min(1),
+    createdAt: z.string().datetime(),
+  }),
+});
+
 export type SupportCaseListQuery = z.infer<typeof supportCaseListQuerySchema>;
 export type SupportCaseUpdateRequest = z.infer<
   typeof supportCaseUpdateRequestSchema
 >;
 export type SupportCaseEntryRequest = z.infer<
   typeof supportCaseEntryRequestSchema
+>;
+export type CustomerSupportCaseRequest = z.infer<
+  typeof customerSupportCaseRequestSchema
 >;

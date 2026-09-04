@@ -2,6 +2,8 @@ import type { Actor } from "@/lib/auth/actor";
 import { requireStudioPermission } from "@/lib/auth/permissions";
 import { AppError, ErrorCode } from "@/lib/errors";
 import {
+  customerSupportCaseRequestSchema,
+  customerSupportCaseResponseSchema,
   supportCaseDetailResponseSchema,
   supportCaseEntryRequestSchema,
   supportCaseEntryResponseSchema,
@@ -11,11 +13,36 @@ import {
   supportCaseUpdateResponseSchema,
 } from "./schema";
 import {
+  countRecentSupportCasesByReporter,
   createSupportCaseEntryTransaction,
+  insertCustomerSupportCase,
   selectSupportCase,
   selectSupportCases,
   updateSupportCaseTransaction,
 } from "./queries";
+
+const CUSTOMER_CASE_LIMIT_PER_HOUR = 5;
+
+export async function createCustomerSupportCase(
+  actor: Actor,
+  rawInput: unknown,
+  now = new Date(),
+) {
+  const input = customerSupportCaseRequestSchema.parse(rawInput);
+  const since = new Date(now.getTime() - 60 * 60 * 1000);
+  const recentCount = await countRecentSupportCasesByReporter(actor.id, since);
+  if (recentCount >= CUSTOMER_CASE_LIMIT_PER_HOUR) {
+    throw new AppError(
+      ErrorCode.SUPPORT_CASE_RATE_LIMITED,
+      "Too many support requests; please try again later",
+      429,
+    );
+  }
+  const record = await insertCustomerSupportCase(actor, input);
+  return customerSupportCaseResponseSchema.parse({
+    data: { id: record.id, createdAt: record.createdAt.toISOString() },
+  });
+}
 
 function assertSupportRead(actor: Actor) {
   requireStudioPermission(actor, "studio.support.read");

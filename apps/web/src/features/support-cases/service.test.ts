@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const queryMocks = vi.hoisted(() => ({
+  countRecentSupportCasesByReporter: vi.fn(),
+  insertCustomerSupportCase: vi.fn(),
   selectSupportCases: vi.fn(),
   selectSupportCase: vi.fn(),
   updateSupportCaseTransaction: vi.fn(),
@@ -10,6 +12,7 @@ vi.mock("./queries", () => queryMocks);
 
 import {
   addSupportCaseEntry,
+  createCustomerSupportCase,
   getSupportCase,
   listSupportCases,
   updateSupportCase,
@@ -54,6 +57,58 @@ describe("support case operations", () => {
       code: "FORBIDDEN",
       status: 403,
     });
+  });
+
+  it("creates a customer case without collecting separate contact details", async () => {
+    queryMocks.countRecentSupportCasesByReporter.mockResolvedValue(0);
+    queryMocks.insertCustomerSupportCase.mockResolvedValue({
+      id: "case-new",
+      createdAt: new Date("2026-09-04T00:00:00.000Z"),
+    });
+    await expect(
+      createCustomerSupportCase(user, {
+        type: "REPORT",
+        subject: "부적절한 코스 신고",
+        description: "광고성 문구가 반복되어 확인을 요청합니다.",
+        targetType: "Course",
+        targetId: "course-1",
+      }),
+    ).resolves.toEqual({
+      data: {
+        id: "case-new",
+        createdAt: "2026-09-04T00:00:00.000Z",
+      },
+    });
+    expect(queryMocks.insertCustomerSupportCase).toHaveBeenCalledWith(
+      user,
+      expect.not.objectContaining({ email: expect.anything() }),
+    );
+  });
+
+  it("limits each user to five new cases per hour", async () => {
+    queryMocks.countRecentSupportCasesByReporter.mockResolvedValue(5);
+    await expect(
+      createCustomerSupportCase(user, {
+        type: "INQUIRY",
+        subject: "코스 저장 문의",
+        description: "저장한 코스를 다시 찾는 방법을 알고 싶습니다.",
+      }),
+    ).rejects.toMatchObject({
+      code: "SUPPORT_CASE_RATE_LIMITED",
+      status: 429,
+    });
+    expect(queryMocks.insertCustomerSupportCase).not.toHaveBeenCalled();
+  });
+
+  it("rejects deceptive control characters in customer text", async () => {
+    await expect(
+      createCustomerSupportCase(user, {
+        type: "INQUIRY",
+        subject: "코스\u202e문의",
+        description: "문의 내용을 충분히 길게 작성했습니다.",
+      }),
+    ).rejects.toBeDefined();
+    expect(queryMocks.countRecentSupportCasesByReporter).not.toHaveBeenCalled();
   });
 
   it("returns filtered support case summaries", async () => {

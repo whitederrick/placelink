@@ -584,7 +584,42 @@
     "createdEmpty": "You have not created a course yet.",
     "savedEmpty": "Save a course you would love to try.",
     "draftStatus": "Draft · Continue editing",
-    "publishedStatus": "Published course"
+    "publishedStatus": "Published course",
+    "supportKicker": "HELP & SAFETY",
+    "supportTitle": "Contact or report",
+    "supportBody": "Tell us about a problem or content that needs review.",
+    "supportAction": "Open request form"
+  },
+  "customerSupport": {
+    "kicker": "HELP & SAFETY",
+    "title": "How can we help?",
+    "subtitle": "We will review your request or report and follow up with the appropriate action.",
+    "typeLabel": "Request type",
+    "types": {
+      "inquiry": "Question",
+      "complaint": "Complaint",
+      "report": "Content report",
+      "privacy": "Privacy request"
+    },
+    "targetLabel": "Reported item",
+    "targets": {
+      "course": "Course",
+      "place": "Place",
+      "happening": "Event"
+    },
+    "subjectLabel": "Subject",
+    "subjectPlaceholder": "Briefly describe what you need help with",
+    "descriptionLabel": "Details",
+    "descriptionPlaceholder": "Describe what happened and how you would like it resolved",
+    "privacyNote": "Do not enter sensitive information such as identification numbers, bank details, or passwords. We securely link your request to your signed-in account.",
+    "submit": "Submit request",
+    "submitting": "Submitting...",
+    "error": "We could not submit your request. Check the details and try again.",
+    "rateLimited": "You have submitted several requests recently. Please try again in one hour.",
+    "successKicker": "REQUEST RECEIVED",
+    "successTitle": "Your request is in",
+    "successBody": "It is safely stored in the operations inbox. Reply delivery is still being prepared.",
+    "reference": "Reference: {id}"
   },
   "couples": {
     "loading": "Checking this invite...",

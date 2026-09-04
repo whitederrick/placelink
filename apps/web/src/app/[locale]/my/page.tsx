@@ -1,4 +1,11 @@
-import { ArrowUpRight, Bookmark, Clock3, Heart, MapPin } from "lucide-react";
+import {
+  ArrowUpRight,
+  Bookmark,
+  Clock3,
+  Heart,
+  MapPin,
+  MessageCircleQuestion,
+} from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
@@ -208,6 +215,18 @@ export default async function MyPage({
           draftLabel={t("draftStatus")}
           publishedLabel={t("publishedStatus")}
         />
+      </section>
+      <section className="my-support-card">
+        <MessageCircleQuestion size={24} />
+        <div>
+          <span className="section-kicker">{t("supportKicker")}</span>
+          <h2>{t("supportTitle")}</h2>
+          <p>{t("supportBody")}</p>
+        </div>
+        <a className="summary-link" href={`/${locale}/support`}>
+          {t("supportAction")}
+          <ArrowUpRight size={16} />
+        </a>
       </section>
     </div>
   );

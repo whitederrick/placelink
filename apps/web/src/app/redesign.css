@@ -2139,3 +2139,205 @@ textarea:focus-visible {
     justify-content: flex-end;
   }
 }
+
+.my-support-card,
+.customer-support-form,
+.customer-support-success {
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.my-support-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  margin-top: 28px;
+  padding: 22px;
+}
+
+.my-support-card h2,
+.my-support-card p,
+.customer-support-heading h1,
+.customer-support-heading p,
+.customer-support-success h2,
+.customer-support-success p {
+  margin: 0;
+}
+
+.my-support-card > div,
+.customer-support-heading {
+  display: grid;
+  gap: 7px;
+}
+
+.my-support-card p,
+.customer-support-heading p,
+.customer-support-success p,
+.customer-support-form small,
+.support-privacy-note {
+  color: var(--muted);
+}
+
+.customer-support-page {
+  display: grid;
+  width: min(100%, 720px);
+  gap: 24px;
+  margin: 0 auto;
+}
+
+.customer-support-heading h1 {
+  font-size: clamp(34px, 7vw, 56px);
+  line-height: 1;
+  letter-spacing: -0.055em;
+}
+
+.customer-support-form {
+  display: grid;
+  gap: 22px;
+  padding: clamp(20px, 5vw, 32px);
+}
+
+.customer-support-form fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.customer-support-form legend,
+.customer-support-form > label > span,
+.support-target-note strong {
+  margin-bottom: 9px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.support-type-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.support-type-options label {
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.support-type-options input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--ink);
+}
+
+.support-type-options span {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.support-type-options label:has(input:checked) {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--surface);
+}
+
+.support-type-options label:has(input:focus-visible) {
+  outline: 3px solid rgba(38, 35, 31, 0.25);
+  outline-offset: 2px;
+}
+
+.customer-support-form > label {
+  display: grid;
+}
+
+.customer-support-form input[type="text"],
+.customer-support-form > label > input,
+.customer-support-form textarea {
+  width: 100%;
+  min-height: 46px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+}
+
+.customer-support-form textarea {
+  min-height: 180px;
+  resize: vertical;
+}
+
+.customer-support-form label > small {
+  margin-top: 6px;
+  text-align: right;
+}
+
+.support-target-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--surface-muted);
+}
+
+.support-target-note strong {
+  margin: 0;
+}
+
+.support-privacy-note,
+.support-submit-error {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.support-submit-error {
+  color: #a21b12;
+}
+
+.customer-support-form .button {
+  min-height: 48px;
+  justify-content: center;
+}
+
+.customer-support-success {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: clamp(36px, 8vw, 64px) 24px;
+  text-align: center;
+}
+
+.customer-support-success > svg {
+  color: #12652b;
+}
+
+.customer-support-success small {
+  margin-top: 8px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 620px) {
+  .my-support-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .my-support-card .summary-link {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+}

@@ -1,10 +1,62 @@
 import { getDatabase } from "@placelink/database";
 import type { Actor } from "@/lib/auth/actor";
 import type {
+  CustomerSupportCaseRequest,
   SupportCaseEntryRequest,
   SupportCaseListQuery,
   SupportCaseUpdateRequest,
 } from "./schema";
+
+export function countRecentSupportCasesByReporter(
+  reporterUserId: string,
+  since: Date,
+) {
+  return getDatabase().supportCase.count({
+    where: { reporterUserId, createdAt: { gte: since } },
+  });
+}
+
+export function insertCustomerSupportCase(
+  actor: Actor,
+  input: CustomerSupportCaseRequest,
+) {
+  return getDatabase().$transaction(async (transaction) => {
+    const supportCase = await transaction.supportCase.create({
+      data: {
+        reporterUserId: actor.id,
+        type: input.type,
+        subject: input.subject,
+        description: input.description,
+        targetType: input.targetType,
+        targetId: input.targetId,
+        entries: {
+          create: {
+            kind: "CUSTOMER_MESSAGE",
+            authorId: actor.id,
+            authorType: actor.type,
+            body: input.description,
+          },
+        },
+      },
+      select: { id: true, createdAt: true },
+    });
+    await transaction.auditLog.create({
+      data: {
+        actorId: actor.id,
+        actorType: actor.type,
+        action: "support_case.created",
+        targetType: "SupportCase",
+        targetId: supportCase.id,
+        after: {
+          type: input.type,
+          targetType: input.targetType ?? null,
+          targetId: input.targetId ?? null,
+        },
+      },
+    });
+    return supportCase;
+  });
+}
 
 const personSelect = { id: true, nickname: true, email: true } as const;
 const summarySelect = {
