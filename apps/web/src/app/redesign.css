@@ -195,8 +195,15 @@ textarea:focus-visible {
 }
 
 .button.ghost {
+  background: var(--surface-muted);
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+.hero-section .button.ghost {
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(255, 255, 255, 0.24);
+  color: #fff;
 }
 
 .hero-sticker {
