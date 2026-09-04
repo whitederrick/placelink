@@ -223,7 +223,7 @@ export async function createSupportCaseEntryTransaction(
   return getDatabase().$transaction(async (transaction) => {
     const exists = await transaction.supportCase.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, reporterUserId: true },
     });
     if (!exists) return null;
     const entry = await transaction.supportCaseEntry.create({
@@ -247,6 +247,16 @@ export async function createSupportCaseEntryTransaction(
       data: { updatedAt: new Date() },
       select: { updatedAt: true },
     });
+    if (input.kind === "STAFF_REPLY" && exists.reporterUserId) {
+      await transaction.notificationDelivery.create({
+        data: {
+          supportCaseEntryId: entry.id,
+          recipientUserId: exists.reporterUserId,
+          channel: "EMAIL",
+          dedupeKey: `support-case-entry:${entry.id}:email`,
+        },
+      });
+    }
     await transaction.auditLog.create({
       data: {
         actorId: actor.id,
