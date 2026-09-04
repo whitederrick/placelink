@@ -12,6 +12,8 @@ const webEnvSchema = z.object({
   SEOUL_OPEN_DATA_API_KEY: z.string().min(1).optional(),
   CULTURE_PORTAL_SERVICE_KEY: z.string().min(1).optional(),
   CRON_SECRET: z.string().min(16).optional(),
+  RESEND_API_KEY: z.string().min(1).optional(),
+  EMAIL_FROM: z.string().min(3).optional(),
   AUTH_SECRET: z.string().min(32).optional(),
   AUTH_KAKAO_ID: z.string().min(1).optional(),
   AUTH_KAKAO_SECRET: z.string().min(1).optional(),
@@ -56,6 +58,8 @@ export const webEnv = webEnvSchema.parse({
   CULTURE_PORTAL_SERVICE_KEY:
     process.env.CULTURE_PORTAL_SERVICE_KEY || undefined,
   CRON_SECRET: process.env.CRON_SECRET || undefined,
+  RESEND_API_KEY: process.env.RESEND_API_KEY || undefined,
+  EMAIL_FROM: process.env.EMAIL_FROM || undefined,
   AUTH_SECRET: process.env.AUTH_SECRET || undefined,
   AUTH_KAKAO_ID: process.env.AUTH_KAKAO_ID || undefined,
   AUTH_KAKAO_SECRET: process.env.AUTH_KAKAO_SECRET || undefined,

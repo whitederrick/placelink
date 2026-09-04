@@ -153,6 +153,18 @@ enum SupportEntryKind {
   INTERNAL_NOTE
 }
 
+enum NotificationChannel {
+  EMAIL
+}
+
+enum NotificationDeliveryStatus {
+  PENDING
+  SENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
 enum TagKind {
   SITUATION
   BUDGET
@@ -187,6 +199,7 @@ model User {
   acceptedCoupleInvites CoupleInvite[]   @relation("CoupleInviteAccepter")
   reportedSupportCases  SupportCase[]    @relation("SupportCaseReporter")
   assignedSupportCases  SupportCase[]    @relation("SupportCaseAssignee")
+  notificationDeliveries NotificationDelivery[] @relation("NotificationRecipient")
 
   @@index([status, createdAt])
   @@index([status, suspendedUntil])
@@ -230,9 +243,34 @@ model SupportCaseEntry {
   body          String           @db.VarChar(5000)
   createdAt     DateTime         @default(now()) @map("created_at")
   supportCase   SupportCase      @relation(fields: [supportCaseId], references: [id], onDelete: Cascade)
+  deliveries    NotificationDelivery[]
 
   @@index([supportCaseId, createdAt, id])
   @@map("support_case_entries")
+}
+
+model NotificationDelivery {
+  id                  String                     @id @default(cuid())
+  supportCaseEntryId  String                     @map("support_case_entry_id")
+  recipientUserId     String                     @map("recipient_user_id")
+  channel             NotificationChannel
+  status              NotificationDeliveryStatus @default(PENDING)
+  dedupeKey           String                     @unique @map("dedupe_key")
+  attemptCount        Int                        @default(0) @map("attempt_count")
+  nextAttemptAt       DateTime                   @default(now()) @map("next_attempt_at")
+  lockedAt            DateTime?                  @map("locked_at")
+  providerMessageId   String?                    @map("provider_message_id")
+  lastError           String?                    @map("last_error") @db.VarChar(1000)
+  sentAt              DateTime?                  @map("sent_at")
+  createdAt           DateTime                   @default(now()) @map("created_at")
+  updatedAt           DateTime                   @updatedAt @map("updated_at")
+  supportCaseEntry    SupportCaseEntry           @relation(fields: [supportCaseEntryId], references: [id], onDelete: Cascade)
+  recipient           User                       @relation("NotificationRecipient", fields: [recipientUserId], references: [id], onDelete: Cascade)
+
+  @@unique([supportCaseEntryId, channel])
+  @@index([status, nextAttemptAt, id])
+  @@index([recipientUserId, createdAt])
+  @@map("notification_deliveries")
 }
 
 model AuthIdentity {
