@@ -61,4 +61,25 @@ describe("withApiHandler agent authentication", () => {
     });
     expect(callback).not.toHaveBeenCalled();
   });
+
+  it("enforces the requested Studio permission", async () => {
+    authMocks.auth.mockResolvedValue({ user: { id: "support-1" } });
+    authMocks.loadHumanActor.mockResolvedValue({
+      id: "support-1",
+      type: "HUMAN",
+      role: "ADMIN",
+      studioRole: "SUPPORT",
+    });
+    const callback = vi.fn(async () => NextResponse.json({ ok: true }));
+    const handler = withApiHandler(
+      { auth: "permission", permission: "studio.ingestions.manage" },
+      callback,
+    );
+    const response = await handler(
+      new NextRequest("http://localhost/api/v1/admin/ingestions/sync"),
+    );
+
+    expect(response.status).toBe(403);
+    expect(callback).not.toHaveBeenCalled();
+  });
 });

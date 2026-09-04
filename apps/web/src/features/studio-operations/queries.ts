@@ -1,5 +1,410 @@
 import { getDatabase } from "@placelink/database";
-import type { IngestionRunListQuery } from "./schema";
+import type {
+  AuditLogListQuery,
+  IngestionRunListQuery,
+  StudioUserListQuery,
+  StudioUserStatusUpdateRequest,
+  StudioOperatorListQuery,
+  StudioOperatorUpdateRequest,
+} from "./schema";
+import type { Actor } from "@/lib/auth/actor";
+
+export async function selectAuditLogs(query: AuditLogListQuery) {
+  const search = query.search || undefined;
+  const database = getDatabase();
+  const [records, targetTypes] = await Promise.all([
+    database.auditLog.findMany({
+      where: {
+        actorType: query.actorType,
+        targetType: query.targetType,
+        OR: search
+          ? [
+              { action: { contains: search, mode: "insensitive" } },
+              { actorId: { contains: search, mode: "insensitive" } },
+              { targetId: { contains: search, mode: "insensitive" } },
+            ]
+          : undefined,
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      cursor: query.cursor ? { id: query.cursor } : undefined,
+      skip: query.cursor ? 1 : 0,
+      take: query.take + 1,
+    }),
+    database.auditLog.findMany({
+      distinct: ["targetType"],
+      orderBy: { targetType: "asc" },
+      select: { targetType: true },
+    }),
+  ]);
+  const hasNext = records.length > query.take;
+  const page = hasNext ? records.slice(0, query.take) : records;
+  return {
+    records: page,
+    nextCursor: hasNext ? page.at(-1)?.id : undefined,
+    targetTypes: targetTypes.map((record) => record.targetType),
+  };
+}
+
+const userCoupleSelect = {
+  id: true,
+  displayName: true,
+  status: true,
+  startedAt: true,
+  members: {
+    where: { leftAt: null },
+    select: { user: { select: { id: true, nickname: true } } },
+  },
+  _count: { select: { courses: true } },
+} as const;
+
+const studioUserSummarySelect = {
+  id: true,
+  nickname: true,
+  email: true,
+  status: true,
+  createdAt: true,
+  authIdentities: { select: { provider: true } },
+  events: {
+    orderBy: { createdAt: "desc" as const },
+    take: 1,
+    select: { createdAt: true },
+  },
+  coupleMemberships: {
+    where: { leftAt: null, couple: { status: "ACTIVE" as const } },
+    take: 1,
+    select: { couple: { select: userCoupleSelect } },
+  },
+  _count: { select: { soloCourses: true, scraps: true } },
+} as const;
+
+export async function selectStudioUsers(query: StudioUserListQuery) {
+  const search = query.search || undefined;
+  const records = await getDatabase().user.findMany({
+    where: {
+      status: query.status,
+      authIdentities: query.provider
+        ? { some: { provider: query.provider } }
+        : undefined,
+      OR: search
+        ? [
+            { id: { contains: search, mode: "insensitive" } },
+            { nickname: { contains: search, mode: "insensitive" } },
+            { email: { contains: search, mode: "insensitive" } },
+          ]
+        : undefined,
+    },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    cursor: query.cursor ? { id: query.cursor } : undefined,
+    skip: query.cursor ? 1 : 0,
+    take: query.take + 1,
+    select: studioUserSummarySelect,
+  });
+  const hasNext = records.length > query.take;
+  const page = hasNext ? records.slice(0, query.take) : records;
+  return {
+    records: page,
+    nextCursor: hasNext ? page.at(-1)?.id : undefined,
+  };
+}
+
+export async function selectStudioOperators(query: StudioOperatorListQuery) {
+  const search = query.search || undefined;
+  const records = await getDatabase().user.findMany({
+    where: {
+      status: { not: "WITHDRAWN" },
+      OR: search
+        ? [
+            { id: { contains: search, mode: "insensitive" } },
+            { nickname: { contains: search, mode: "insensitive" } },
+            { email: { contains: search, mode: "insensitive" } },
+          ]
+        : [{ studioRole: { not: null } }],
+    },
+    orderBy: [{ studioRole: "asc" }, { createdAt: "desc" }, { id: "desc" }],
+    cursor: query.cursor ? { id: query.cursor } : undefined,
+    skip: query.cursor ? 1 : 0,
+    take: query.take + 1,
+    select: {
+      id: true,
+      nickname: true,
+      email: true,
+      status: true,
+      studioRole: true,
+      updatedAt: true,
+    },
+  });
+  const hasNext = records.length > query.take;
+  const page = hasNext ? records.slice(0, query.take) : records;
+  return { records: page, nextCursor: hasNext ? page.at(-1)?.id : undefined };
+}
+
+export async function updateStudioOperatorTransaction(
+  actor: Actor,
+  id: string,
+  input: StudioOperatorUpdateRequest,
+) {
+  return getDatabase().$transaction(async (transaction) => {
+    const before = await transaction.user.findUnique({
+      where: { id },
+      select: { id: true, status: true, studioRole: true, updatedAt: true },
+    });
+    if (!before) return { outcome: "not-found" as const };
+    if (before.status !== "ACTIVE") return { outcome: "inactive" as const };
+    if (
+      before.studioRole === "SUPER_ADMIN" &&
+      input.studioRole !== "SUPER_ADMIN"
+    ) {
+      const superAdmins = await transaction.user.count({
+        where: { studioRole: "SUPER_ADMIN", status: "ACTIVE" },
+      });
+      if (superAdmins <= 1) return { outcome: "last-super-admin" as const };
+    }
+    const result = await transaction.user.updateMany({
+      where: { id, updatedAt: new Date(input.expectedUpdatedAt) },
+      data: { studioRole: input.studioRole },
+    });
+    if (result.count !== 1) return { outcome: "conflict" as const };
+    const after = await transaction.user.findUniqueOrThrow({
+      where: { id },
+      select: { id: true, studioRole: true, updatedAt: true },
+    });
+    await transaction.auditLog.create({
+      data: {
+        actorId: actor.id,
+        actorType: actor.type,
+        action: "studio_operator.role_updated",
+        targetType: "User",
+        targetId: id,
+        before: { studioRole: before.studioRole },
+        after: { studioRole: after.studioRole, reason: input.reason },
+      },
+    });
+    return { outcome: "updated" as const, record: after };
+  });
+}
+
+export async function selectStudioUser(id: string) {
+  return getDatabase().user.findUnique({
+    where: { id },
+    select: {
+      ...studioUserSummarySelect,
+      profileImageUrl: true,
+      updatedAt: true,
+      deletedAt: true,
+      statusReason: true,
+      suspendedUntil: true,
+      statusChangedAt: true,
+      authIdentities: {
+        orderBy: { createdAt: "asc" },
+        select: { provider: true, createdAt: true },
+      },
+      events: {
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: 20,
+        select: { id: true, name: true, createdAt: true },
+      },
+      coupleMemberships: {
+        where: { leftAt: null, couple: { status: "ACTIVE" } },
+        take: 1,
+        select: {
+          joinedAt: true,
+          couple: {
+            select: {
+              ...userCoupleSelect,
+              courses: {
+                orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+                take: 20,
+                select: {
+                  id: true,
+                  slug: true,
+                  title: true,
+                  status: true,
+                  createdAt: true,
+                  publishedAt: true,
+                },
+              },
+            },
+          },
+        },
+      },
+      soloCourses: {
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: 20,
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          status: true,
+          createdAt: true,
+          publishedAt: true,
+        },
+      },
+      scraps: {
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: 20,
+        select: {
+          id: true,
+          createdAt: true,
+          course: { select: { slug: true, title: true, status: true } },
+        },
+      },
+    },
+  });
+}
+
+export async function updateStudioUserStatusTransaction(
+  actor: Actor,
+  id: string,
+  input: StudioUserStatusUpdateRequest,
+  now: Date,
+) {
+  return getDatabase().$transaction(async (transaction) => {
+    const before = await transaction.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        status: true,
+        statusReason: true,
+        suspendedUntil: true,
+        updatedAt: true,
+        deletedAt: true,
+        studioRole: true,
+      },
+    });
+    if (!before) return { outcome: "not-found" as const };
+    if (before.status === "WITHDRAWN") return { outcome: "withdrawn" as const };
+    if (before.studioRole && input.status !== "ACTIVE")
+      return { outcome: "operator" as const };
+    const result = await transaction.user.updateMany({
+      where: { id, updatedAt: new Date(input.expectedUpdatedAt) },
+      data: {
+        status: input.status,
+        statusReason: input.reason,
+        suspendedUntil:
+          input.status === "SUSPENDED" && input.suspendedUntil
+            ? new Date(input.suspendedUntil)
+            : null,
+        statusChangedAt: now,
+        deletedAt: input.status === "WITHDRAWN" ? now : null,
+      },
+    });
+    if (result.count !== 1) return { outcome: "conflict" as const };
+    const after = await transaction.user.findUniqueOrThrow({
+      where: { id },
+      select: {
+        id: true,
+        status: true,
+        statusReason: true,
+        suspendedUntil: true,
+        statusChangedAt: true,
+        updatedAt: true,
+        deletedAt: true,
+      },
+    });
+    await transaction.auditLog.create({
+      data: {
+        actorId: actor.id,
+        actorType: actor.type,
+        action: `user.status.${input.status.toLowerCase()}`,
+        targetType: "User",
+        targetId: id,
+        before: {
+          status: before.status,
+          statusReason: before.statusReason,
+          suspendedUntil: before.suspendedUntil?.toISOString() ?? null,
+          deletedAt: before.deletedAt?.toISOString() ?? null,
+        },
+        after: {
+          status: after.status,
+          reason: input.reason,
+          suspendedUntil: after.suspendedUntil?.toISOString() ?? null,
+          deletedAt: after.deletedAt?.toISOString() ?? null,
+        },
+      },
+    });
+    return { outcome: "updated" as const, record: after };
+  });
+}
+
+export async function restoreExpiredUserSuspensionsTransaction(
+  actor: Actor,
+  now: Date,
+  batchSize: number,
+) {
+  return getDatabase().$transaction(
+    async (transaction) => {
+      const candidates = await transaction.user.findMany({
+        where: {
+          status: "SUSPENDED",
+          suspendedUntil: { not: null, lte: now },
+        },
+        orderBy: [{ suspendedUntil: "asc" }, { id: "asc" }],
+        take: batchSize + 1,
+        select: {
+          id: true,
+          statusReason: true,
+          suspendedUntil: true,
+          deletedAt: true,
+        },
+      });
+      const batch = candidates.slice(0, batchSize);
+      if (batch.length === 0) {
+        return { restoredCount: 0, hasMore: false };
+      }
+      const restored = await transaction.user.updateManyAndReturn({
+        where: {
+          id: { in: batch.map((user) => user.id) },
+          status: "SUSPENDED",
+          suspendedUntil: { not: null, lte: now },
+        },
+        data: {
+          status: "ACTIVE",
+          statusReason: "Timed suspension expired automatically",
+          suspendedUntil: null,
+          statusChangedAt: now,
+          deletedAt: null,
+        },
+        select: { id: true },
+      });
+      const beforeById = new Map(batch.map((user) => [user.id, user]));
+      const restoredAt = now.toISOString();
+      const auditLogs = restored.flatMap((restoredUser) => {
+        const user = beforeById.get(restoredUser.id);
+        if (!user) return [];
+        return [
+          {
+            actorId: actor.id,
+            actorType: actor.type,
+            action: "user.status.auto_restored",
+            targetType: "User",
+            targetId: user.id,
+            before: {
+              status: "SUSPENDED",
+              statusReason: user.statusReason,
+              suspendedUntil: user.suspendedUntil?.toISOString() ?? null,
+              deletedAt: user.deletedAt?.toISOString() ?? null,
+            },
+            after: {
+              status: "ACTIVE",
+              reason: "Timed suspension expired automatically",
+              suspendedUntil: null,
+              deletedAt: null,
+              restoredAt,
+            },
+          },
+        ];
+      });
+      if (auditLogs.length > 0) {
+        await transaction.auditLog.createMany({ data: auditLogs });
+      }
+      return {
+        restoredCount: restored.length,
+        hasMore: candidates.length > batchSize,
+      };
+    },
+    { isolationLevel: "Serializable" },
+  );
+}
 
 const runSelect = {
   id: true,

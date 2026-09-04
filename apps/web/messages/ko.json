@@ -31,11 +31,14 @@
     "operations": "서비스 운영",
     "business": "비즈니스 운영",
     "dashboard": "대시보드",
+    "users": "사용자 관리",
+    "operators": "운영자 권한",
     "runs": "수집 실행 이력",
     "ingestions": "수집 데이터 검수",
     "happenings": "행사·노출 관리",
     "analytics": "사용 분석",
-    "customers": "사용자·고객지원",
+    "support": "문의·신고 관리",
+    "auditLogs": "감사로그",
     "partners": "파트너·제휴",
     "campaigns": "캠페인·쿠폰",
     "revenue": "결제·정산",
@@ -84,11 +87,31 @@
       "idle": "기록 없음"
     },
     "areas": {
-      "customers": { "title": "사용자·고객지원", "body": "가입자, 활동, 문의·불만·신고 처리", "status": "2단계 구축" },
-      "content": { "title": "콘텐츠 운영", "body": "장소, 행사, 코스, 노출과 품질 관리", "status": "일부 운영 중" },
-      "partners": { "title": "파트너·제휴", "body": "업체, 매장 소유권, 계약과 제휴 성과", "status": "3단계 구축" },
-      "campaigns": { "title": "캠페인·쿠폰", "body": "쿠폰, 이벤트, 대상과 사용 실적", "status": "3단계 구축" },
-      "revenue": { "title": "결제·정산", "body": "예약, 결제, 환불, 수수료와 파트너 정산", "status": "4단계 구축" }
+      "customers": {
+        "title": "사용자 관리",
+        "body": "가입 경로, 최근 활동, 커플과 코스·스크랩 이력",
+        "status": "운영 중"
+      },
+      "content": {
+        "title": "콘텐츠 운영",
+        "body": "장소, 행사, 코스, 노출과 품질 관리",
+        "status": "일부 운영 중"
+      },
+      "partners": {
+        "title": "파트너·제휴",
+        "body": "업체, 매장 소유권, 계약과 제휴 성과",
+        "status": "3단계 구축"
+      },
+      "campaigns": {
+        "title": "캠페인·쿠폰",
+        "body": "쿠폰, 이벤트, 대상과 사용 실적",
+        "status": "3단계 구축"
+      },
+      "revenue": {
+        "title": "결제·정산",
+        "body": "예약, 결제, 환불, 수수료와 파트너 정산",
+        "status": "4단계 구축"
+      }
     }
   },
   "ingestionRuns": {
@@ -134,7 +157,193 @@
     },
     "status": { "running": "실행 중", "succeeded": "성공", "failed": "실패" },
     "trigger": { "manual": "수동 실행", "scheduled": "정기 실행" },
-    "recordStatus": { "staged": "수집됨", "normalized": "검수 대기", "merged": "병합 완료", "rejected": "반려", "failed": "실패" }
+    "recordStatus": {
+      "staged": "수집됨",
+      "normalized": "검수 대기",
+      "merged": "병합 완료",
+      "rejected": "반려",
+      "failed": "실패"
+    }
+  },
+  "studioUsers": {
+    "kicker": "CUSTOMER OPERATIONS",
+    "title": "사용자 관리",
+    "subtitle": "가입 경로와 최근 활동, 커플 연결, 코스·스크랩 이력을 확인합니다.",
+    "searchLabel": "사용자 검색",
+    "searchPlaceholder": "닉네임, 이메일 또는 사용자 ID",
+    "search": "검색",
+    "filterLabel": "사용자 필터",
+    "allStatuses": "모든 상태",
+    "allProviders": "모든 가입 경로",
+    "empty": "조건에 맞는 사용자가 없습니다.",
+    "nextPage": "다음 사용자 보기",
+    "solo": "커플 연결 없음",
+    "counts": "코스 {courses} · 저장 {scraps}",
+    "lastActive": "최근 활동 {date}",
+    "backToUsers": "사용자 목록",
+    "detailKicker": "USER DETAIL",
+    "account": "계정 정보",
+    "userId": "사용자 ID",
+    "email": "이메일",
+    "providers": "가입 경로",
+    "joinedAt": "가입일",
+    "lastActiveLabel": "최근 활동",
+    "relationship": "커플 연결",
+    "coupleName": "표시 이름",
+    "members": "구성원",
+    "startedAt": "처음 만난 날",
+    "connectedAt": "연결일",
+    "noCouple": "현재 연결된 커플이 없습니다.",
+    "courses": "생성 코스",
+    "coursesBody": "개인 및 현재 커플 코스를 최근 순으로 표시합니다.",
+    "noCourses": "생성한 코스가 없습니다.",
+    "scraps": "저장한 코스",
+    "scrapsBody": "최근 저장한 코스입니다.",
+    "noScraps": "저장한 코스가 없습니다.",
+    "activity": "최근 활동",
+    "activityBody": "개인정보 원문 없이 이벤트명과 시각만 표시합니다.",
+    "noActivity": "활동 기록 없음",
+    "actions": {
+      "title": "계정 상태 변경",
+      "body": "정지·복구·탈퇴 처리와 사유를 감사로그에 함께 기록합니다. 탈퇴는 Studio에서 되돌릴 수 없습니다.",
+      "status": "변경할 상태",
+      "suspendedUntil": "정지 종료 시각 (비우면 무기한)",
+      "reason": "변경 사유",
+      "save": "계정 상태 저장",
+      "saving": "저장 중",
+      "saved": "계정 상태와 감사로그를 저장했습니다.",
+      "error": "변경하지 못했습니다. 최신 상태와 권한을 확인해 주세요."
+    },
+    "status": { "active": "활성", "suspended": "정지", "withdrawn": "탈퇴" },
+    "provider": { "kakao": "카카오", "google": "구글" },
+    "ownership": { "solo": "개인", "couple": "커플" },
+    "courseStatus": {
+      "draft": "초안",
+      "published": "공개",
+      "private": "비공개",
+      "deleted": "삭제"
+    }
+  },
+  "studioOperators": {
+    "kicker": "ACCESS CONTROL",
+    "title": "운영자 권한",
+    "subtitle": "운영 역할을 지정·해제하고 모든 변경 사유를 감사로그에 남깁니다.",
+    "searchLabel": "사용자 검색",
+    "searchPlaceholder": "닉네임, 이메일 또는 사용자 ID",
+    "search": "검색",
+    "empty": "등록된 운영자가 없습니다. 사용자를 검색해 역할을 지정하세요.",
+    "role": "운영 역할",
+    "reason": "변경 사유",
+    "none": "운영 권한 없음",
+    "save": "역할 저장",
+    "saving": "저장 중",
+    "saved": "역할과 감사로그를 저장했습니다.",
+    "error": "변경하지 못했습니다. 최신 상태와 최고 관리자 수를 확인해 주세요.",
+    "selfProtected": "자기 역할은 다른 최고 관리자가 변경해야 합니다.",
+    "roles": {
+      "superAdmin": "최고 관리자",
+      "support": "고객지원",
+      "content": "콘텐츠 운영",
+      "analyst": "분석·조회"
+    }
+  },
+  "studioSupport": {
+    "kicker": "CUSTOMER SUPPORT",
+    "title": "문의·신고 관리",
+    "subtitle": "문의, 불만, 신고와 개인정보 요청의 담당자·기한·처리 이력을 관리합니다.",
+    "searchLabel": "접수 검색",
+    "searchPlaceholder": "제목, 내용, 사용자 또는 접수 ID",
+    "search": "검색",
+    "filterLabel": "접수 필터",
+    "allStatuses": "모든 상태",
+    "allTypes": "모든 유형",
+    "allPriorities": "모든 우선순위",
+    "empty": "조건에 맞는 접수 건이 없습니다.",
+    "nextPage": "다음 접수 보기",
+    "anonymous": "사용자 정보 없음",
+    "unassigned": "담당자 미지정",
+    "entries": "메시지 {count}개",
+    "due": "처리기한 {date}",
+    "backToCases": "문의·신고 목록",
+    "detailKicker": "SUPPORT CASE DETAIL",
+    "caseInfo": "접수 정보",
+    "typeLabel": "유형",
+    "priorityLabel": "우선순위",
+    "reporter": "접수 사용자",
+    "assignee": "담당자",
+    "createdAt": "접수 시각",
+    "dueAt": "처리기한",
+    "request": "접수 내용",
+    "target": "신고 대상",
+    "timeline": "처리 이력",
+    "timelineBody": "고객 메시지, 답변과 내부 메모를 시간순으로 표시합니다.",
+    "type": {
+      "inquiry": "문의",
+      "complaint": "불만",
+      "report": "신고",
+      "privacy": "개인정보 요청"
+    },
+    "priority": {
+      "low": "낮음",
+      "normal": "보통",
+      "high": "높음",
+      "urgent": "긴급"
+    },
+    "status": {
+      "open": "접수",
+      "in_progress": "처리 중",
+      "waiting_user": "사용자 응답 대기",
+      "resolved": "해결",
+      "closed": "종료"
+    },
+    "entryKind": {
+      "customer_message": "고객 메시지",
+      "staff_reply": "고객 답변",
+      "internal_note": "내부 메모"
+    },
+    "actions": {
+      "save": "처리 상태 변경",
+      "saving": "저장 중",
+      "saved": "변경사항과 감사로그를 저장했습니다.",
+      "updateError": "변경하지 못했습니다. 최신 상태를 확인해 다시 시도해 주세요.",
+      "status": "상태",
+      "priority": "우선순위",
+      "assignment": "담당자",
+      "keepAssignment": "현재 담당자 유지",
+      "assignSelf": "나에게 배정",
+      "unassign": "담당자 해제",
+      "dueAt": "처리기한",
+      "reason": "변경 사유",
+      "reasonPlaceholder": "상태 또는 우선순위를 변경하는 이유",
+      "entryKind": "기록 유형",
+      "staffReply": "고객 답변",
+      "internalNote": "내부 메모",
+      "entryBody": "내용",
+      "entryPlaceholder": "답변 또는 운영자만 볼 내부 메모",
+      "addEntry": "처리 기록 추가",
+      "addingEntry": "추가 중",
+      "entryAdded": "처리 기록과 감사로그를 추가했습니다.",
+      "entryError": "처리 기록을 추가하지 못했습니다."
+    }
+  },
+  "studioAuditLogs": {
+    "kicker": "SYSTEM OPERATIONS",
+    "title": "감사로그",
+    "subtitle": "운영자와 자동화 작업이 남긴 주요 변경 이력을 확인합니다.",
+    "searchLabel": "변경 이력 검색",
+    "searchPlaceholder": "작업명, 실행 주체 또는 대상 ID",
+    "search": "검색",
+    "filterLabel": "감사로그 필터",
+    "allActors": "모든 실행 주체",
+    "allTargets": "모든 대상",
+    "actorType": { "human": "운영자", "agent": "자동화" },
+    "actor": "{type} · {id}",
+    "changes": "변경 전후 보기",
+    "before": "변경 전",
+    "after": "변경 후",
+    "none": "기록 없음",
+    "empty": "조건에 맞는 감사로그가 없습니다.",
+    "nextPage": "다음 기록 보기"
   },
   "home": {
     "hero": {
@@ -367,7 +576,42 @@
     "createdEmpty": "아직 만든 코스가 없어요.",
     "savedEmpty": "마음에 드는 코스를 저장해 보세요.",
     "draftStatus": "초안 · 계속 편집하기",
-    "publishedStatus": "발행된 코스"
+    "publishedStatus": "발행된 코스",
+    "supportKicker": "HELP & SAFETY",
+    "supportTitle": "문의하거나 신고하기",
+    "supportBody": "불편한 점이나 확인이 필요한 콘텐츠를 알려주세요.",
+    "supportAction": "접수 화면 열기"
+  },
+  "customerSupport": {
+    "kicker": "HELP & SAFETY",
+    "title": "무엇을 도와드릴까요?",
+    "subtitle": "문의와 신고 내용을 확인한 뒤 필요한 조치를 안내해 드립니다.",
+    "typeLabel": "접수 유형",
+    "types": {
+      "inquiry": "문의",
+      "complaint": "불편 접수",
+      "report": "콘텐츠 신고",
+      "privacy": "개인정보 요청"
+    },
+    "targetLabel": "신고 대상",
+    "targets": {
+      "course": "코스",
+      "place": "장소",
+      "happening": "행사"
+    },
+    "subjectLabel": "제목",
+    "subjectPlaceholder": "어떤 도움이 필요한지 짧게 적어주세요",
+    "descriptionLabel": "자세한 내용",
+    "descriptionPlaceholder": "확인이 필요한 상황과 원하는 해결 방법을 알려주세요",
+    "privacyNote": "주민등록번호, 계좌번호, 비밀번호 등 민감한 개인정보는 입력하지 마세요. 계정 확인에 필요한 정보는 로그인 정보로 안전하게 연결됩니다.",
+    "submit": "접수하기",
+    "submitting": "접수 중...",
+    "error": "접수하지 못했어요. 입력 내용을 확인하고 다시 시도해 주세요.",
+    "rateLimited": "짧은 시간에 접수된 요청이 많아요. 한 시간 뒤 다시 시도해 주세요.",
+    "successKicker": "REQUEST RECEIVED",
+    "successTitle": "접수가 완료됐어요",
+    "successBody": "운영팀 접수함에 안전하게 저장됐어요. 답변 전달 기능은 준비 중입니다.",
+    "reference": "접수 번호: {id}"
   },
   "couples": {
     "loading": "초대 정보를 확인하는 중...",
@@ -429,13 +673,59 @@
       "result": "{fetched}개 확인 · {selected}개 선택 · {inserted}개 추가 · {unchanged}개 기존 항목",
       "error": "가져오지 못했습니다. 선택한 출처의 API 키와 외부 서비스 상태를 확인해 주세요."
     },
-    "fields": { "placeKind": "장소 유형", "happeningKind": "행사 유형", "operatorType": "운영 주체", "rejectReason": "반려 사유" },
-    "all": { "provider": "모든 출처", "happeningKind": "모든 행사", "operatorType": "모든 운영 주체" },
-    "status": { "normalized": "검수 대기", "merged": "병합 완료", "rejected": "반려", "failed": "수집 실패" },
-    "provider": { "seoul_open_data": "서울 열린데이터", "culture_portal": "문화포털", "kopis": "KOPIS", "kobis": "KOBIS", "official_site": "공식 사이트" },
-    "placeKind": { "cafe": "카페", "restaurant": "음식점", "bar": "바", "shop": "상점", "cinema": "영화관", "museum": "박물관", "gallery": "갤러리", "park": "공원", "activity": "체험 공간", "cultural_venue": "문화시설", "other": "기타" },
-    "happeningKind": { "exhibition": "전시", "popup": "팝업", "festival": "축제", "performance": "공연", "screening": "상영", "workshop": "워크숍", "event": "행사", "other": "기타" },
-    "operatorType": { "public": "공공", "private": "민간", "nonprofit": "비영리", "unknown": "미확인" }
+    "fields": {
+      "placeKind": "장소 유형",
+      "happeningKind": "행사 유형",
+      "operatorType": "운영 주체",
+      "rejectReason": "반려 사유"
+    },
+    "all": {
+      "provider": "모든 출처",
+      "happeningKind": "모든 행사",
+      "operatorType": "모든 운영 주체"
+    },
+    "status": {
+      "normalized": "검수 대기",
+      "merged": "병합 완료",
+      "rejected": "반려",
+      "failed": "수집 실패"
+    },
+    "provider": {
+      "seoul_open_data": "서울 열린데이터",
+      "culture_portal": "문화포털",
+      "kopis": "KOPIS",
+      "kobis": "KOBIS",
+      "official_site": "공식 사이트"
+    },
+    "placeKind": {
+      "cafe": "카페",
+      "restaurant": "음식점",
+      "bar": "바",
+      "shop": "상점",
+      "cinema": "영화관",
+      "museum": "박물관",
+      "gallery": "갤러리",
+      "park": "공원",
+      "activity": "체험 공간",
+      "cultural_venue": "문화시설",
+      "other": "기타"
+    },
+    "happeningKind": {
+      "exhibition": "전시",
+      "popup": "팝업",
+      "festival": "축제",
+      "performance": "공연",
+      "screening": "상영",
+      "workshop": "워크숍",
+      "event": "행사",
+      "other": "기타"
+    },
+    "operatorType": {
+      "public": "공공",
+      "private": "민간",
+      "nonprofit": "비영리",
+      "unknown": "미확인"
+    }
   },
   "analytics": {
     "kicker": "INTERNAL OPERATIONS",

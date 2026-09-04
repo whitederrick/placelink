@@ -31,11 +31,14 @@
     "operations": "Service operations",
     "business": "Business operations",
     "dashboard": "Dashboard",
+    "users": "Users",
+    "operators": "Operator access",
     "runs": "Ingestion runs",
     "ingestions": "Ingestion review",
     "happenings": "Events & placement",
     "analytics": "Usage analytics",
-    "customers": "Users & support",
+    "support": "Requests & reports",
+    "auditLogs": "Audit log",
     "partners": "Partners",
     "campaigns": "Campaigns & coupons",
     "revenue": "Payments & settlement",
@@ -77,13 +80,38 @@
       "KOBIS": "KOBIS",
       "OFFICIAL_SITE": "Official site"
     },
-    "status": { "running": "Running", "succeeded": "Healthy", "failed": "Failed", "idle": "No history" },
+    "status": {
+      "running": "Running",
+      "succeeded": "Healthy",
+      "failed": "Failed",
+      "idle": "No history"
+    },
     "areas": {
-      "customers": { "title": "Users & support", "body": "Accounts, activity, requests, complaints, and reports", "status": "Phase 2" },
-      "content": { "title": "Content operations", "body": "Places, events, courses, placement, and data quality", "status": "Partially active" },
-      "partners": { "title": "Partners", "body": "Businesses, venue ownership, contracts, and performance", "status": "Phase 3" },
-      "campaigns": { "title": "Campaigns & coupons", "body": "Coupons, events, targeting, and redemption", "status": "Phase 3" },
-      "revenue": { "title": "Payments & settlement", "body": "Bookings, payments, refunds, fees, and partner settlement", "status": "Phase 4" }
+      "customers": {
+        "title": "User operations",
+        "body": "Signup, activity, couples, courses, and saves",
+        "status": "Active"
+      },
+      "content": {
+        "title": "Content operations",
+        "body": "Places, events, courses, placement, and data quality",
+        "status": "Partially active"
+      },
+      "partners": {
+        "title": "Partners",
+        "body": "Businesses, venue ownership, contracts, and performance",
+        "status": "Phase 3"
+      },
+      "campaigns": {
+        "title": "Campaigns & coupons",
+        "body": "Coupons, events, targeting, and redemption",
+        "status": "Phase 3"
+      },
+      "revenue": {
+        "title": "Payments & settlement",
+        "body": "Bookings, payments, refunds, fees, and partner settlement",
+        "status": "Phase 4"
+      }
     }
   },
   "ingestionRuns": {
@@ -127,9 +155,203 @@
       "KOBIS": "KOBIS",
       "OFFICIAL_SITE": "Official site"
     },
-    "status": { "running": "Running", "succeeded": "Succeeded", "failed": "Failed" },
+    "status": {
+      "running": "Running",
+      "succeeded": "Succeeded",
+      "failed": "Failed"
+    },
     "trigger": { "manual": "Manual", "scheduled": "Scheduled" },
-    "recordStatus": { "staged": "Staged", "normalized": "Awaiting review", "merged": "Merged", "rejected": "Rejected", "failed": "Failed" }
+    "recordStatus": {
+      "staged": "Staged",
+      "normalized": "Awaiting review",
+      "merged": "Merged",
+      "rejected": "Rejected",
+      "failed": "Failed"
+    }
+  },
+  "studioUsers": {
+    "kicker": "CUSTOMER OPERATIONS",
+    "title": "Users",
+    "subtitle": "Review signup providers, recent activity, couple connections, courses, and saves.",
+    "searchLabel": "Search users",
+    "searchPlaceholder": "Nickname, email, or user ID",
+    "search": "Search",
+    "filterLabel": "User filters",
+    "allStatuses": "All statuses",
+    "allProviders": "All signup providers",
+    "empty": "No users match these filters.",
+    "nextPage": "View next users",
+    "solo": "No couple connection",
+    "counts": "{courses} courses · {scraps} saves",
+    "lastActive": "Last active {date}",
+    "backToUsers": "Users",
+    "detailKicker": "USER DETAIL",
+    "account": "Account",
+    "userId": "User ID",
+    "email": "Email",
+    "providers": "Signup providers",
+    "joinedAt": "Joined",
+    "lastActiveLabel": "Last active",
+    "relationship": "Couple connection",
+    "coupleName": "Display name",
+    "members": "Members",
+    "startedAt": "Together since",
+    "connectedAt": "Connected",
+    "noCouple": "This user has no active couple connection.",
+    "courses": "Created courses",
+    "coursesBody": "Recent solo and current-couple courses.",
+    "noCourses": "No courses have been created.",
+    "scraps": "Saved courses",
+    "scrapsBody": "Recently saved courses.",
+    "noScraps": "No courses have been saved.",
+    "activity": "Recent activity",
+    "activityBody": "Shows event names and timestamps without raw personal properties.",
+    "noActivity": "No activity recorded",
+    "actions": {
+      "title": "Change account status",
+      "body": "Suspension, restoration, withdrawal, and the reason are recorded in the audit log. Withdrawal cannot be reversed in Studio.",
+      "status": "New status",
+      "suspendedUntil": "Suspension ends (leave blank for indefinite)",
+      "reason": "Reason",
+      "save": "Save account status",
+      "saving": "Saving",
+      "saved": "The account status and audit log were saved.",
+      "error": "The change failed. Check the latest status and your permission."
+    },
+    "status": {
+      "active": "Active",
+      "suspended": "Suspended",
+      "withdrawn": "Withdrawn"
+    },
+    "provider": { "kakao": "Kakao", "google": "Google" },
+    "ownership": { "solo": "Solo", "couple": "Couple" },
+    "courseStatus": {
+      "draft": "Draft",
+      "published": "Published",
+      "private": "Private",
+      "deleted": "Deleted"
+    }
+  },
+  "studioOperators": {
+    "kicker": "ACCESS CONTROL",
+    "title": "Operator access",
+    "subtitle": "Assign or remove operational roles with an audited reason for every change.",
+    "searchLabel": "Search users",
+    "searchPlaceholder": "Nickname, email, or user ID",
+    "search": "Search",
+    "empty": "No operators are registered. Search for a user to assign a role.",
+    "role": "Operator role",
+    "reason": "Reason",
+    "none": "No operator access",
+    "save": "Save role",
+    "saving": "Saving",
+    "saved": "The role and audit log were saved.",
+    "error": "The change failed. Check the latest state and super administrator count.",
+    "selfProtected": "Another super administrator must change your role.",
+    "roles": {
+      "superAdmin": "Super administrator",
+      "support": "Support",
+      "content": "Content operations",
+      "analyst": "Analytics and read-only"
+    }
+  },
+  "studioSupport": {
+    "kicker": "CUSTOMER SUPPORT",
+    "title": "Requests & reports",
+    "subtitle": "Manage ownership, deadlines, and resolution history for inquiries, complaints, reports, and privacy requests.",
+    "searchLabel": "Search cases",
+    "searchPlaceholder": "Subject, content, user, or case ID",
+    "search": "Search",
+    "filterLabel": "Case filters",
+    "allStatuses": "All statuses",
+    "allTypes": "All types",
+    "allPriorities": "All priorities",
+    "empty": "No cases match these filters.",
+    "nextPage": "View next cases",
+    "anonymous": "No user information",
+    "unassigned": "Unassigned",
+    "entries": "{count} messages",
+    "due": "Due {date}",
+    "backToCases": "Requests & reports",
+    "detailKicker": "SUPPORT CASE DETAIL",
+    "caseInfo": "Case information",
+    "typeLabel": "Type",
+    "priorityLabel": "Priority",
+    "reporter": "Reporter",
+    "assignee": "Assignee",
+    "createdAt": "Created",
+    "dueAt": "Due",
+    "request": "Request",
+    "target": "Reported target",
+    "timeline": "Resolution timeline",
+    "timelineBody": "Customer messages, staff replies, and internal notes in chronological order.",
+    "type": {
+      "inquiry": "Inquiry",
+      "complaint": "Complaint",
+      "report": "Report",
+      "privacy": "Privacy request"
+    },
+    "priority": {
+      "low": "Low",
+      "normal": "Normal",
+      "high": "High",
+      "urgent": "Urgent"
+    },
+    "status": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "waiting_user": "Waiting for user",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "entryKind": {
+      "customer_message": "Customer message",
+      "staff_reply": "Staff reply",
+      "internal_note": "Internal note"
+    },
+    "actions": {
+      "save": "Update case",
+      "saving": "Saving",
+      "saved": "Saved the update and audit log.",
+      "updateError": "The case could not be updated. Reload and try again.",
+      "status": "Status",
+      "priority": "Priority",
+      "assignment": "Assignee",
+      "keepAssignment": "Keep current assignee",
+      "assignSelf": "Assign to me",
+      "unassign": "Unassign",
+      "dueAt": "Due",
+      "reason": "Change reason",
+      "reasonPlaceholder": "Why this status or priority is changing",
+      "entryKind": "Entry type",
+      "staffReply": "Staff reply",
+      "internalNote": "Internal note",
+      "entryBody": "Content",
+      "entryPlaceholder": "Reply or an internal note visible only to operators",
+      "addEntry": "Add resolution entry",
+      "addingEntry": "Adding",
+      "entryAdded": "Added the entry and audit log.",
+      "entryError": "The entry could not be added."
+    }
+  },
+  "studioAuditLogs": {
+    "kicker": "SYSTEM OPERATIONS",
+    "title": "Audit log",
+    "subtitle": "Review important changes made by operators and automated jobs.",
+    "searchLabel": "Search changes",
+    "searchPlaceholder": "Action, actor, or target ID",
+    "search": "Search",
+    "filterLabel": "Audit log filters",
+    "allActors": "All actors",
+    "allTargets": "All targets",
+    "actorType": { "human": "Operator", "agent": "Automation" },
+    "actor": "{type} · {id}",
+    "changes": "View before and after",
+    "before": "Before",
+    "after": "After",
+    "none": "No record",
+    "empty": "No audit logs match these filters.",
+    "nextPage": "View more records"
   },
   "home": {
     "hero": {
@@ -362,7 +584,42 @@
     "createdEmpty": "You have not created a course yet.",
     "savedEmpty": "Save a course you would love to try.",
     "draftStatus": "Draft · Continue editing",
-    "publishedStatus": "Published course"
+    "publishedStatus": "Published course",
+    "supportKicker": "HELP & SAFETY",
+    "supportTitle": "Contact or report",
+    "supportBody": "Tell us about a problem or content that needs review.",
+    "supportAction": "Open request form"
+  },
+  "customerSupport": {
+    "kicker": "HELP & SAFETY",
+    "title": "How can we help?",
+    "subtitle": "We will review your request or report and follow up with the appropriate action.",
+    "typeLabel": "Request type",
+    "types": {
+      "inquiry": "Question",
+      "complaint": "Complaint",
+      "report": "Content report",
+      "privacy": "Privacy request"
+    },
+    "targetLabel": "Reported item",
+    "targets": {
+      "course": "Course",
+      "place": "Place",
+      "happening": "Event"
+    },
+    "subjectLabel": "Subject",
+    "subjectPlaceholder": "Briefly describe what you need help with",
+    "descriptionLabel": "Details",
+    "descriptionPlaceholder": "Describe what happened and how you would like it resolved",
+    "privacyNote": "Do not enter sensitive information such as identification numbers, bank details, or passwords. We securely link your request to your signed-in account.",
+    "submit": "Submit request",
+    "submitting": "Submitting...",
+    "error": "We could not submit your request. Check the details and try again.",
+    "rateLimited": "You have submitted several requests recently. Please try again in one hour.",
+    "successKicker": "REQUEST RECEIVED",
+    "successTitle": "Your request is in",
+    "successBody": "It is safely stored in the operations inbox. Reply delivery is still being prepared.",
+    "reference": "Reference: {id}"
   },
   "couples": {
     "loading": "Checking this invite...",
@@ -424,13 +681,59 @@
       "result": "{fetched} fetched · {selected} selected · {inserted} added · {unchanged} unchanged",
       "error": "The import failed. Check the selected provider key and external service status."
     },
-    "fields": { "placeKind": "Place type", "happeningKind": "Event type", "operatorType": "Operator", "rejectReason": "Rejection reason" },
-    "all": { "provider": "All sources", "happeningKind": "All events", "operatorType": "All operators" },
-    "status": { "normalized": "Awaiting review", "merged": "Merged", "rejected": "Rejected", "failed": "Failed" },
-    "provider": { "seoul_open_data": "Seoul Open Data", "culture_portal": "Culture Portal", "kopis": "KOPIS", "kobis": "KOBIS", "official_site": "Official site" },
-    "placeKind": { "cafe": "Cafe", "restaurant": "Restaurant", "bar": "Bar", "shop": "Shop", "cinema": "Cinema", "museum": "Museum", "gallery": "Gallery", "park": "Park", "activity": "Activity venue", "cultural_venue": "Cultural venue", "other": "Other" },
-    "happeningKind": { "exhibition": "Exhibition", "popup": "Pop-up", "festival": "Festival", "performance": "Performance", "screening": "Screening", "workshop": "Workshop", "event": "Event", "other": "Other" },
-    "operatorType": { "public": "Public", "private": "Private", "nonprofit": "Nonprofit", "unknown": "Unknown" }
+    "fields": {
+      "placeKind": "Place type",
+      "happeningKind": "Event type",
+      "operatorType": "Operator",
+      "rejectReason": "Rejection reason"
+    },
+    "all": {
+      "provider": "All sources",
+      "happeningKind": "All events",
+      "operatorType": "All operators"
+    },
+    "status": {
+      "normalized": "Awaiting review",
+      "merged": "Merged",
+      "rejected": "Rejected",
+      "failed": "Failed"
+    },
+    "provider": {
+      "seoul_open_data": "Seoul Open Data",
+      "culture_portal": "Culture Portal",
+      "kopis": "KOPIS",
+      "kobis": "KOBIS",
+      "official_site": "Official site"
+    },
+    "placeKind": {
+      "cafe": "Cafe",
+      "restaurant": "Restaurant",
+      "bar": "Bar",
+      "shop": "Shop",
+      "cinema": "Cinema",
+      "museum": "Museum",
+      "gallery": "Gallery",
+      "park": "Park",
+      "activity": "Activity venue",
+      "cultural_venue": "Cultural venue",
+      "other": "Other"
+    },
+    "happeningKind": {
+      "exhibition": "Exhibition",
+      "popup": "Pop-up",
+      "festival": "Festival",
+      "performance": "Performance",
+      "screening": "Screening",
+      "workshop": "Workshop",
+      "event": "Event",
+      "other": "Other"
+    },
+    "operatorType": {
+      "public": "Public",
+      "private": "Private",
+      "nonprofit": "Nonprofit",
+      "unknown": "Unknown"
+    }
   },
   "analytics": {
     "kicker": "INTERNAL OPERATIONS",

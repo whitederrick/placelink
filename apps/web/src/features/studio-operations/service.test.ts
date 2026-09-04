@@ -1,20 +1,39 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const queryMocks = vi.hoisted(() => ({
+  selectAuditLogs: vi.fn(),
   selectStudioDashboard: vi.fn(),
   selectIngestionRuns: vi.fn(),
   selectIngestionRun: vi.fn(),
+  selectStudioUsers: vi.fn(),
+  selectStudioUser: vi.fn(),
+  updateStudioUserStatusTransaction: vi.fn(),
+  selectStudioOperators: vi.fn(),
+  updateStudioOperatorTransaction: vi.fn(),
+  restoreExpiredUserSuspensionsTransaction: vi.fn(),
 }));
 vi.mock("./queries", () => queryMocks);
 
 import {
   getIngestionRun,
+  getStudioUser,
   listIngestionRuns,
+  listAuditLogs,
+  listStudioUsers,
   loadStudioDashboard,
+  restoreExpiredUserSuspensions,
+  updateStudioUserStatus,
+  listStudioOperators,
+  updateStudioOperator,
 } from "./service";
 
 const admin = { id: "admin-1", type: "HUMAN" as const, role: "ADMIN" as const };
 const user = { id: "user-1", type: "HUMAN" as const, role: "USER" as const };
+const suspensionAgent = {
+  id: "user-suspension-expiry-cron",
+  type: "AGENT" as const,
+  role: "ADMIN" as const,
+};
 const run = {
   id: "run-1",
   provider: "CULTURE_PORTAL" as const,
@@ -28,6 +47,80 @@ const run = {
   errorMessage: null,
   startedAt: new Date("2026-08-27T10:00:00.000Z"),
   finishedAt: new Date("2026-08-27T10:00:05.000Z"),
+};
+const studioUser = {
+  id: "user-1",
+  nickname: "민지",
+  email: "minji@example.test",
+  status: "ACTIVE" as const,
+  profileImageUrl: null,
+  createdAt: new Date("2026-08-01T00:00:00.000Z"),
+  updatedAt: new Date("2026-08-27T00:00:00.000Z"),
+  deletedAt: null,
+  statusReason: null,
+  suspendedUntil: null,
+  statusChangedAt: null,
+  authIdentities: [
+    {
+      provider: "KAKAO" as const,
+      createdAt: new Date("2026-08-01T00:00:00.000Z"),
+    },
+  ],
+  events: [
+    {
+      id: "event-1",
+      name: "course_scrapped",
+      createdAt: new Date("2026-08-27T10:00:00.000Z"),
+    },
+  ],
+  coupleMemberships: [
+    {
+      joinedAt: new Date("2026-08-02T00:00:00.000Z"),
+      couple: {
+        id: "couple-1",
+        displayName: "지훈♥민지",
+        status: "ACTIVE" as const,
+        startedAt: new Date("2025-03-23T00:00:00.000Z"),
+        members: [
+          { user: { id: "user-1", nickname: "민지" } },
+          { user: { id: "user-2", nickname: "지훈" } },
+        ],
+        _count: { courses: 1 },
+        courses: [
+          {
+            id: "course-1",
+            slug: "couple-course",
+            title: "성수 데이트",
+            status: "PUBLISHED" as const,
+            createdAt: new Date("2026-08-20T00:00:00.000Z"),
+            publishedAt: new Date("2026-08-20T01:00:00.000Z"),
+          },
+        ],
+      },
+    },
+  ],
+  _count: { soloCourses: 1, scraps: 1 },
+  soloCourses: [
+    {
+      id: "course-2",
+      slug: "solo-course",
+      title: "혼자 만든 코스",
+      status: "DRAFT" as const,
+      createdAt: new Date("2026-08-21T00:00:00.000Z"),
+      publishedAt: null,
+    },
+  ],
+  scraps: [
+    {
+      id: "scrap-1",
+      createdAt: new Date("2026-08-22T00:00:00.000Z"),
+      course: {
+        slug: "saved-course",
+        title: "저장한 코스",
+        status: "PUBLISHED" as const,
+      },
+    },
+  ],
 };
 
 describe("studio operations", () => {
@@ -102,7 +195,7 @@ describe("studio operations", () => {
             happeningKind: "EXHIBITION",
             placeName: "대한민국역사박물관",
             placeKind: "CULTURAL_VENUE",
-        operatorType: "UNKNOWN",
+            operatorType: "UNKNOWN",
             district: "서울",
             startsAt: "2026-07-15T15:00:00.000Z",
             endsAt: "2026-10-12T15:00:00.000Z",
@@ -129,6 +222,225 @@ describe("studio operations", () => {
         actorType: "AGENT",
         records: [{ title: "다시 보는 제헌절" }],
       },
+    });
+  });
+
+  it("returns filtered user summaries without raw activity properties", async () => {
+    queryMocks.selectStudioUsers.mockResolvedValue({
+      records: [studioUser],
+      nextCursor: "user-next",
+    });
+
+    await expect(
+      listStudioUsers(admin, { search: "민지", provider: "KAKAO" }),
+    ).resolves.toMatchObject({
+      data: [
+        {
+          id: "user-1",
+          providers: ["KAKAO"],
+          lastActiveAt: "2026-08-27T10:00:00.000Z",
+          couple: { partnerNickname: "지훈" },
+        },
+      ],
+      meta: { nextCursor: "user-next" },
+    });
+  });
+
+  it("returns user detail with solo and couple histories", async () => {
+    queryMocks.selectStudioUser.mockResolvedValue(studioUser);
+
+    await expect(getStudioUser(admin, "user-1")).resolves.toMatchObject({
+      data: {
+        id: "user-1",
+        currentCouple: { displayName: "지훈♥민지" },
+        courses: [
+          { id: "course-2", ownership: "SOLO" },
+          { id: "course-1", ownership: "COUPLE" },
+        ],
+        scraps: [{ id: "scrap-1" }],
+        recentActivity: [{ name: "course_scrapped" }],
+      },
+    });
+  });
+
+  it("rejects non-admin user lookup", async () => {
+    await expect(listStudioUsers(user)).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      status: 403,
+    });
+  });
+
+  it("restores expired suspensions in a bounded automated batch", async () => {
+    const now = new Date("2026-09-04T00:00:00.000Z");
+    queryMocks.restoreExpiredUserSuspensionsTransaction.mockResolvedValue({
+      restoredCount: 2,
+      hasMore: false,
+    });
+
+    await expect(
+      restoreExpiredUserSuspensions(suspensionAgent, now),
+    ).resolves.toEqual({ data: { restoredCount: 2, hasMore: false } });
+    expect(
+      queryMocks.restoreExpiredUserSuspensionsTransaction,
+    ).toHaveBeenCalledWith(suspensionAgent, now, 500);
+  });
+
+  it("does not allow a human operator to run automatic recovery", async () => {
+    await expect(restoreExpiredUserSuspensions(admin)).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      status: 403,
+    });
+    expect(
+      queryMocks.restoreExpiredUserSuspensionsTransaction,
+    ).not.toHaveBeenCalled();
+  });
+
+  it("updates a user status with optimistic concurrency metadata", async () => {
+    queryMocks.updateStudioUserStatusTransaction.mockResolvedValue({
+      outcome: "updated",
+      record: {
+        id: "user-1",
+        status: "SUSPENDED",
+        statusReason: "반복적인 서비스 악용",
+        suspendedUntil: new Date("2026-09-10T00:00:00.000Z"),
+        statusChangedAt: new Date("2026-09-03T12:00:00.000Z"),
+        updatedAt: new Date("2026-09-03T12:00:00.000Z"),
+        deletedAt: null,
+      },
+    });
+
+    await expect(
+      updateStudioUserStatus(
+        admin,
+        "user-1",
+        {
+          status: "SUSPENDED",
+          reason: "반복적인 서비스 악용",
+          suspendedUntil: "2026-09-10T00:00:00.000Z",
+          expectedUpdatedAt: "2026-08-27T00:00:00.000Z",
+        },
+        new Date("2026-09-03T12:00:00.000Z"),
+      ),
+    ).resolves.toMatchObject({
+      data: {
+        status: "SUSPENDED",
+        suspendedUntil: "2026-09-10T00:00:00.000Z",
+      },
+    });
+  });
+
+  it("prevents operators from changing their own status", async () => {
+    await expect(
+      updateStudioUserStatus(admin, "admin-1", {
+        status: "SUSPENDED",
+        reason: "self change",
+        suspendedUntil: null,
+        expectedUpdatedAt: "2026-08-27T00:00:00.000Z",
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN", status: 403 });
+  });
+
+  it("reserves irreversible withdrawal for super administrators", async () => {
+    const support = {
+      id: "support-1",
+      type: "HUMAN" as const,
+      role: "ADMIN" as const,
+      studioRole: "SUPPORT" as const,
+    };
+    await expect(
+      updateStudioUserStatus(support, "user-1", {
+        status: "WITHDRAWN",
+        reason: "verified privacy request",
+        expectedUpdatedAt: "2026-08-27T00:00:00.000Z",
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN", status: 403 });
+  });
+
+  it("lists operator candidates only for super administrators", async () => {
+    queryMocks.selectStudioOperators.mockResolvedValue({
+      records: [
+        {
+          id: "support-1",
+          nickname: "지원",
+          email: "support@example.test",
+          status: "ACTIVE",
+          studioRole: "SUPPORT",
+          updatedAt: new Date("2026-09-03T12:00:00.000Z"),
+        },
+      ],
+      nextCursor: undefined,
+    });
+    await expect(listStudioOperators(admin)).resolves.toMatchObject({
+      data: [{ id: "support-1", studioRole: "SUPPORT" }],
+    });
+    await expect(
+      listStudioOperators({
+        id: "support-1",
+        type: "HUMAN",
+        role: "ADMIN",
+        studioRole: "SUPPORT",
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("updates another operator role with concurrency protection", async () => {
+    queryMocks.updateStudioOperatorTransaction.mockResolvedValue({
+      outcome: "updated",
+      record: {
+        id: "user-1",
+        studioRole: "CONTENT",
+        updatedAt: new Date("2026-09-03T13:00:00.000Z"),
+      },
+    });
+    await expect(
+      updateStudioOperator(admin, "user-1", {
+        studioRole: "CONTENT",
+        reason: "콘텐츠 운영 담당 지정",
+        expectedUpdatedAt: "2026-09-03T12:00:00.000Z",
+      }),
+    ).resolves.toMatchObject({ data: { studioRole: "CONTENT" } });
+  });
+
+  it("prevents self role changes", async () => {
+    await expect(
+      updateStudioOperator(admin, "admin-1", {
+        studioRole: null,
+        reason: "remove self",
+        expectedUpdatedAt: "2026-09-03T12:00:00.000Z",
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("returns filtered audit logs with stored snapshots", async () => {
+    queryMocks.selectAuditLogs.mockResolvedValue({
+      records: [
+        {
+          id: "audit-1",
+          actorId: "admin-1",
+          actorType: "HUMAN",
+          action: "support_case.updated",
+          targetType: "SupportCase",
+          targetId: "case-1",
+          before: { status: "OPEN" },
+          after: { status: "IN_PROGRESS" },
+          createdAt: new Date("2026-09-03T10:00:00.000Z"),
+        },
+      ],
+      nextCursor: "audit-next",
+      targetTypes: ["SupportCase"],
+    });
+
+    await expect(
+      listAuditLogs(admin, { actorType: "HUMAN", targetType: "SupportCase" }),
+    ).resolves.toEqual({
+      data: [
+        expect.objectContaining({
+          id: "audit-1",
+          before: { status: "OPEN" },
+          createdAt: "2026-09-03T10:00:00.000Z",
+        }),
+      ],
+      meta: { nextCursor: "audit-next", targetTypes: ["SupportCase"] },
     });
   });
 });

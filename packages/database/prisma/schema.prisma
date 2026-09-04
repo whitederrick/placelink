@@ -13,6 +13,13 @@ enum UserStatus {
   WITHDRAWN
 }
 
+enum StudioRole {
+  SUPER_ADMIN
+  SUPPORT
+  CONTENT
+  ANALYST
+}
+
 enum AuthProvider {
   KAKAO
   GOOGLE
@@ -118,6 +125,34 @@ enum CourseStatus {
   DELETED
 }
 
+enum SupportCaseType {
+  INQUIRY
+  COMPLAINT
+  REPORT
+  PRIVACY
+}
+
+enum SupportPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum SupportCaseStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_USER
+  RESOLVED
+  CLOSED
+}
+
+enum SupportEntryKind {
+  CUSTOMER_MESSAGE
+  STAFF_REPLY
+  INTERNAL_NOTE
+}
+
 enum TagKind {
   SITUATION
   BUDGET
@@ -136,6 +171,10 @@ model User {
   nickname              String
   profileImageUrl       String?          @map("profile_image_url")
   status                UserStatus       @default(ACTIVE)
+  studioRole            StudioRole?      @map("studio_role")
+  statusReason          String?          @map("status_reason") @db.VarChar(500)
+  suspendedUntil        DateTime?        @map("suspended_until")
+  statusChangedAt       DateTime?        @map("status_changed_at")
   createdAt             DateTime         @default(now()) @map("created_at")
   updatedAt             DateTime         @updatedAt @map("updated_at")
   deletedAt             DateTime?        @map("deleted_at")
@@ -146,9 +185,54 @@ model User {
   events                AnalyticsEvent[]
   createdCoupleInvites  CoupleInvite[]   @relation("CoupleInviteCreator")
   acceptedCoupleInvites CoupleInvite[]   @relation("CoupleInviteAccepter")
+  reportedSupportCases  SupportCase[]    @relation("SupportCaseReporter")
+  assignedSupportCases  SupportCase[]    @relation("SupportCaseAssignee")
 
   @@index([status, createdAt])
+  @@index([status, suspendedUntil])
+  @@index([studioRole])
   @@map("users")
+}
+
+model SupportCase {
+  id             String             @id @default(cuid())
+  reporterUserId String?            @map("reporter_user_id")
+  assigneeUserId String?            @map("assignee_user_id")
+  type           SupportCaseType
+  priority       SupportPriority    @default(NORMAL)
+  status         SupportCaseStatus  @default(OPEN)
+  subject        String
+  description    String             @db.VarChar(5000)
+  targetType     String?            @map("target_type")
+  targetId       String?            @map("target_id")
+  dueAt          DateTime?          @map("due_at")
+  resolvedAt     DateTime?          @map("resolved_at")
+  closedAt       DateTime?          @map("closed_at")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+  reporter       User?              @relation("SupportCaseReporter", fields: [reporterUserId], references: [id], onDelete: SetNull)
+  assignee       User?              @relation("SupportCaseAssignee", fields: [assigneeUserId], references: [id], onDelete: SetNull)
+  entries        SupportCaseEntry[]
+
+  @@index([status, priority, createdAt, id])
+  @@index([assigneeUserId, status, dueAt])
+  @@index([reporterUserId, createdAt])
+  @@index([targetType, targetId])
+  @@map("support_cases")
+}
+
+model SupportCaseEntry {
+  id            String           @id @default(cuid())
+  supportCaseId String           @map("support_case_id")
+  kind          SupportEntryKind
+  authorId      String           @map("author_id")
+  authorType    ActorType        @map("author_type")
+  body          String           @db.VarChar(5000)
+  createdAt     DateTime         @default(now()) @map("created_at")
+  supportCase   SupportCase      @relation(fields: [supportCaseId], references: [id], onDelete: Cascade)
+
+  @@index([supportCaseId, createdAt, id])
+  @@map("support_case_entries")
 }
 
 model AuthIdentity {
@@ -389,23 +473,23 @@ model IngestionRecord {
 }
 
 model IngestionRun {
-  id                String             @id @default(cuid())
-  provider          ExternalProvider
-  status            IngestionRunStatus @default(RUNNING)
-  trigger           IngestionTrigger
-  actorId           String             @map("actor_id")
-  actorType         ActorType           @map("actor_type")
-  requestPayload    Json                @map("request_payload")
-  totalAvailable    Int?                @map("total_available")
-  fetched           Int                @default(0)
-  selected          Int                @default(0)
-  inserted          Int                @default(0)
-  unchanged         Int                @default(0)
-  errorMessage      String?            @map("error_message")
-  startedAt         DateTime           @map("started_at")
-  finishedAt        DateTime?          @map("finished_at")
-  createdAt         DateTime           @default(now()) @map("created_at")
-  records           IngestionRecord[]
+  id             String             @id @default(cuid())
+  provider       ExternalProvider
+  status         IngestionRunStatus @default(RUNNING)
+  trigger        IngestionTrigger
+  actorId        String             @map("actor_id")
+  actorType      ActorType          @map("actor_type")
+  requestPayload Json               @map("request_payload")
+  totalAvailable Int?               @map("total_available")
+  fetched        Int                @default(0)
+  selected       Int                @default(0)
+  inserted       Int                @default(0)
+  unchanged      Int                @default(0)
+  errorMessage   String?            @map("error_message")
+  startedAt      DateTime           @map("started_at")
+  finishedAt     DateTime?          @map("finished_at")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  records        IngestionRecord[]
 
   @@index([status, startedAt, id])
   @@index([provider, startedAt, id])

@@ -2,6 +2,10 @@ import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
 
+// Keep local E2E runs self-contained. Production authorization still depends on
+// its explicit deployment environment configuration.
+process.env.ADMIN_USER_IDS ??= "seed-user-jihoon";
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,

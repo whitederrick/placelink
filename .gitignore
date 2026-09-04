@@ -13,6 +13,7 @@ pnpm-debug.log*
 packages/database/generated
 playwright-report
 test-results
+tmp/migration-backups
 .agents
 
 .vercel

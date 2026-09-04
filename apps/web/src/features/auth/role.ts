@@ -5,11 +5,27 @@ export function resolveActorRole(
   email: string | null,
   adminUserIds: readonly string[],
   operatorEmails: readonly string[],
+  studioRole?: Actor["studioRole"] | null,
 ): Actor["role"] {
-  return adminUserIds.includes(userId) ||
+  return studioRole ||
+    adminUserIds.includes(userId) ||
     isStudioOperatorEmail(email, operatorEmails)
     ? "ADMIN"
     : "USER";
+}
+
+export function resolveStudioRole(
+  userId: string,
+  email: string | null,
+  adminUserIds: readonly string[],
+  operatorEmails: readonly string[],
+  studioRole?: Actor["studioRole"] | null,
+): Actor["studioRole"] | undefined {
+  if (studioRole) return studioRole;
+  return adminUserIds.includes(userId) ||
+    isStudioOperatorEmail(email, operatorEmails)
+    ? "SUPER_ADMIN"
+    : undefined;
 }
 
 export function isStudioOperatorEmail(
