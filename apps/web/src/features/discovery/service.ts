@@ -68,7 +68,7 @@ function formatDuration(durationMinutes: number | null): string {
 }
 
 function formatHappeningBadge(
-  status: "UPCOMING" | "ACTIVE" | "ENDED",
+  status: "UPCOMING" | "ACTIVE" | "ENDED" | "HIDDEN",
   startsAt: Date,
   endsAt: Date,
   now: Date,
