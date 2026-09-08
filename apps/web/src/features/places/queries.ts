@@ -4,8 +4,9 @@ import type {
   NearbyPlacesQuery,
   PlaceListQuery,
 } from "./schema";
+import { webEnv } from "@/lib/env";
 
-const hideDemoPlaces = process.env.NODE_ENV === "production";
+const hideDemoPlaces = webEnv.NODE_ENV === "production";
 
 export async function selectPlaceRecords(query: PlaceListQuery) {
   return getDatabase().place.findMany({
