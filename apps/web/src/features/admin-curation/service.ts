@@ -10,6 +10,7 @@ import {
 } from "./schema";
 import {
   selectHappeningsForCuration,
+  selectHappeningForCuration,
   updateHappeningAnchorTransaction,
 } from "./queries";
 
@@ -53,4 +54,11 @@ export async function updateHappeningAnchor(
     );
   }
   return anchorCurationResponseSchema.parse({ data: result });
+}
+
+export async function getHappeningForCuration(actor: Actor, id: string) {
+  requireStudioPermission(actor, "studio.content.read");
+  const record = await selectHappeningForCuration(id);
+  if (!record) throw new AppError(ErrorCode.HAPPENING_NOT_FOUND, "Happening not found", 404);
+  return record;
 }

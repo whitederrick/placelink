@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { loadHumanActor } from "@/features/auth";
 import { AUDIT_ACTOR_TYPES, listAuditLogs } from "@/features/studio-operations";
+import { SavedFilters } from "@/features/studio-operations/components/SavedFilters";
 import { isLocale } from "@/i18n/config";
 
 function queryHref(current: URLSearchParams, key: string, value?: string) {
@@ -12,6 +13,15 @@ function queryHref(current: URLSearchParams, key: string, value?: string) {
   else next.delete(key);
   if (key !== "cursor") next.delete("cursor");
   return next.size ? `?${next.toString()}` : "?";
+}
+
+function targetHref(locale: string, targetType: string, targetId: string) {
+  if (targetType === "Happening") return `/${locale}/studio/happenings/${encodeURIComponent(targetId)}`;
+  if (targetType === "Place") return `/${locale}/studio/places/${encodeURIComponent(targetId)}`;
+  if (targetType === "Course") return `/${locale}/studio/courses/${encodeURIComponent(targetId)}`;
+  if (targetType === "SupportCase") return `/${locale}/studio/support/${encodeURIComponent(targetId)}`;
+  if (targetType === "User") return `/${locale}/studio/users/${encodeURIComponent(targetId)}`;
+  return undefined;
 }
 
 export default async function StudioAuditLogsPage({
@@ -39,14 +49,20 @@ export default async function StudioAuditLogsPage({
     (item) => item === value("actorType"),
   );
   const targetType = value("targetType")?.trim() || undefined;
+  const dateFrom = value("dateFrom");
+  const dateTo = value("dateTo");
   const current = new URLSearchParams();
   if (search) current.set("search", search);
   if (actorType) current.set("actorType", actorType);
   if (targetType) current.set("targetType", targetType);
+  if (dateFrom) current.set("dateFrom", dateFrom);
+  if (dateTo) current.set("dateTo", dateTo);
   const { data, meta } = await listAuditLogs(actor, {
     search,
     actorType,
     targetType,
+    dateFrom,
+    dateTo,
     cursor: value("cursor"),
   });
   const dateTime = (date: string) =>
@@ -83,11 +99,17 @@ export default async function StudioAuditLogsPage({
           {targetType ? (
             <input name="targetType" type="hidden" value={targetType} />
           ) : null}
+          <label>시작일 <input name="dateFrom" type="date" defaultValue={dateFrom} /></label>
+          <label>종료일 <input name="dateTo" type="date" defaultValue={dateTo} /></label>
           <button className="button primary" type="submit">
             {t("search")}
           </button>
         </div>
       </form>
+      <SavedFilters
+        currentHref={`/${locale}/studio/audit-logs${current.size ? `?${current.toString()}` : ""}`}
+        storageKey="placelink:studio-audit-filters"
+      />
       <nav className="studio-run-filters" aria-label={t("filterLabel")}>
         <div className="chip-row">
           <Link
@@ -132,7 +154,7 @@ export default async function StudioAuditLogsPage({
                 <span>
                   <strong>{log.action}</strong>
                   <small>
-                    {log.targetType} · {log.targetId}
+                    {log.targetType} · {targetHref(locale, log.targetType, log.targetId) ? <Link href={targetHref(locale, log.targetType, log.targetId)!}>{log.targetId}</Link> : log.targetId}
                   </small>
                 </span>
                 <time>{dateTime(log.createdAt)}</time>

@@ -11,8 +11,12 @@ import {
   selectMapPlaceRecords,
   selectNearbyPlaceRecords,
   selectPlaceRecords,
+  selectStudioPlace,
   type PlaceRecords,
 } from "./queries";
+import type { Actor } from "@/lib/auth/actor";
+import { requireStudioPermission } from "@/lib/auth/permissions";
+import { AppError, ErrorCode } from "@/lib/errors";
 
 function mapPlace(record: PlaceRecords[number]): PlaceSummary {
   const translation = record.translations[0];
@@ -59,4 +63,11 @@ export async function findMapPlaces(query: MapPlacesQuery) {
     })),
     meta: { capped: records.length > query.take },
   });
+}
+
+export async function getStudioPlace(actor: Actor, id: string) {
+  requireStudioPermission(actor, "studio.content.read");
+  const record = await selectStudioPlace(id);
+  if (!record) throw new AppError(ErrorCode.INVALID_INPUT, "Place not found", 404);
+  return record;
 }

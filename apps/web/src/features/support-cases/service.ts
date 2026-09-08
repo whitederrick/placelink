@@ -4,6 +4,7 @@ import { AppError, ErrorCode } from "@/lib/errors";
 import {
   customerSupportCaseRequestSchema,
   customerSupportCaseResponseSchema,
+  customerSupportCaseListResponseSchema,
   supportCaseDetailResponseSchema,
   supportCaseEntryRequestSchema,
   supportCaseEntryResponseSchema,
@@ -14,10 +15,13 @@ import {
 } from "./schema";
 import {
   countRecentSupportCasesByReporter,
+  countSupportCaseAttention,
   createSupportCaseEntryTransaction,
   insertCustomerSupportCase,
   selectSupportCase,
   selectSupportCases,
+  selectCustomerSupportCases,
+  selectCustomerSupportCase,
   updateSupportCaseTransaction,
 } from "./queries";
 
@@ -41,6 +45,40 @@ export async function createCustomerSupportCase(
   const record = await insertCustomerSupportCase(actor, input);
   return customerSupportCaseResponseSchema.parse({
     data: { id: record.id, createdAt: record.createdAt.toISOString() },
+  });
+}
+
+export async function listCustomerSupportCases(actor: Actor) {
+  const records = await selectCustomerSupportCases(actor.id);
+  return customerSupportCaseListResponseSchema.parse({ data: records.map((record) => ({ ...record, entryCount: record._count.entries, createdAt: record.createdAt.toISOString(), updatedAt: record.updatedAt.toISOString() })) });
+}
+
+export async function getSupportCaseAttention(actor: Actor) {
+  assertSupportRead(actor);
+  return countSupportCaseAttention();
+}
+
+export async function getCustomerSupportCase(actor: Actor, id: string) {
+  const record = await selectCustomerSupportCase(id, actor.id);
+  if (!record)
+    throw new AppError(
+      ErrorCode.SUPPORT_CASE_NOT_FOUND,
+      "Support case not found",
+      404,
+    );
+  return supportCaseDetailResponseSchema.parse({
+    data: {
+      ...summary(record),
+      description: record.description,
+      targetType: record.targetType,
+      targetId: record.targetId,
+      resolvedAt: record.resolvedAt?.toISOString() ?? null,
+      closedAt: record.closedAt?.toISOString() ?? null,
+      entries: record.entries.map((entry) => ({
+        ...entry,
+        createdAt: entry.createdAt.toISOString(),
+      })),
+    },
   });
 }
 

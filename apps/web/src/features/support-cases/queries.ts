@@ -16,6 +16,24 @@ export function countRecentSupportCasesByReporter(
   });
 }
 
+export async function countSupportCaseAttention() {
+  const database = getDatabase();
+  const now = new Date();
+  const [urgent, overdue, unassigned] = await Promise.all([
+    database.supportCase.count({ where: { priority: "URGENT", status: { notIn: ["RESOLVED", "CLOSED"] } } }),
+    database.supportCase.count({ where: { dueAt: { lt: now }, status: { notIn: ["RESOLVED", "CLOSED"] } } }),
+    database.supportCase.count({ where: { assigneeUserId: null, status: { notIn: ["RESOLVED", "CLOSED"] } } }),
+  ]);
+  return { urgent, overdue, unassigned };
+}
+
+export function selectCustomerSupportCases(reporterUserId: string) {
+  return getDatabase().supportCase.findMany({
+    where: { reporterUserId }, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: 50,
+    select: { id: true, type: true, status: true, subject: true, createdAt: true, updatedAt: true, _count: { select: { entries: true } } },
+  });
+}
+
 export function insertCustomerSupportCase(
   actor: Actor,
   input: CustomerSupportCaseRequest,
@@ -75,11 +93,14 @@ const summarySelect = {
 
 export async function selectSupportCases(query: SupportCaseListQuery) {
   const search = query.search || undefined;
+  const now = new Date();
   const records = await getDatabase().supportCase.findMany({
     where: {
       type: query.type,
-      priority: query.priority,
       status: query.status,
+      priority: query.attention === "URGENT" ? "URGENT" : query.priority,
+      dueAt: query.attention === "OVERDUE" ? { lt: now } : undefined,
+      assigneeUserId: query.attention === "UNASSIGNED" ? null : undefined,
       OR: search
         ? [
             { id: { contains: search, mode: "insensitive" } },
@@ -114,6 +135,32 @@ export function selectSupportCase(id: string) {
       resolvedAt: true,
       closedAt: true,
       entries: {
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        select: {
+          id: true,
+          kind: true,
+          authorId: true,
+          authorType: true,
+          body: true,
+          createdAt: true,
+        },
+      },
+    },
+  });
+}
+
+export function selectCustomerSupportCase(id: string, reporterUserId: string) {
+  return getDatabase().supportCase.findFirst({
+    where: { id, reporterUserId },
+    select: {
+      ...summarySelect,
+      description: true,
+      targetType: true,
+      targetId: true,
+      resolvedAt: true,
+      closedAt: true,
+      entries: {
+        where: { kind: { in: ["CUSTOMER_MESSAGE", "STAFF_REPLY"] } },
         orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         select: {
           id: true,

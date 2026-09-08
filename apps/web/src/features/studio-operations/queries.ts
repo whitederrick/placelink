@@ -17,6 +17,7 @@ export async function selectAuditLogs(query: AuditLogListQuery) {
       where: {
         actorType: query.actorType,
         targetType: query.targetType,
+        createdAt: { gte: query.dateFrom ? new Date(`${query.dateFrom}T00:00:00.000Z`) : undefined, lt: query.dateTo ? new Date(new Date(`${query.dateTo}T00:00:00.000Z`).getTime() + 86_400_000) : undefined },
         OR: search
           ? [
               { action: { contains: search, mode: "insensitive" } },

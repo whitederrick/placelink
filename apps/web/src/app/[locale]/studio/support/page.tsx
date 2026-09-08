@@ -8,8 +8,11 @@ import {
   SUPPORT_CASE_TYPES,
   SUPPORT_PRIORITIES,
   listSupportCases,
+  getSupportCaseAttention,
 } from "@/features/support-cases";
 import { isLocale } from "@/i18n/config";
+import { SupportCaseBulkActions } from "@/features/support-cases/components/SupportCaseBulkActions";
+import { SavedFilters } from "@/features/studio-operations/components/SavedFilters";
 
 function filterHref(current: URLSearchParams, key: string, value?: string) {
   const next = new URLSearchParams(current);
@@ -51,18 +54,24 @@ export default async function StudioSupportPage({
   const priority = SUPPORT_PRIORITIES.find(
     (item) => item === value("priority"),
   );
+  const attention = ["URGENT", "OVERDUE", "UNASSIGNED"].find((item) => item === value("attention"));
   const current = new URLSearchParams();
   if (search) current.set("search", search);
   if (status) current.set("status", status);
   if (type) current.set("type", type);
   if (priority) current.set("priority", priority);
-  const { data, meta } = await listSupportCases(actor, {
-    search,
-    status,
-    type,
-    priority,
-    cursor: value("cursor"),
-  });
+  if (attention) current.set("attention", attention);
+  const [{ data, meta }, attentionSummary] = await Promise.all([
+    listSupportCases(actor, {
+      search,
+      status,
+      type,
+      priority,
+      attention: attention as "URGENT" | "OVERDUE" | "UNASSIGNED" | undefined,
+      cursor: value("cursor"),
+    }),
+    getSupportCaseAttention(actor),
+  ]);
   const dateTime = (date: string | null) =>
     date
       ? new Intl.DateTimeFormat(locale, {
@@ -81,6 +90,12 @@ export default async function StudioSupportPage({
           <p>{t("subtitle")}</p>
         </div>
       </header>
+      <section className="studio-metric-grid" aria-label="문의 관제 요약">
+        <Link href={filterHref(current, "attention", "URGENT")}><strong>{attentionSummary.urgent}</strong><span>긴급</span></Link>
+        <Link href={filterHref(current, "attention", "OVERDUE")}><strong>{attentionSummary.overdue}</strong><span>기한 초과</span></Link>
+        <Link href={filterHref(current, "attention", "UNASSIGNED")}><strong>{attentionSummary.unassigned}</strong><span>미배정</span></Link>
+      </section>
+      <SavedFilters storageKey="placelink:studio-support-filters" currentHref={`/${locale}/studio/support${current.size ? `?${current.toString()}` : ""}`} />
       <form className="studio-search" action={`/${locale}/studio/support`}>
         <label htmlFor="support-search">{t("searchLabel")}</label>
         <div>
@@ -96,6 +111,7 @@ export default async function StudioSupportPage({
           {priority ? (
             <input name="priority" type="hidden" value={priority} />
           ) : null}
+          {attention ? <input name="attention" type="hidden" value={attention} /> : null}
           <button className="button primary" type="submit">
             {t("search")}
           </button>
@@ -118,6 +134,12 @@ export default async function StudioSupportPage({
               {t(`status.${item.toLowerCase()}`)}
             </Link>
           ))}
+        </div>
+        <div className="chip-row">
+          <Link className={!attention ? "selected" : ""} href={filterHref(current, "attention")}>전체 관제</Link>
+          <Link className={attention === "URGENT" ? "selected" : ""} href={filterHref(current, "attention", "URGENT")}>긴급</Link>
+          <Link className={attention === "OVERDUE" ? "selected" : ""} href={filterHref(current, "attention", "OVERDUE")}>기한 초과</Link>
+          <Link className={attention === "UNASSIGNED" ? "selected" : ""} href={filterHref(current, "attention", "UNASSIGNED")}>미배정</Link>
         </div>
         <div className="chip-row">
           <Link
@@ -154,6 +176,7 @@ export default async function StudioSupportPage({
           ))}
         </div>
       </nav>
+      {data.length ? <SupportCaseBulkActions items={data.map((item) => ({ id: item.id, updatedAt: item.updatedAt }))} /> : null}
       <div className="support-case-list">
         {data.length ? (
           data.map((supportCase) => (

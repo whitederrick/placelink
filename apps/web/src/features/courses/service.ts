@@ -29,6 +29,7 @@ import {
   selectCourseOwner,
   selectDraftCourse,
   selectPublishedCourse,
+  selectStudioCourse,
   selectRoutePlaces,
   type CourseAnchorRecord,
   type DraftCourseRecord,
@@ -447,4 +448,12 @@ export async function loadPublishedCourse(slug: string, locale: string) {
       404,
     );
   return mapPublishedCourse(record, locale);
+}
+
+export async function getStudioCourse(actor: Actor, slug: string) {
+  const { requireStudioPermission } = await import("@/lib/auth/permissions");
+  requireStudioPermission(actor, "studio.content.read");
+  const record = await selectStudioCourse(slug);
+  if (!record) throw new AppError(ErrorCode.INVALID_INPUT, "Course not found", 404);
+  return record;
 }

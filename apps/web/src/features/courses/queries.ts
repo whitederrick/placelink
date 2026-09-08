@@ -315,6 +315,10 @@ export async function selectPublishedCourse(slug: string, locale: string) {
   });
 }
 
+export function selectStudioCourse(slug: string) {
+  return getDatabase().course.findUnique({ where: { slug }, select: { id: true, slug: true, title: true, description: true, status: true, durationMinutes: true, dayCount: true, creatorUser: { select: { id: true, nickname: true, email: true } }, couple: { select: { id: true, displayName: true } }, tags: { select: { tag: { select: { slug: true, labelKo: true, labelEn: true } } } }, nodes: { orderBy: { orderIndex: "asc" }, select: { id: true, orderIndex: true, dayIndex: true, durationMinutes: true, tip: true, place: { select: { id: true, status: true, translations: { select: { locale: true, name: true, address: true } } } } } } } });
+}
+
 export type CourseAnchorRecord = Awaited<
   ReturnType<typeof selectCourseAnchorRecords>
 >[number];

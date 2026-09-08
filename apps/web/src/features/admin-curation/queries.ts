@@ -9,6 +9,8 @@ export async function selectHappeningsForCuration(
     where: {
       status: query.status,
       isAnchor: query.anchor,
+      kind: query.kind,
+      ...(query.q ? { translations: { some: { title: { contains: query.q, mode: "insensitive" } } } } : {}),
     },
     orderBy: [{ endsAt: "asc" }, { id: "asc" }],
     take: query.take,
@@ -32,6 +34,18 @@ export async function selectHappeningsForCuration(
           },
         },
       },
+    },
+  });
+}
+
+export function selectHappeningForCuration(id: string) {
+  return getDatabase().happening.findUnique({
+    where: { id },
+    select: {
+      id: true, status: true, kind: true, startsAt: true, endsAt: true, isAnchor: true,
+      translations: { orderBy: { locale: "asc" }, select: { locale: true, title: true, description: true, scheduleText: true } },
+      providerRefs: { orderBy: { provider: "asc" }, select: { provider: true, externalId: true, sourceUrl: true, bookingUrl: true, lastFetchedAt: true } },
+      place: { select: { id: true, translations: { select: { locale: true, name: true, address: true } } } },
     },
   });
 }

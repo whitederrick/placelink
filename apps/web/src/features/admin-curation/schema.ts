@@ -2,11 +2,13 @@ import { z } from "zod";
 
 export const happeningCurationListQuerySchema = z.object({
   locale: z.enum(["ko", "en"]).default("ko"),
-  status: z.enum(["UPCOMING", "ACTIVE", "ENDED"]).optional(),
+  status: z.enum(["UPCOMING", "ACTIVE", "ENDED", "HIDDEN"]).optional(),
   anchor: z
     .enum(["true", "false"])
     .transform((value) => value === "true")
     .optional(),
+  q: z.string().trim().max(100).optional(),
+  kind: z.enum(["EXHIBITION", "POPUP", "FESTIVAL", "PERFORMANCE", "SCREENING", "WORKSHOP", "EVENT", "OTHER"]).optional(),
   take: z.coerce.number().int().min(1).max(100).default(50),
 });
 
@@ -18,7 +20,7 @@ export const happeningCurationEntrySchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
   placeName: z.string().min(1),
-  status: z.enum(["UPCOMING", "ACTIVE", "ENDED"]),
+  status: z.enum(["UPCOMING", "ACTIVE", "ENDED", "HIDDEN"]),
   startsAt: z.string().datetime(),
   endsAt: z.string().datetime(),
   isAnchor: z.boolean(),

@@ -12,6 +12,7 @@ import { webEnv } from "../../lib/env";
 import {
   createIngestionRun,
   failIngestionRun,
+  recordIngestionRetry,
   mergeIngestionTransaction,
   rejectIngestionTransaction,
   stageIngestionBatch,
@@ -41,6 +42,25 @@ function oneYearAfter(date: string) {
   const instant = new Date(`${date}T00:00:00Z`);
   instant.setUTCFullYear(instant.getUTCFullYear() + 1);
   return instant.toISOString().slice(0, 10);
+}
+
+async function fetchBatchWithRetry(
+  provider: ScheduleIngestionProvider,
+  request: Parameters<ScheduleIngestionProvider["fetchBatch"]>[0],
+  onRetry: (attempt: number, error: unknown) => Promise<unknown>,
+  maxAttempts = 3,
+) {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      return await provider.fetchBatch(request);
+    } catch (error: unknown) {
+      lastError = error;
+      await onRetry(attempt, error);
+      if (attempt === maxAttempts) break;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("Schedule provider failed after retries");
 }
 
 async function syncScheduleIngestions(
@@ -84,7 +104,7 @@ async function syncScheduleIngestions(
         503,
       );
     }
-    const batch = await scheduleProvider.fetchBatch(request);
+    const batch = await fetchBatchWithRetry(scheduleProvider, request, (attempt, error) => recordIngestionRetry(actor, run.id, attempt, error instanceof Error ? error.message : "Unknown provider failure"));
     if (batch.provider !== providerName)
       throw new AppError(
         ErrorCode.INTEGRATION_FAILURE,

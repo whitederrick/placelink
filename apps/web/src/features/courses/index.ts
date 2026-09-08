@@ -7,6 +7,7 @@ export {
   loadPublishedCourse,
   publishCourseDraft,
   updateCourseDraft,
+  getStudioCourse,
 } from "./service";
 export {
   anchorListQuerySchema,
