@@ -16,6 +16,7 @@ import type { HomeFeed, HomeFeedQuery, HomeFeedResponse } from "../schema";
 import type { HomeDayPeriod } from "../service";
 import { findTrackedHomeFilter } from "../tracking";
 import { CourseFeed } from "./CourseFeed";
+import { DeferredWeather } from "./DeferredWeather";
 
 type ActiveFilters = Pick<
   HomeFeedQuery,
@@ -103,16 +104,7 @@ export async function HomeScreen({
           })}
         </h1>
         <p>{heroSubhead}</p>
-        {weather ? (
-          <a
-            className="weather-attribution"
-            href="https://www.data.go.kr/data/15084084/openapi.do"
-            rel="noreferrer"
-            target="_blank"
-          >
-            {t("weather.source")}
-          </a>
-        ) : null}
+        <DeferredWeather labels={{ rain: t("weather.rainEyebrow", { temperature: "{temperature}" }), snow: t("weather.snowEyebrow", { temperature: "{temperature}" }), temperature: t("weather.temperatureEyebrow", { temperature: "{temperature}" }), source: t("weather.source") }} />
         <div className="hero-actions">
           <Link className="button primary" href={`/${locale}/explore`}>
             {t("exploreCta")}
