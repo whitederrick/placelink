@@ -87,4 +87,18 @@ describe("mergePlaceMergeCandidate", () => {
     await expect(mergePlaceMergeCandidate(actor, "candidate-1", "race detected")).rejects.toMatchObject({ status: 409 });
     expect(mocks.tx.auditLog.create).not.toHaveBeenCalled();
   });
+
+  it("rejects provider reference conflicts before moving relations", async () => {
+    mocks.tx.placeMergeCandidate.findFirst.mockResolvedValue({
+      id: "candidate-1", primaryPlaceId: "primary", duplicatePlaceId: "duplicate", reason: "same venue",
+    });
+    mocks.tx.place.findUnique
+      .mockResolvedValueOnce(place("primary", { providerRefs: [{ provider: "KAKAO", externalId: "same-ref" }] }))
+      .mockResolvedValueOnce(place("duplicate", { providerRefs: [{ id: "provider-1", provider: "KAKAO", externalId: "same-ref" }] }));
+
+    await expect(mergePlaceMergeCandidate(actor, "candidate-1", "confirmed duplicate"))
+      .rejects.toMatchObject({ status: 409 });
+    expect(mocks.tx.placeProviderRef.update).not.toHaveBeenCalled();
+    expect(mocks.tx.auditLog.create).not.toHaveBeenCalled();
+  });
 });
