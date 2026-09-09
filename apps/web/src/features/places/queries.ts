@@ -4,8 +4,9 @@ import type {
   NearbyPlacesQuery,
   PlaceListQuery,
 } from "./schema";
+import { webEnv } from "@/lib/env";
 
-const hideDemoPlaces = process.env.NODE_ENV === "production";
+const hideDemoPlaces = webEnv.NODE_ENV === "production";
 
 export async function selectPlaceRecords(query: PlaceListQuery) {
   return getDatabase().place.findMany({
@@ -122,6 +123,21 @@ export async function selectMapPlaceRecords(
     ORDER BY p."id" ASC
     LIMIT ${query.take + 1}
   `;
+}
+
+export function selectStudioPlace(id: string) {
+  return getDatabase().place.findUnique({
+    where: { id },
+    select: {
+      id: true, status: true, category: true, kind: true, areaSlug: true, lat: true, lng: true,
+      translations: { orderBy: { locale: "asc" }, select: { locale: true, name: true, address: true, summary: true } },
+      providerRefs: { orderBy: { provider: "asc" }, select: { provider: true, externalId: true, sourceUrl: true } },
+      openingPeriods: { orderBy: [{ dayOfWeek: "asc" }, { opensAtMinutes: "asc" }], select: { dayOfWeek: true, opensAtMinutes: true, closesAtMinutes: true } },
+      openingExceptions: { orderBy: { date: "asc" }, select: { date: true, isClosed: true, opensAtMinutes: true, closesAtMinutes: true, note: true } },
+      happenings: { orderBy: { startsAt: "desc" }, take: 20, select: { id: true, status: true, startsAt: true, endsAt: true, translations: { take: 1, select: { title: true } } } },
+      courseNodes: { take: 20, select: { course: { select: { id: true, slug: true, title: true, status: true } } } },
+    },
+  });
 }
 
 export type PlaceRecords = Awaited<ReturnType<typeof selectPlaceRecords>>;

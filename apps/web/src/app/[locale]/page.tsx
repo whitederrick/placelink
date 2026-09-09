@@ -5,13 +5,7 @@ import {
   loadHomeHero,
 } from "@/features/discovery";
 import { isLocale } from "@/i18n/config";
-import { createKmaWeatherProvider } from "@/lib/adapters/weather";
-import { webEnv } from "@/lib/env";
 import { notFound } from "next/navigation";
-
-const weatherProvider = webEnv.KMA_SERVICE_KEY
-  ? createKmaWeatherProvider(webEnv.KMA_SERVICE_KEY)
-  : undefined;
 
 export default async function HomePage({
   params,
@@ -59,7 +53,7 @@ export default async function HomePage({
   const now = new Date();
   const [{ data: feed, nextCursor }, hero] = await Promise.all([
     loadHomeFeed(locale, query, now),
-    loadHomeHero(now, weatherProvider),
+    loadHomeHero(now),
   ]);
   return (
     <HomeScreen

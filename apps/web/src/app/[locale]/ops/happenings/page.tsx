@@ -7,12 +7,14 @@ import { HappeningCurationPanel } from "@/features/admin-curation/components/Hap
 import { loadHumanActor } from "@/features/auth";
 import { isLocale } from "@/i18n/config";
 
-const STATUSES = ["UPCOMING", "ACTIVE", "ENDED"] as const;
+const STATUSES = ["UPCOMING", "ACTIVE", "ENDED", "HIDDEN"] as const;
 type HappeningStatus = (typeof STATUSES)[number];
 
 function curationHref(
   status: HappeningStatus | undefined,
   anchor: string | undefined,
+  q: string | undefined,
+  kind: string | undefined,
   change: { status?: HappeningStatus | null; anchor?: string | null },
 ) {
   const nextStatus =
@@ -22,6 +24,8 @@ function curationHref(
   const params = new URLSearchParams();
   if (nextStatus) params.set("status", nextStatus);
   if (nextAnchor) params.set("anchor", nextAnchor);
+  if (q) params.set("q", q);
+  if (kind) params.set("kind", kind);
   return params.size ? `?${params.toString()}` : "?";
 }
 
@@ -30,7 +34,7 @@ export default async function HappeningOperationsPage({
   searchParams,
 }: Readonly<{
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ status?: string; anchor?: string }>;
+  searchParams: Promise<{ status?: string; anchor?: string; q?: string; kind?: string }>;
 }>) {
   const [{ locale }, query, session] = await Promise.all([
     params,
@@ -47,8 +51,10 @@ export default async function HappeningOperationsPage({
   const anchor = ["true", "false"].includes(query.anchor ?? "")
     ? query.anchor
     : undefined;
+  const q = query.q?.trim().slice(0, 100) || undefined;
+  const kind = ["EXHIBITION", "POPUP", "FESTIVAL", "PERFORMANCE", "SCREENING", "WORKSHOP", "EVENT", "OTHER"].includes(query.kind ?? "") ? query.kind : undefined;
   const [{ data }, t] = await Promise.all([
-    listHappeningsForCuration(actor, { locale, status, anchor }),
+    listHappeningsForCuration(actor, { locale, status, anchor, q, kind }),
     getTranslations("curation"),
   ]);
 
@@ -68,14 +74,14 @@ export default async function HappeningOperationsPage({
         <div className="chip-row">
           <Link
             className={!status ? "selected" : ""}
-            href={curationHref(status, anchor, { status: null })}
+            href={curationHref(status, anchor, q, kind, { status: null })}
           >
             {t("allStatuses")}
           </Link>
           {STATUSES.map((value) => (
             <Link
               className={status === value ? "selected" : ""}
-              href={curationHref(status, anchor, { status: value })}
+              href={curationHref(status, anchor, q, kind, { status: value })}
               key={value}
             >
               {t(`status.${value.toLowerCase()}`)}
@@ -85,19 +91,19 @@ export default async function HappeningOperationsPage({
         <div className="chip-row">
           <Link
             className={!anchor ? "selected" : ""}
-            href={curationHref(status, anchor, { anchor: null })}
+            href={curationHref(status, anchor, q, kind, { anchor: null })}
           >
             {t("allAnchors")}
           </Link>
           <Link
             className={anchor === "true" ? "selected" : ""}
-            href={curationHref(status, anchor, { anchor: "true" })}
+            href={curationHref(status, anchor, q, kind, { anchor: "true" })}
           >
             {t("anchoredOnly")}
           </Link>
           <Link
             className={anchor === "false" ? "selected" : ""}
-            href={curationHref(status, anchor, { anchor: "false" })}
+            href={curationHref(status, anchor, q, kind, { anchor: "false" })}
           >
             {t("unanchoredOnly")}
           </Link>

@@ -61,6 +61,31 @@ export async function failIngestionRun(
       },
     });
     if (failed.count !== 1) return false;
+    const failedRun = await transaction.ingestionRun.findUnique({
+      where: { id: runId },
+      select: { provider: true },
+    });
+    if (failedRun) {
+      const recentFailures = await transaction.ingestionRun.count({
+        where: {
+          provider: failedRun.provider,
+          status: "FAILED",
+          finishedAt: { gte: new Date(finishedAt.getTime() - 24 * 60 * 60 * 1000) },
+        },
+      });
+      if (recentFailures >= 3) {
+        await transaction.auditLog.create({
+          data: {
+            actorId: actor.id,
+            actorType: actor.type,
+            action: "ingestion.provider_degraded",
+            targetType: "IngestionRun",
+            targetId: runId,
+            after: { provider: failedRun.provider, recentFailures, windowHours: 24, errorMessage },
+          },
+        });
+      }
+    }
     await transaction.auditLog.create({
       data: {
         actorId: actor.id,
@@ -74,6 +99,10 @@ export async function failIngestionRun(
     });
     return true;
   });
+}
+
+export function recordIngestionRetry(actor: Actor, runId: string, attempt: number, errorMessage: string) {
+  return getDatabase().auditLog.create({ data: { actorId: actor.id, actorType: actor.type, action: "ingestion.provider_retry", targetType: "IngestionRun", targetId: runId, after: { attempt, errorMessage: errorMessage.slice(0, 1000) } } });
 }
 
 export async function selectIngestionsForReview(query: IngestionListQuery) {
@@ -405,6 +434,19 @@ export async function stageIngestionBatch(
   finishedAt: Date,
 ) {
   return getDatabase().$transaction(async (transaction) => {
+    const externalIds = batch.records.map((record) => record.externalId);
+    const previous = externalIds.length
+      ? await transaction.ingestionRecord.findMany({
+          where: { provider: batch.provider, externalId: { in: externalIds } },
+          orderBy: { fetchedAt: "desc" },
+          distinct: ["externalId"],
+          select: { externalId: true, checksum: true },
+        })
+      : [];
+    const previousByExternalId = new Map(previous.map((record) => [record.externalId, record.checksum]));
+    const changedExternalIds = batch.records
+      .filter((record) => previousByExternalId.has(record.externalId) && previousByExternalId.get(record.externalId) !== record.checksum)
+      .map((record) => record.externalId);
     const created = await transaction.ingestionRecord.createMany({
       data: batch.records.map((record) => ({
         ingestionRunId: runId,
@@ -420,10 +462,11 @@ export async function stageIngestionBatch(
       skipDuplicates: true,
     });
     const selected = batch.records.length;
+    const runStatus = batch.records.length < batch.fetched ? "PARTIAL" : "SUCCEEDED";
     const completed = await transaction.ingestionRun.updateMany({
       where: { id: runId, status: "RUNNING" },
       data: {
-        status: "SUCCEEDED",
+        status: runStatus,
         totalAvailable: batch.totalAvailable,
         fetched: batch.fetched,
         selected,
@@ -444,11 +487,12 @@ export async function stageIngestionBatch(
         targetId: runId,
         after: {
           provider: batch.provider,
-          status: "SUCCEEDED",
+          status: runStatus,
           fetched: batch.fetched,
           selected,
           inserted: created.count,
           unchanged: selected - created.count,
+          changedExternalIds,
           totalAvailable: batch.totalAvailable,
           fetchedAt: fetchedAt.toISOString(),
           finishedAt: finishedAt.toISOString(),

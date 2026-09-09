@@ -8,6 +8,7 @@ const queryMocks = vi.hoisted(() => ({
   mergeIngestionTransaction: vi.fn(),
   rejectIngestionTransaction: vi.fn(),
   stageIngestionBatch: vi.fn(),
+  recordIngestionRetry: vi.fn(),
 }));
 vi.mock("./queries", () => queryMocks);
 vi.mock("../../lib/env", () => ({ webEnv: {} }));
@@ -51,6 +52,7 @@ describe("ingestion review", () => {
     vi.clearAllMocks();
     queryMocks.createIngestionRun.mockResolvedValue({ id: "run-1" });
     queryMocks.failIngestionRun.mockResolvedValue(true);
+    queryMocks.recordIngestionRetry.mockResolvedValue(true);
   });
 
   it("rejects non-admin callers", async () => {
@@ -191,6 +193,32 @@ describe("ingestion review", () => {
       now,
       expect.any(Date),
     );
+  });
+
+  it("retries transient provider failures before failing the run", async () => {
+    const provider = {
+      fetchBatch: vi.fn()
+        .mockRejectedValueOnce(new Error("temporary upstream failure"))
+        .mockResolvedValueOnce({
+          provider: "SEOUL_OPEN_DATA" as const,
+          totalAvailable: 1,
+          fetched: 1,
+          records: [],
+        }),
+    };
+    queryMocks.stageIngestionBatch.mockResolvedValue({ inserted: 0 });
+
+    await expect(
+      syncSeoulIngestions(admin, { start: 1, end: 1 }, provider, new Date("2026-08-27T03:00:00.000Z")),
+    ).resolves.toMatchObject({ data: { provider: "SEOUL_OPEN_DATA", fetched: 1 } });
+    expect(provider.fetchBatch).toHaveBeenCalledTimes(2);
+    expect(queryMocks.recordIngestionRetry).toHaveBeenCalledWith(
+      admin,
+      "run-1",
+      1,
+      "temporary upstream failure",
+    );
+    expect(queryMocks.failIngestionRun).not.toHaveBeenCalled();
   });
 
   it("records missing provider configuration as a failed run", async () => {

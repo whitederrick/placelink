@@ -20,6 +20,7 @@ export const supportCaseListQuerySchema = z.object({
   type: z.enum(SUPPORT_CASE_TYPES).optional(),
   priority: z.enum(SUPPORT_PRIORITIES).optional(),
   status: z.enum(SUPPORT_CASE_STATUSES).optional(),
+  attention: z.enum(["URGENT", "OVERDUE", "UNASSIGNED"]).optional(),
   cursor: z.string().min(1).optional(),
   take: z.coerce.number().int().min(1).max(50).default(20),
 });
@@ -158,6 +159,13 @@ export const customerSupportCaseResponseSchema = z.object({
     id: z.string().min(1),
     createdAt: z.string().datetime(),
   }),
+});
+
+export const customerSupportCaseListResponseSchema = z.object({
+  data: z.array(z.object({
+    id: z.string(), type: z.string(), status: z.string(), subject: z.string(),
+    createdAt: z.string(), updatedAt: z.string(), entryCount: z.number().int().nonnegative(),
+  })),
 });
 
 export type SupportCaseListQuery = z.infer<typeof supportCaseListQuerySchema>;

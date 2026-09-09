@@ -8,7 +8,10 @@ export {
 export {
   addSupportCaseEntry,
   createCustomerSupportCase,
+  listCustomerSupportCases,
   getSupportCase,
+  getCustomerSupportCase,
   listSupportCases,
+  getSupportCaseAttention,
   updateSupportCase,
 } from "./service";

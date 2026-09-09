@@ -76,7 +76,7 @@ export async function listAuditLogs(actor: Actor, rawQuery: unknown = {}) {
 function runSummary(run: {
   id: string;
   provider: ExternalProvider;
-  status: "RUNNING" | "SUCCEEDED" | "FAILED";
+  status: "RUNNING" | "SUCCEEDED" | "PARTIAL" | "FAILED";
   trigger: "MANUAL" | "SCHEDULED";
   fetched: number;
   selected: number;

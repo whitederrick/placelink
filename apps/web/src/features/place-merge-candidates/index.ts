@@ -1,1 +1,1 @@
-export { createPlaceMergeCandidate, dismissPlaceMergeCandidate, listPlaceMergeCandidates } from "./service";
+export { createPlaceMergeCandidate, dismissPlaceMergeCandidate, listPlaceMergeCandidates, mergePlaceMergeCandidate } from "./service";

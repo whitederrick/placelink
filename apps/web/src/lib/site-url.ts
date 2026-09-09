@@ -11,11 +11,7 @@ function normalizeOrigin(value: string) {
 }
 
 export function getSiteOrigin(
-  environment: SiteEnvironment = {
-    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
-    VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
-    VERCEL_URL: process.env.VERCEL_URL,
-  },
+  environment: SiteEnvironment = webEnv,
 ) {
   if (environment.NEXT_PUBLIC_SITE_URL) {
     return normalizeOrigin(environment.NEXT_PUBLIC_SITE_URL);
@@ -36,3 +32,4 @@ export function getLocalizedAlternates(pathname = "") {
     "x-default": `${origin}/ko${suffix}`,
   };
 }
+import { webEnv } from "./env";

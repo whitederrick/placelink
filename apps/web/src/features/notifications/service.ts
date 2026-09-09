@@ -4,6 +4,7 @@ import { webEnv } from "@/lib/env";
 
 const MAX_ATTEMPTS = 5;
 const BATCH_SIZE = 25;
+const LOCK_TIMEOUT_MS = 10 * 60_000;
 
 function retryAt(attemptCount: number) {
   const minutes = Math.min(60 * 24, 5 * 2 ** Math.max(0, attemptCount - 1));
@@ -114,6 +115,11 @@ async function processNotificationDelivery(id: string) {
 }
 
 export async function processPendingNotificationDeliveries() {
+  const staleBefore = new Date(Date.now() - LOCK_TIMEOUT_MS);
+  await getDatabase().notificationDelivery.updateMany({
+    where: { status: "SENDING", lockedAt: { lte: staleBefore }, attemptCount: { lt: MAX_ATTEMPTS } },
+    data: { status: "FAILED", lockedAt: null, nextAttemptAt: new Date(), lastError: "Previous delivery worker timed out" },
+  });
   const candidates = await getDatabase().notificationDelivery.findMany({
     where: {
       status: { in: ["PENDING", "FAILED"] },

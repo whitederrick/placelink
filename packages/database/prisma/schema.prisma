@@ -106,6 +106,7 @@ enum IngestionStatus {
 enum IngestionRunStatus {
   RUNNING
   SUCCEEDED
+  PARTIAL
   FAILED
 }
 

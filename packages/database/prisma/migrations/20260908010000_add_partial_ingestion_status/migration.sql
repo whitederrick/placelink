@@ -1,0 +1,1 @@
+ALTER TYPE "IngestionRunStatus" ADD VALUE IF NOT EXISTS 'PARTIAL';

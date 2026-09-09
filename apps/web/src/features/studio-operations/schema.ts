@@ -15,6 +15,7 @@ export const STUDIO_INGESTION_PROVIDERS = [
 export const INGESTION_RUN_STATUSES = [
   "RUNNING",
   "SUCCEEDED",
+  "PARTIAL",
   "FAILED",
 ] as const;
 
@@ -38,6 +39,8 @@ export const auditLogListQuerySchema = z.object({
   search: z.string().trim().max(100).optional(),
   actorType: z.enum(AUDIT_ACTOR_TYPES).optional(),
   targetType: z.string().trim().max(80).optional(),
+  dateFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  dateTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   cursor: z.string().min(1).optional(),
   take: z.coerce.number().int().min(1).max(50).default(20),
 });
